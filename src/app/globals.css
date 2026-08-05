@@ -1,26 +1,153 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  /* Darkroom palette: warm near-black surfaces under a safelight. */
+  --color-ink: #0a0908;
+  --color-pit: #0f0d0c;
+  --color-slab: #161311;
+  --color-riser: #1e1a17;
+  --color-line: #2c2521;
+  --color-line-lit: #3d332c;
+  --color-chalk: #f0e9df;
+  --color-ash: #9c9188;
+  --color-dust: #6a615a;
+  --color-safe: #ff5c26;
+  --color-safe-soft: #ff8a5c;
+  --color-ember: #a83208;
+
+  --font-display: var(--font-display), "Iowan Old Style", Georgia, serif;
+  --font-sans: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-mono), ui-monospace, "SF Mono", monospace;
+
+  --animate-sweep: sweep 1.9s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+  --animate-rise: rise 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@keyframes sweep {
+  0% {
+    transform: translateY(-8%);
+    opacity: 0;
+  }
+  15%,
+  85% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(108%);
+    opacity: 0;
   }
 }
 
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+html {
+  color-scheme: dark;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-ink);
+  color: var(--color-chalk);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Film grain, laid over the whole page at very low opacity. */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+@utility checkerboard {
+  background-color: #e6e0d8;
+  background-image:
+    linear-gradient(45deg, #c2b9ae 25%, transparent 25%, transparent 75%, #c2b9ae 75%),
+    linear-gradient(45deg, #c2b9ae 25%, transparent 25%, transparent 75%, #c2b9ae 75%);
+  background-size: 16px 16px;
+  background-position:
+    0 0,
+    8px 8px;
+}
+
+/* Sliders: a thin rail with a machined amber head. */
+@utility rail {
+  appearance: none;
+  width: 100%;
+  height: 22px;
+  background: transparent;
+  cursor: ew-resize;
+
+  &::-webkit-slider-runnable-track {
+    height: 2px;
+    background: var(--color-line-lit);
+  }
+  &::-webkit-slider-thumb {
+    appearance: none;
+    width: 4px;
+    height: 16px;
+    margin-top: -7px;
+    border-radius: 1px;
+    background: var(--color-safe);
+    box-shadow: 0 0 10px 0 color-mix(in srgb, var(--color-safe) 60%, transparent);
+    transition: height 0.15s ease;
+  }
+  &:hover::-webkit-slider-thumb {
+    height: 20px;
+    margin-top: -9px;
+  }
+  &::-moz-range-track {
+    height: 2px;
+    background: var(--color-line-lit);
+  }
+  &::-moz-range-thumb {
+    width: 4px;
+    height: 16px;
+    border: 0;
+    border-radius: 1px;
+    background: var(--color-safe);
+  }
+}
+
+::selection {
+  background: var(--color-safe);
+  color: var(--color-ink);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-ink);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-line);
+  border: 3px solid var(--color-ink);
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-line-lit);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

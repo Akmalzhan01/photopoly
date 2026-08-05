@@ -4,12 +4,22 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db": "prisma dev --name photopoly",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:seed": "node --env-file=.env prisma/seed.ts",
+    "db:studio": "prisma studio"
   },
   "dependencies": {
+    "@imgly/background-removal": "^1.7.0",
+    "@prisma/adapter-pg": "^7.9.1",
+    "@prisma/client": "^7.9.1",
+    "jose": "^6.2.5",
     "next": "16.2.12",
+    "prisma": "^7.9.1",
     "react": "19.2.4",
     "react-dom": "19.2.4"
   },
@@ -18,6 +28,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv": "^17.4.2",
     "eslint": "^9",
     "eslint-config-next": "16.2.12",
     "tailwindcss": "^4",

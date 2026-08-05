@@ -1,0 +1,219 @@
+// Photopoly — accounts, plans and payments.
+//
+// The photo editing itself stays entirely in the browser; nothing here touches
+// image data. This database only answers two questions: who is this, and are
+// they allowed to export?
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+  // Explicit `.ts` on internal imports so the generated client also resolves
+  // under plain `node`, which is how the seed script and the tests run it.
+  // Left bare, Node's ESM resolver cannot find `./enums` and only a bundler works.
+  moduleFormat           = "esm"
+  generatedFileExtension = "ts"
+  importFileExtension    = "ts"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  USER
+  ADMIN
+  SUPERADMIN
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELLED
+}
+
+enum PaymentProvider {
+  FINIK
+  MANUAL
+}
+
+model User {
+  id           String   @id @default(cuid())
+  /// Always stored lowercased and trimmed; the unique index is what stops duplicates.
+  email        String   @unique
+  passwordHash String
+  name         String?
+  role         Role     @default(USER)
+  /// Set by an admin. Blocked users keep their data but cannot sign in.
+  blocked      Boolean  @default(false)
+  /// Free exports already spent, counted for the lifetime of the account.
+  /// A plain counter rather than a `count()` over UsageEvent so that spending
+  /// one can be a single conditional UPDATE and two parallel tabs cannot both
+  /// slip through on the last free export.
+  freeUsed     Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  sessions      Session[]
+  subscriptions Subscription[]
+  payments      Payment[]
+  usage         UsageEvent[]
+  auditLogs     AuditLog[]     @relation("AuditActor")
+
+  @@index([createdAt])
+}
+
+/// Sessions live in the database so an admin can revoke them and a blocked user
+/// is locked out on their next request rather than whenever their JWT expires.
+model Session {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userAgent String?
+  ip        String?
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model Plan {
+  id          String  @id @default(cuid())
+  /// Stable identifier used in URLs and code; the display name is free to change.
+  code        String  @unique
+  name        String
+  description String?
+  /// Kyrgyz som. Whole som only — Finik is sent this number as `Amount`.
+  priceSom    Int
+  /// How long the subscription runs once paid.
+  days        Int
+  /// Exports allowed for the whole period; null means unlimited.
+  exportLimit Int?
+  /// Bullet points shown on the price list, in order.
+  features    String[] @default([])
+  active      Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  subscriptions Subscription[]
+  payments      Payment[]
+
+  @@index([active, sortOrder])
+}
+
+model Subscription {
+  id        String             @id @default(cuid())
+  userId    String
+  user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  planId    String
+  plan      Plan               @relation(fields: [planId], references: [id])
+  status    SubscriptionStatus @default(ACTIVE)
+  startsAt  DateTime           @default(now())
+  endsAt    DateTime
+  /// Exports already spent against this subscription.
+  used      Int                @default(0)
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  payment Payment?
+
+  @@index([userId, status])
+  @@index([endsAt])
+}
+
+model Payment {
+  id       String          @id @default(cuid())
+  userId   String
+  user     User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  planId   String
+  plan     Plan            @relation(fields: [planId], references: [id])
+  provider PaymentProvider @default(FINIK)
+  status   PaymentStatus   @default(PENDING)
+  /// Copied from the plan at purchase time so later price changes cannot rewrite history.
+  amountSom Int
+
+  /// The UUID we generate and send to Finik as `PaymentId`; it comes back in the
+  /// webhook under `fields.paymentId`, which is how we match the two up.
+  reference String  @unique
+  /// Finik's own transaction id. Unique so a replayed webhook cannot pay twice.
+  externalId String? @unique
+  /// Where Finik told us to send the customer.
+  paymentUrl String?
+  /// The last webhook body, kept verbatim for support and dispute handling.
+  raw        Json?
+
+  paidAt    DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  subscriptionId String?       @unique
+  subscription   Subscription? @relation(fields: [subscriptionId], references: [id])
+
+  @@index([userId, status])
+  @@index([createdAt])
+}
+
+/// One row per export. Also what the free allowance is counted against.
+model UsageEvent {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind      String   @default("export")
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
+
+/// Every administrative action, so a shared superadmin account is still traceable.
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  actor      User?    @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+  action     String
+  targetType String?
+  targetId   String?
+  meta       Json?
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+/// Runtime knobs an admin can change without a redeploy — the free allowance, for one.
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+/// A suit an admin uploaded, painted over the subject's shoulders in the studio.
+///
+/// Only the metadata lives here; the PNG itself sits in Supabase Storage, which
+/// serves it straight to the browser over its CDN. `path` is what identifies the
+/// object for deletion — `url` is derived from it, but is stored too so a bucket
+/// rename cannot silently break every existing row.
+model AttireAsset {
+  id        String   @id @default(cuid())
+  name      String
+  path      String   @unique
+  url       String
+  /// Natural pixel size, used to keep the drawn aspect ratio honest.
+  width     Int
+  height    Int
+  bytes     Int
+  /// Hidden rather than deleted keeps the artwork recoverable after a misclick.
+  active    Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([active, sortOrder])
+}
