@@ -81,6 +81,7 @@ export function sanitise(raw: unknown): Settings {
     sheetRotate: pick(v.sheetRotate, ROTATIONS, base.sheetRotate),
     copies: num(v.copies, base.copies, 1, 9999),
     fillSheet: bool(v.fillSheet, base.fillSheet),
+    proof: bool(v.proof, base.proof),
   };
 }
 

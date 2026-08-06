@@ -1,5 +1,5 @@
 import { drawAttire, type Attire } from "./attire";
-import { withDpi } from "./dpi";
+import { withPrintMetadata } from "./print-metadata";
 import type { FitMode } from "./presets";
 
 export type Bounds = { x: number; y: number; w: number; h: number };
@@ -145,7 +145,7 @@ export async function exportCanvas(
     canvas.toBlob(resolve, format, quality),
   );
   if (!blob) throw new Error("Не удалось экспортировать изображение.");
-  return withDpi(blob, dpi);
+  return withPrintMetadata(blob, dpi);
 }
 
 export function download(blob: Blob, filename: string): void {

@@ -167,6 +167,63 @@ kimga bepul obuna berish bilan teng.
 Webhook uchun `APP_URL` internetdan ochiq bo'lishi shart. Ishlab chiqish
 paytida ngrok yoki cloudflared tunnelidan foydalaning.
 
+## Rang va CMYK
+
+Brauzer canvas'i faqat RGB biladi. `toBlob()` dan CMYK fayl chiqmaydi va buni
+biror sozlama bilan yoqib bo'lmaydi — CMYK'ga o'tkazish bosmaxonaning RIP'ida
+yoki Photoshop'da bo'ladi.
+
+Shuning uchun ilovaning vazifasi boshqa: **RGB'ni ikkiga tushunilmaydigan
+qilib berish**. `src/lib/print-metadata.ts` har bir eksportga ikkita narsani
+yozadi:
+
+| Format | Fizik o'lcham | Rang profili |
+| --- | --- | --- |
+| PNG | `pHYs` | `iCCP` (+ `gAMA`, `cHRM`) |
+| JPEG | JFIF `APP0` | `APP2 ICC_PROFILE`, agar brauzer o'zi yozmagan bo'lsa |
+| WebP | — | brauzer o'zi yozadi |
+
+Bu bekorga emas. Chrome JPEG va WebP'ga sRGB profilini o'zi qo'yadi, **PNG'ga
+esa hech narsa qo'ymaydi** — na `iCCP`, na `sRGB`, na `gAMA`. PNG esa bu yerda
+ham sukutdagi format, ham bosib chiqarishning yagona formati edi. Ya'ni
+bosmaxonaga borgan har bir fayl «bu ranglar qaysi fazoda» degan javobsiz
+borardi, qabul qiluvchi dastur esa o'zining ishchi fazasini (ko'pincha Adobe
+RGB) taxmin qilib qo'yardi. Bir xil raqamlar boshqa rang bo'lib bosilardi:
+yuz qizarardi, kulrang fon ko'karardi.
+
+Profil `src/lib/srgb-profile.ts` da, ikki ko'rinishda (xom va zlib bilan
+siqilgan). U — Chrome JPEG'ga yozadigan profilning aynan o'zi, shuning uchun
+bitta suratning PNG, JPEG va WebP nusxasi bir xil narsani da'vo qiladi.
+
+### Proba (soft-proof)
+
+Profil ranglarni ikkiga tushunilmaydigan qiladi, lekin siyohning gamutini
+kengaytirmaydi: to'q ko'k va yorqin yashil bosmada baribir xiralashadi.
+«Eksport» bo'limidagi **«Проба CMYK»** shuni oldindan ko'rsatadi va suratning
+necha foizi sezilarli o'zgarishini aytadi.
+
+Model — `src/lib/proof.ts`: RGB kubining sakkiz burchagi siyoh chiqara oladigan
+ranglar bilan almashtiriladi va orasi trilinear to'ldiriladi (Neugebauer
+tenglamasi). Ustiga **kulrang balansi** qo'yilgan, va bu shart edi: teng CMY
+qog'ozda kulrang emas, jigarrang beradi, ya'ni balanssiz model hech bir bosmada
+bo'lmaydigan rang og'ishini ko'rsatib, operatorni yo'q kamchilikni
+«tuzatish»ga undardi. Endi kulrang aynan kulrang bo'lib o'tadi (o'lchangan:
+og'ish 0), teri 8–9 birlik siljiydi, to'yingan ko'k esa 53.
+
+Ikki narsa ataylab shunday:
+
+- **Proba faylga tushmaydi.** U faqat ko'rinadigan canvas'ga qo'yiladi. Siyohga
+  o'xshatib pishirilgan fayl bosmaga ketsa, yo'qotishni ikki marta olardi.
+- **Varaq emas, suratning o'zi proof qilinadi**, keyin ko'paytiriladi. Natija
+  bir xil, narxi esa qirq barobar arzon — tayyor A4 varaqni proof qilish 1.26
+  soniya olardi.
+
+Bu — prikidka, muayyan bosmaxonaning ICC profili emas. Interfeysda ham shunday
+yozilgan.
+
+Qolgan ochiq narsa: **monitor kalibrlanmagan bo'lsa** ekrandagi rang baribir
+yolg'on gapiradi.
+
 ## Bepul chegara haqida ochiq gap
 
 Limit tugagach uchta narsa bir vaqtda sodir bo'ladi:

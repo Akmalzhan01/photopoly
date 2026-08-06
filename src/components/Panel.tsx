@@ -51,6 +51,8 @@ type PanelProps = {
   /** False once the export allowance is spent — both outputs are refused. */
   canExport: boolean;
   estimate: number | null;
+  /** Share of the picture ink would visibly change; null while not proofing. */
+  proofShare: number | null;
   onDownload: () => void;
   layout: SheetLayout;
   copies: number;
@@ -76,6 +78,7 @@ export function Panel({
   busy,
   canExport,
   estimate,
+  proofShare,
   onDownload,
   layout,
   copies,
@@ -716,6 +719,32 @@ export function Panel({
               onReset={() => patch({ quality: 0.92 })}
             />
           ) : null}
+
+          <div className="border-t border-line pt-4">
+            <Toggle
+              label="Проба CMYK"
+              checked={settings.proof}
+              onChange={(proof) => patch({ proof })}
+            />
+            {settings.proof ? (
+              <p className="mt-2 text-[10px] leading-snug text-dust">
+                Так цвета лягут на бумагу. Краска не достаёт до экранных синих,
+                зелёных и красных — нейтральные тона и кожа меняются мало.
+                {proofShare !== null ? (
+                  <>
+                    {" "}
+                    Заметно изменится{" "}
+                    <span className="text-safe-soft tabular-nums">
+                      {Math.round(proofShare * 100)}%
+                    </span>{" "}
+                    снимка.
+                  </>
+                ) : null}{" "}
+                Это прикидка, а не профиль конкретной типографии. Файл
+                сохраняется в sRGB без изменений.
+              </p>
+            ) : null}
+          </div>
 
           <button
             type="button"

@@ -52,6 +52,11 @@ export type Settings = {
   copies: number;
   /** When set, ignore `copies` and lay out as many as the sheet will take. */
   fillSheet: boolean;
+  /**
+   * Show the preview as ink would print it. A viewing aid only — it never
+   * reaches the exported file, which stays in full sRGB.
+   */
+  proof: boolean;
 };
 
 /** Editing any of these means the result no longer matches the chosen preset. */
@@ -102,6 +107,9 @@ export const DEFAULT_SETTINGS: Settings = {
   // One copy to start with: multiplying is an explicit choice, not a surprise.
   copies: 1,
   fillSheet: false,
+  // Off by default: the studio should open showing the photograph, not a
+  // simulation of one.
+  proof: false,
 };
 
 /**

@@ -23,6 +23,7 @@ import {
 import { applyStrokes, type Stroke } from "@/lib/mask";
 import { printAtSize } from "@/lib/print";
 import { findPreset } from "@/lib/presets";
+import { applyProof, shiftedShare } from "@/lib/proof";
 import {
   fromPreset,
   fromSheet,
@@ -45,6 +46,19 @@ import { MaskEditor } from "./MaskEditor";
 import { OfflineReady } from "./OfflineReady";
 import { Panel } from "./Panel";
 import { Stage } from "./Stage";
+
+/**
+ * Rewrites a canvas to its printed appearance, answering with the share of it
+ * that ink visibly moves. Preview surfaces only — see the note in `build`.
+ */
+function proofCanvas(canvas: HTMLCanvasElement): number | null {
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  if (!ctx) return null;
+  const image = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const result = applyProof(image.data);
+  ctx.putImageData(image, 0, 0);
+  return shiftedShare(result);
+}
 
 function baseName(name: string): string {
   const stem = name.replace(/\.[^.]+$/, "").replace(/[^\p{L}\p{N}_-]+/gu, "-");
@@ -77,6 +91,10 @@ export function Studio({
   const [editing, setEditing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [estimate, setEstimate] = useState<number | null>(null);
+  /** Share of the picture ink would visibly change; null while not proofing. */
+  const [proofShare, setProofShare] = useState<number | null>(null);
+  // Written from inside `build`, which has nowhere to return a second value.
+  const proofShareRef = useRef<number | null>(null);
 
   // Saved settings can only be read after mount — localStorage does not exist on
   // the server, and seeding state with it would make the first client render
@@ -384,17 +402,34 @@ export function Studio({
   const build = useCallback(
     (forExport: boolean, canvas?: HTMLCanvasElement) => {
       if (!graded) return null;
-      if (!sheeting) return compose(graded, forExport ? exportSpec : spec, canvas);
+      // Never on the export path. A file baked to look like ink and then sent to
+      // a printer would take the loss a second time, and come back worse than
+      // the untouched one.
+      const proofing = !forExport && settings.proof;
+
+      if (!sheeting) {
+        const photo = compose(graded, forExport ? exportSpec : spec, canvas);
+        if (proofing) proofShareRef.current = proofCanvas(photo);
+        return photo;
+      }
+
+      // Proofed before tiling rather than after: a sheet is one photo repeated,
+      // so both routes show the same thing, and this one touches a fortieth of
+      // the pixels. Proofing a finished A4 sheet took a second and a quarter.
+      const photo = compose(graded, spec);
+      if (proofing) proofShareRef.current = proofCanvas(photo);
       // Paper is already white, so the photo keeps its own alpha here.
-      return composeSheet(compose(graded, spec), sheetSpec, layout, canvas);
+      return composeSheet(photo, sheetSpec, layout, canvas);
     },
-    [graded, sheeting, spec, exportSpec, sheetSpec, layout],
+    [graded, sheeting, spec, exportSpec, sheetSpec, layout, settings.proof],
   );
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || !graded) return;
+    proofShareRef.current = null;
     build(false, canvas);
+    setProofShare(proofShareRef.current);
     // Only ever the visible canvas: `build(true)` composes into its own surface,
     // so an export cannot pick this up. See the note in watermark.ts.
     if (!entitlement.allowed) {
@@ -462,15 +497,15 @@ export function Studio({
     try {
       const canvas = build(true);
       if (!canvas) return;
-      const blob = await new Promise<Blob | null>((resolve) =>
-        canvas.toBlob(resolve, "image/png"),
-      );
-      if (!blob) throw new Error("empty");
+      // Goes through `exportCanvas` rather than straight to `toBlob` so the
+      // printed file is tagged sRGB like the downloaded one. A bare PNG leaves
+      // the printer driver to guess the colour space, and it guesses wrong.
+      const blob = await exportCanvas(canvas, "image/png", 1, sheeting ? sheetDpi : settings.dpi);
       await printAtSize(blob, printWmm, printHmm);
     } catch {
       setError("Не удалось открыть печать.");
     }
-  }, [graded, build, printWmm, printHmm, claimExport]);
+  }, [graded, build, printWmm, printHmm, claimExport, sheeting, sheetDpi, settings.dpi]);
 
   const handleDownload = useCallback(async () => {
     if (!graded) return;
@@ -616,6 +651,7 @@ export function Studio({
             busy={busy}
             canExport={entitlement.allowed}
             estimate={estimate}
+            proofShare={proofShare}
             onDownload={handleDownload}
             layout={layout}
             copies={copies}
