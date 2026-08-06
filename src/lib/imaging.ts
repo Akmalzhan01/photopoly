@@ -20,6 +20,8 @@ export type ComposeSpec = {
   /** Fraction of the shorter side kept clear around the subject. */
   padding: number;
   zoom: number;
+  /** Turn applied about the subject's own centre, in degrees. */
+  rotate: number;
   /** Nudge, as a fraction of the target dimension. */
   offsetX: number;
   offsetY: number;
@@ -118,7 +120,22 @@ export function compose(
 
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = "high";
+
+  // Turned about the subject's own centre, and deliberately *after* the scale
+  // above was worked out. Fitting the rotated bounding box instead would shrink
+  // the subject as it turned — and in a document photo the head is measured, so
+  // straightening a tilted shot must not quietly resize the face.
+  const turning = spec.rotate !== 0;
+  if (turning) {
+    const cx = dx + dw / 2;
+    const cy = dy + dh / 2;
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate((spec.rotate * Math.PI) / 180);
+    ctx.translate(-cx, -cy);
+  }
   ctx.drawImage(source.bitmap, bounds.x, bounds.y, bounds.w, bounds.h, dx, dy, dw, dh);
+  if (turning) ctx.restore();
 
   // Positioned against the frame, deliberately independent of where the subject
   // above was placed — see the note in attire.ts.

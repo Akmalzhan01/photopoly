@@ -14,6 +14,8 @@ export type Settings = {
   fit: FitMode;
   padding: number;
   zoom: number;
+  /** Turn applied to the subject, in degrees — mostly for straightening. */
+  rotate: number;
   offsetX: number;
   offsetY: number;
   format: ExportFormat;
@@ -80,6 +82,7 @@ export const DEFAULT_SETTINGS: Settings = {
   fit: "contain",
   padding: 0.08,
   zoom: 1,
+  rotate: 0,
   offsetX: 0,
   offsetY: 0,
   format: "image/png",
@@ -114,10 +117,10 @@ export const DEFAULT_SETTINGS: Settings = {
 
 /**
  * A preset describes the output — paper, not framing. It deliberately leaves
- * `zoom` and the offsets alone: those are how the user placed *their* face in
- * the frame, and resetting them meant a careful composition was thrown away by
- * a stray click on a size. The offsets are fractions of the target dimensions,
- * so they survive a change of aspect ratio on their own.
+ * `zoom`, `rotate` and the offsets alone: those are how the user placed *their*
+ * face in the frame, and resetting them meant a careful composition was thrown
+ * away by a stray click on a size. The offsets are fractions of the target
+ * dimensions, so they survive a change of aspect ratio on their own.
  */
 export function fromPreset(preset: Preset): Partial<Settings> {
   return {

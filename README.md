@@ -167,6 +167,18 @@ kimga bepul obuna berish bilan teng.
 Webhook uchun `APP_URL` internetdan ochiq bo'lishi shart. Ishlab chiqish
 paytida ngrok yoki cloudflared tunnelidan foydalaning.
 
+## Kadrlash
+
+Masshtab, burilish va siljish — foydalanuvchining **o'z** kompozitsiyasi, shuning
+uchun o'lcham (preset) bosilganda ular saqlanib qoladi. Preset faqat chiqish
+natijasini belgilaydi: qog'oz, dpi, fon, chegara.
+
+Burilishda masshtab **qayta hisoblanmaydi**. Burilgan tasvirning tashqi
+to'rtburchagi kattaroq bo'ladi va uni kadrga sig'dirish uchun kichraytirish
+mumkin edi — lekin u holda qiyshiq suratni to'g'irlaganda bosh ham kichrayib
+ketardi, hujjat suratida esa bosh o'lchami me'yorlangan. Shuning uchun surat
+joyida buriladi, burchaklarda fon ochilib qolsa masshtab bilan yopiladi.
+
 ## Rang va CMYK
 
 Brauzer canvas'i faqat RGB biladi. `toBlob()` dan CMYK fayl chiqmaydi va buni

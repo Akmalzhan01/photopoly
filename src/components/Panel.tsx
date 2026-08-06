@@ -514,6 +514,22 @@ export function Panel({
             onReset={() => patch({ zoom: 1 })}
           />
           <Slider
+            label="Поворот"
+            value={settings.rotate}
+            min={-180}
+            max={180}
+            step={0.5}
+            display={`${settings.rotate > 0 ? "+" : ""}${settings.rotate.toFixed(1)}°`}
+            onChange={(rotate) => patch({ rotate })}
+            onReset={() => patch({ rotate: 0 })}
+          />
+          {settings.rotate !== 0 ? (
+            <p className="text-[10px] leading-snug text-dust">
+              Размер лица не меняется при повороте — это важно для документов.
+              Если по углам появился фон, добавьте масштаб.
+            </p>
+          ) : null}
+          <Slider
             label="Сдвиг по горизонтали"
             value={settings.offsetX}
             min={-0.5}

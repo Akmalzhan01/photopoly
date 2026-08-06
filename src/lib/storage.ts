@@ -53,6 +53,7 @@ export function sanitise(raw: unknown): Settings {
     fit: pick(v.fit, FITS, base.fit),
     padding: num(v.padding, base.padding, 0, 0.45),
     zoom: num(v.zoom, base.zoom, 0.2, 4),
+    rotate: num(v.rotate, base.rotate, -180, 180),
     offsetX: num(v.offsetX, base.offsetX, -1, 1),
     offsetY: num(v.offsetY, base.offsetY, -1, 1),
     format: pick(v.format, FORMATS, base.format),
