@@ -2,8 +2,16 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { spendExport } from "@/app/actions/usage";
+import { settleOfflineExports, spendExport, viewEntitlement } from "@/app/actions/usage";
 import { describeQuota, type EntitlementView } from "@/lib/entitlement-view";
+import {
+  readPending,
+  readQuota,
+  spendLocally,
+  usableOffline,
+  writePending,
+  writeQuota,
+} from "@/lib/offline-quota";
 import type { AttireAssetView } from "@/lib/attire";
 import { useAttireImage } from "@/lib/use-attire-image";
 import { adjustSource, isNeutral, type Adjustments } from "@/lib/colour";
@@ -42,6 +50,7 @@ import {
 import { loadSettings, saveSettings } from "@/lib/storage";
 import { toPixels } from "@/lib/units";
 import { drawWatermark } from "@/lib/watermark";
+import { ThemeToggle } from "./ThemeToggle";
 import { MaskEditor } from "./MaskEditor";
 import { OfflineReady } from "./OfflineReady";
 import { Panel } from "./Panel";
@@ -65,19 +74,66 @@ function baseName(name: string): string {
   return stem.slice(0, 48) || "photopoly";
 }
 
-export function Studio({
-  initialEntitlement,
-  attireAssets,
-}: {
-  initialEntitlement: EntitlementView;
-  attireAssets: AttireAssetView[];
-}) {
+export function Studio({ attireAssets }: { attireAssets: AttireAssetView[] }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // The server is the authority; this copy exists so the count in the header can
-  // tick down without a round trip after every export.
-  const [entitlement, setEntitlement] = useState(initialEntitlement);
+  /**
+   * The allowance, which no longer arrives with the page.
+   *
+   * It used to be rendered into the HTML, and that is exactly what made this
+   * page impossible to cache — the finished markup differed per account. It is
+   * fetched after load and mirrored in local storage instead, so the editor
+   * still knows what it may do when the connection is gone. `null` means we
+   * have not learned it yet.
+   */
+  const [entitlement, setEntitlement] = useState<EntitlementView | null>(null);
   const [blocked, setBlocked] = useState(false);
+
+  /**
+   * What the editor acts on.
+   *
+   * An allowance we have not learned yet reads as allowed: the first export
+   * asks the server anyway, and stamping a watermark across a paying
+   * customer's photo while that check is in flight is the worse mistake.
+   */
+  const allowed = entitlement === null ? true : usableOffline(entitlement);
+
+  /**
+   * Learn the allowance, and settle anything taken during an outage.
+   *
+   * The stored copy is shown first so a returning operator sees their count
+   * immediately, then the server corrects it. With no connection the fetch
+   * throws and the stored copy simply stands.
+   */
+  useEffect(() => {
+    let alive = true;
+
+    const sync = async () => {
+      const stored = readQuota();
+      if (stored && alive) setEntitlement(stored);
+
+      try {
+        const owed = readPending();
+        // Clear the debt before the request, not after: a settlement that
+        // succeeds but whose reply is lost must not be charged twice.
+        if (owed > 0) writePending(0);
+        const fresh = owed > 0 ? await settleOfflineExports(owed) : await viewEntitlement();
+        if (fresh && alive) {
+          setEntitlement(fresh);
+          writeQuota(fresh);
+        }
+      } catch {
+        // No connection. The stored allowance is what we go on.
+      }
+    };
+
+    void sync();
+    window.addEventListener("online", sync);
+    return () => {
+      alive = false;
+      window.removeEventListener("online", sync);
+    };
+  }, []);
 
   const [settings, setSettings] = useState<Settings>(initialSettings);
   const [file, setFile] = useState<File | null>(null);
@@ -434,11 +490,11 @@ export function Studio({
     setProofShare(proofShareRef.current);
     // Only ever the visible canvas: `build(true)` composes into its own surface,
     // so an export cannot pick this up. See the note in watermark.ts.
-    if (!entitlement.allowed) {
+    if (!allowed) {
       const ctx = canvas.getContext("2d");
       if (ctx) drawWatermark(ctx, canvas.width, canvas.height);
     }
-  }, [build, graded, entitlement.allowed]);
+  }, [build, graded, allowed]);
 
   useEffect(() => {
     let cancelled = false;
@@ -473,25 +529,50 @@ export function Studio({
    * refused export still produced the file, which is worse.
    */
   const claimExport = useCallback(async (): Promise<boolean> => {
-    // The server is still the authority — this copy can be stale, and a refusal
-    // there is what actually stops the file. But when the allowance is already
-    // known to be gone, there is nothing to ask about.
-    if (!entitlement.allowed) {
+    // The server is still the authority when it can be reached — this copy can
+    // be stale, and a refusal there is what actually stops the file. But when
+    // the allowance is already known to be gone, there is nothing to ask about.
+    if (!allowed) {
       setBlocked(true);
       return false;
     }
-    const result = await spendExport();
-    if (result.entitlement) setEntitlement(result.entitlement);
-    if (!result.ok) {
-      if (result.reason === "auth") {
-        setError("Сессия истекла. Войдите заново.");
-      } else {
-        setBlocked(true);
+
+    try {
+      const result = await spendExport();
+      if (result.entitlement) {
+        setEntitlement(result.entitlement);
+        writeQuota(result.entitlement);
       }
-      return false;
+      if (!result.ok) {
+        if (result.reason === "auth") {
+          setError("Сессия истекла. Войдите заново.");
+        } else {
+          setBlocked(true);
+        }
+        return false;
+      }
+      return true;
+    } catch {
+      /*
+       * The connection is gone mid-job.
+       *
+       * The export goes ahead, charged against what this same server last
+       * granted — never more. The debt is written down first and sent on the
+       * next reconnection. A shop whose internet drops with a customer at the
+       * counter should not be told to come back later; nobody gains an export
+       * by pulling the cable out either.
+       */
+      if (!entitlement) {
+        setError("Нет связи, и лимит ещё не известен. Подключитесь один раз.");
+        return false;
+      }
+      const next = spendLocally(entitlement);
+      setEntitlement(next);
+      writeQuota(next);
+      writePending(readPending() + 1);
+      return true;
     }
-    return true;
-  }, [entitlement.allowed]);
+  }, [allowed, entitlement]);
 
   const handlePrint = useCallback(async () => {
     if (!graded) return;
@@ -559,6 +640,7 @@ export function Studio({
             Удаление фона · точный размер
           </p>
           <div className="ml-auto flex items-center gap-3">
+            <ThemeToggle />
             <div className="flex items-center">
               <button
                 type="button"
@@ -585,13 +667,14 @@ export function Studio({
               href="/hisob"
               title="Мой аккаунт"
               className={`border px-2.5 py-1.5 font-mono text-[10px] uppercase tracking-[0.14em] transition-colors ${
-                entitlement.allowed
+                allowed
                   ? "border-line text-ash hover:border-line-lit hover:text-chalk"
                   : "border-ember bg-ember/12 text-safe-soft"
               }`}
             >
-              {describeQuota(entitlement)}
+              {entitlement ? describeQuota(entitlement) : "Проверяем…"}
             </Link>
+
             <span className="hidden items-center gap-2 sm:flex">
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-safe" />
               <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-ash">
@@ -651,7 +734,7 @@ export function Studio({
             targetH={sheeting ? sheetPxH : targetH}
             hasImage={Boolean(source)}
             busy={busy}
-            canExport={entitlement.allowed}
+            canExport={allowed}
             estimate={estimate}
             proofShare={proofShare}
             onDownload={handleDownload}
@@ -683,14 +766,14 @@ export function Studio({
               Лимит исчерпан
             </span>
             <h2 id="quota-title" className="mt-3 font-display text-[28px] leading-tight text-chalk">
-              {entitlement.source === "subscription"
+              {entitlement?.source === "subscription"
                 ? "Экспорты по тарифу закончились."
                 : "Бесплатные экспорты закончились."}
             </h2>
             <p className="mt-3 text-[13px] leading-relaxed text-ash">
-              {entitlement.source === "subscription"
+              {entitlement?.source === "subscription"
                 ? "Выберите новый тариф и продолжайте. Фото в редакторе останется на месте."
-                : `Пробные экспорты (${entitlement.freeLimit}) израсходованы. Выберите тариф — фото и настройки останутся на месте.`}
+                : `Пробные экспорты (${entitlement?.freeLimit ?? 0}) израсходованы. Выберите тариф — фото и настройки останутся на месте.`}
             </p>
             <div className="mt-6 flex flex-wrap gap-2">
               <Link

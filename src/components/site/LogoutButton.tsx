@@ -1,19 +1,24 @@
 "use client";
 
 import { logout } from "@/app/actions/auth";
+import { clearQuota } from "@/lib/offline-quota";
 
 /**
- * Signs out and tells the service worker to drop everything it cached.
+ * Signs out and drops everything this account left on the machine.
  *
- * The worker no longer stores personalised HTML, but the model weights and
- * asset caches are still this account's footprint on a possibly shared machine,
- * and clearing them on the way out costs one message.
+ * Two things now, not one. The worker's caches hold the model weights, the
+ * assets and — since the studio became cacheable — the editor's own HTML, which
+ * is identical for everybody but still this account's footprint. Local storage
+ * holds the mirrored allowance, which is not: on a shared computer the next
+ * operator must not open the app and read the last one's plan and remaining
+ * count.
  */
 export function LogoutButton({ className }: { className?: string }) {
   return (
     <form
       action={logout}
       onSubmit={() => {
+        clearQuota();
         navigator.serviceWorker?.controller?.postMessage("photopoly:signout");
       }}
     >

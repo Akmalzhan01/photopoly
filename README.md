@@ -113,9 +113,13 @@ marta o'tadi. O'lchangan farq: sovuq yuklanish 1764 → 695 ms, issig'i
 
 `public/sw.js` dagi `VERSION` — **xeshlanmagan** manzilda keshlanadigan biror
 narsa o'zgarsa, uni ko'tarish shart. Next o'zining JS/CSS fayllariga xesh
-qo'yadi, ular o'zi to'g'rilanadi; `/oflayn` va `/manifest.webmanifest` esa
-qat'iy manzil bilan olinadi va cache-first beriladi. Ko'tarilmasa, o'rnatilgan
-PWA eski nusxani cheksiz ushlab turadi.
+qo'yadi, ular o'zi to'g'rilanadi; `/oflayn`, `/manifest.webmanifest` va
+`/studio` esa qat'iy manzil bilan olinadi. Ko'tarilmasa, o'rnatilgan PWA eski
+nusxani cheksiz ushlab turadi.
+
+Sahifalar **network-first** beriladi: aloqa bor bo'lsa doim yangi nusxa
+keladi, keshdagisi faqat aloqa yo'q bo'lganda ishlatiladi. Cache-first
+tezroq bo'lardi, lekin deploydan keyin eski redaktorni ko'rsatib turaverardi.
 
 ### Yuklash hajmi
 
@@ -134,6 +138,8 @@ Next qabul qilgan narsani platforma ham qabul qiladi.
 | `/kirish`, `/royxat` | Kirish va ro'yxatdan o'tish |
 | `/studio` | Ish stoli — kirish talab qilinadi |
 | `/hisob` | Obuna holati va to'lovlar tarixi |
+| `/kassa` | Do'konning kirim-chiqim daftari — kirish talab qilinadi |
+| `/zakazlar` | Mijoz zakazlari doskasi — kirish talab qilinadi |
 | `/admin` | Admin panel — ADMIN yoki SUPERADMIN |
 | `/api/webhooks/finik` | Finik to'lov tasdig'i |
 
@@ -166,6 +172,182 @@ kimga bepul obuna berish bilan teng.
 
 Webhook uchun `APP_URL` internetdan ochiq bo'lishi shart. Ishlab chiqish
 paytida ngrok yoki cloudflared tunnelidan foydalaning.
+
+## Mavzu (yorug'/qorong'i)
+
+Uchta holat: **система** (ekranga ergashadi, sukut bo'yicha), **светлая**,
+**тёмная**. Tanlov `localStorage` da — bu hisobning emas, **ekranning** xususiyati:
+yorug' do'kon zalida va kechqurun uydagi bir xil odamga har xil javob kerak.
+
+Butun palitra `globals.css` da tokenlashtirilgan, shuning uchun mavzu almashganda
+**faqat tokenlar** o'zgaradi — birorta komponent qaysi mavzu yoqilganini bilmaydi.
+Rollar saqlanadi, qiymatlar emas: `pit` — cho'kkan sirt, qorong'ida eng qorasi,
+yorug'da eng oqi (kiritish maydoni qog'ozda oq bo'ladi). Xuddi shunday
+`safe-soft` — **matn** sifatida o'qilishi shart bo'lgan urg'u, shuning uchun
+qorong'ida ochroq, yorug'da to'qroq bo'ladi.
+
+Ikki nozik joy, ikkalasi ham xatodan keyin tushunilgan:
+
+- **Qatlamsiz (`unlayered`) qoida har qanday `@layer` dan ustun turadi.**
+  Yorug' mavzu bloki `@layer base` ichida turganda `html { color-scheme: dark }`
+  uni jimgina bosib ketardi. Ranglar almashardi (ular `@theme` dan, ya'ni o'zi
+  qatlamli), lekin `color-scheme` yo'q — natijada yorug' sahifada **qorong'i sana
+  tanlagich, select va scrollbar** qolardi. Shuning uchun mavzu bloklari
+  qatlamsiz.
+- **`<head>` dagi kichik skript** birinchi bo'yashdan oldin `data-theme` ni
+  yozadi. Busiz saqlangan yorug' mavzu bir kadr davomida qorong'i chizilardi —
+  o'sha oq chaqnash.
+
+Kontrast o'lchangan, taxmin qilinmagan. Yorug' mavzuda barcha matn/fon
+juftliklari WCAG AA dan o'tadi (eng yomoni 4.91:1). `--l-safe` dastlab `#c4430f`
+edi va 4.41:1 bergani uchun to'qlashtirildi.
+
+## Kassa
+
+Do'kon o'zining kirim-chiqimini yozadigan daftar. To'rtta yon-panel bo'limi:
+
+| Yo'l | Nima |
+| --- | --- |
+| `/kassa` | Обзор — jami, kategoriyalar, oxirgi yozuvlar |
+| `/kassa/kirim` | Приход — faqat kirim: forma va ro'yxat |
+| `/kassa/chiqim` | Расход — faqat chiqim |
+| `/kassa/hisobot` | Отчёт — kunlar bo'yicha jadval, o'rtacha, eng yaxshi kun |
+
+Приход va Расход sahifalari bitta komponent (`direction.tsx`), chunki ular
+faqat ishora bilan farq qiladi — ikki faylni qo'lda bir xil holatda ushlab
+turish ertami-kechmi ajralib ketardi. Formada yo'nalish **almashtirgichi yo'q**:
+uni sahifaning o'zi belgilaydi, aks holda «Приход» sahifasida turib pulni
+noto'g'ri ustunga yozib qo'yish mumkin bo'lardi.
+
+Davr (`?davr=`) barcha bo'limlar uchun umumiy va yon paneldagi havolalarga
+qo'shib yuboriladi — «o'tgan oy»ni ko'rib turib Расход'ga o'tsangiz, o'tgan oy
+qolishi kerak. Shuning uchun `KassaNav` mijoz komponenti: layout `searchParams`
+ni ko'ra olmaydi. U `useSearchParams` ishlatgani uchun `Suspense` ichida turadi
+— busiz Next butun maketni statik chiqara olmay, build'ni rad etadi.
+
+Bu **ilovaning o'z pulidan butunlay boshqa narsa**: `Payment` — bizga obuna
+uchun to'langan pul, `LedgerEntry` — do'konning mijozlaridan olgan puli.
+Ikkalasi ataylab alohida jadval: egasi boshqa, va aralashtirilsa do'konning
+tushumi bizning hisob-kitob ekranimizda tasodifan ko'rinib qolishi mumkin edi.
+
+**Yozuvni faqat egasi ko'radi.** `src/lib/server/ledger.ts` dagi har bir
+funksiya `userId` oladi va har bir so'rov shu bo'yicha filtrlaydi; o'chirish esa
+`id` **va** egasi bo'yicha mos keladi, ya'ni topilgan id bilan ham begona
+yozuvni o'chirib bo'lmaydi. Server action hech qachon formadan foydalanuvchi
+id'sini olmaydi — egasi doim sessiyadagi odam. Admin panelida bu ma'lumot
+ko'rsatilmaydi.
+
+Ikkita nozik joy:
+
+- **Sana — sana, vaqt emas** (`@db.Date`). Kassa daftariga soat kerak emas, va
+  uni saqlash har bir yig'indiga vaqt mintaqasi savolini olib kirardi.
+- **«Bugun» Bishkek bo'yicha hisoblanadi** (`SHOP_TIME_ZONE`). Server UTC'da
+  ishlaydi; kechqurun soat 20:00 da yopilgan do'kon UTC'da 14:00 da bo'ladi,
+  ya'ni UTC kuni bilan kechki tushum ertangi hisobotga tushib ketardi va har
+  kunlik hisobot ish kunining oxirgi olti soatida noto'g'ri bo'lardi.
+
+Kategoriyalar ro'yxati kodda (`src/lib/ledger.ts`), ustun esa oddiy matn —
+shuning uchun keyinchalik har bir do'konga o'z kategoriyasini qo'shish
+migratsiyasiz mumkin. Erkin matn qilinmadi: «Бумага» va «бумага » deb yozilgan
+ikki kun bitta xarajat sifatida qo'shilmasdi.
+
+### Summa qanday o'qiladi
+
+`wholeNumber()` odam yozgan sonni oladi: «1500», «1 500», «1.500», «1'500» —
+hammasi bitta son. Lekin **ajratgichdan keyin uchtadan boshqa raqam kelsa, rad
+etiladi**. Minglik ajratgichdan keyin doim uchta raqam turadi; `1200,50` esa
+kasr yozgan odam, va vergulni shunchaki tashlab yuborish 1 200 o'rniga
+**120 050** somni daftarga yozardi. Somda tiyin kundalik muomalada yo'q, ya'ni
+bunday kiritishning ishlatsa bo'ladigan o'qilishi yo'q — yuz baravar xatoni
+jimgina saqlagandan ko'ra qayta so'ragan yaxshi. Zakaz narxi ham shu
+funksiyadan o'tadi, chunki u kassaga aynan shu son bo'lib tushadi.
+
+## Zakazlar
+
+Mijozdan olingan ish qabul qilinganidan topshirilgunicha kuzatiladi. Uchta
+yon-panel bo'limi:
+
+| Yo'l | Nima |
+| --- | --- |
+| `/zakazlar` | Ro'yxat — har bir zakaz bitta qator |
+| `/zakazlar/yangi` | Zakazni qabul qilish formasi |
+| `/zakazlar/arxiv` | Topshirilgan va bekor qilinganlar |
+
+Bosqichlar: **Новый → Обработка → Печать → Готов → Выдан**, ustiga `Отменён`.
+Bekor qilingan zakaz ro'yxatda turmaydi — o'lik ish tirik ishning yonida joy
+egallamasligi kerak — lekin o'chirib ham yuborilmaydi, aks holda mijoz ketgani
+haqidagi fakt yo'qoladi. U arxivda turadi va u yerdan qaytarish mumkin.
+
+### Nega ustunlar emas
+
+Avval bu sahifa beshta ustunli kanban doska edi, kartalarni sudrab ko'chirish
+bilan. **U yomon chiqdi va almashtirildi.** Beshta ustun butun matnni 10px ga
+siqib qo'yardi — peshtaxta narigi tomonidan hech kim o'qimaydigan o'lcham. Ish
+bosqichini o'zgartirish esa yo sudrashni talab qilardi — buni sensorli
+brauzerlar umuman qo'llab-quvvatlamaydi — yo `◂ ▸` belgilarini yechishni, ular
+esa zakaz qayerga ketayotgani haqida hech narsa demasdi.
+
+Endi bosqich oddiy ochiluvchi ro'yxatda: har bir manzil nomi bilan yozilgan,
+bitta bosishda ishlaydi, klaviaturadan ham yetib boriladi. Matn qo'l uzunligida
+o'qiladigan darajada katta. Gorizontal aylantirish yo'q.
+
+Qator bosilsa telefon, izoh va xavfli tugmalar ochiladi. Bosiladigan joy —
+butun chap tomon, burchakdagi kichkina belgi emas.
+
+Ro'yxat optimistik: bosilgan zahoti bosqich o'zgaradi, server javobini kutmaydi
+— Bishkekdan Frankfurtgacha borib kelish do'konni ikkinchi marta bosishga
+undaydigan darajada uzoq. React optimistik nusxani action tugagunicha ushlab
+turadi, shuning uchun rad etilgan o'zgarish o'zi orqaga qaytadi; kodda hech
+qanday «revert» yozilmagan. Yuqoridagi raqamlar va filtrlardagi sonlar ham shu
+ro'yxatdan hisoblanadi, ya'ni ular qator bilan birga o'zgaradi.
+
+### Nomer
+
+Har bir do'konda o'z hisobi, 1 dan boshlab (`@@unique([userId, number])`) —
+yordamchi ekrandan cuid o'qib o'tirmasdan «zakaz 12» deb chaqira olsin. Ataylab
+tranzaksiyasiz: READ COMMITTED da bir soniyada olingan ikki zakaz tranzaksiya
+ichida ham, tashqarisida ham bir xil maksimumni o'qiydi. Bir xil nomerni
+haqiqatda **unique indeks** to'xtatadi; kod esa rad javobini olib qaytadan
+so'raydi.
+
+### Kassaga yozish
+
+Topshirilgan zakazni bitta tugma bilan kassaga kirim qilib yozish mumkin.
+**Avtomatik emas**: kartani sinab ko'rish uchun «Выдан»ga sudragan odam
+daftarda o'zi yozmagan pulni topib qolmasligi kerak.
+
+Zakaz `LedgerEntry` ga `ledgerEntryId String? @unique` orqali bog'lanadi, ya'ni
+bir zakaz ko'pi bilan bitta yozuvga arziydi. Ikki marta yozilishidan
+himoya — shartli `updateMany` (`ledgerEntryId: null`), kod ichidagi tekshiruv
+emas: ikki marta bosilsa ikkinchisi yangilanadigan qator topmaydi.
+
+Bu yer ilovadagi **yagona interaktiv tranzaksiya**. `activatePayment` avval
+egallab, keyin ishini qiladi; bu yerda esa avval egallab bo'lmaydi — zakaz
+yozuvga ko'rsatadi, ya'ni tashqi kalit uchun yozuv oldin mavjud bo'lishi shart.
+Bu esa hech kim egasi bo'lmagan qator paydo bo'ladigan lahza qoldiradi, va
+birovning daftaridagi hech narsa tushuntirmaydigan qator — yozuv yo'qligidan
+battar. Poygada yutqazgan urinish yozuvni o'zi bilan birga orqaga qaytaradi.
+
+`onDelete: SetNull` — kassadagi qatorni o'chirsangiz, zakaz yana bo'shaydi va
+uni qaytadan yozish mumkin. Qatordagi «Убрать из кассы» ham aynan shu yozuvni
+o'chiradi.
+
+### Ko'rinish
+
+Topshirilgan zakaz ro'yxatda yana 14 kun turadi (`DONE_WINDOW_DAYS`) — aks holda
+ro'yxat cheksiz o'sib, bugungi ishning surati bo'lishdan to'xtaydi. Qolganlari
+arxivda.
+
+Muddat belgisi `text-safe` bilan chiziladi, `text-ember` bilan emas: ember
+qorong'i mavzuda 2.75:1 beradi, kechikkan zakaz esa o'z rangi bilan ma'no
+tashiydigan yagona narsa. O'lchandi — yorug'da 5.31:1, qorong'ida 6.00:1.
+Topshirilgan zakazda muddat oddiy sana bo'lib ko'rinadi: o'tgan hafta
+tugatilgan ish haqida «просрочен» deyish shunchaki yolg'on.
+
+**Yozuvni faqat egasi ko'radi** — kassadagi bilan bir xil qoida.
+`src/lib/server/orders.ts` dagi har bir so'rov `userId` bo'yicha filtrlaydi,
+ko'chirish va o'chirish esa `id` **va** egasi bo'yicha mos keladi. Admin
+panelida mijozlar ro'yxati ko'rsatilmaydi.
 
 ## Kadrlash
 
@@ -266,8 +448,46 @@ Ya'ni bu turniket, seyf emas — lekin endi turniket eshik oldida turadi.
 
 ## Oflayn
 
-Servis-ishchi statik fayllar va segmentatsiya modelini keshlaydi, lekin
-**render qilingan sahifalarni keshlamaydi** — ular bitta hisobga tegishli
-ma'lumot saqlaydi va umumiy kompyuterda keyingi odamga ko'rinib qolishi
-mumkin edi. Natijada: ochiq turgan ish stoli internetsiz ham ishlaydi, lekin
-aloqasiz holatda sahifani qayta yuklasangiz `/oflayn` sahifasi chiqadi.
+**Ish stoli internetsiz to'liq ishlaydi** — sahifani qayta yuklasangiz ham.
+Fon o'chirish, kadrlash, o'lchamlar, eksport — hammasi joyida.
+
+Buni ishlashi uchun sahifaning o'zi keshlanishi kerak edi, ilgari esa bu
+mumkin emas edi: eksport limiti HTML ichida render qilinardi, ya'ni tayyor
+sahifa har bir hisob uchun boshqacha edi. Umumiy kompyuterda uni keshlash
+oldingi operatorning tarifi va qolgan eksportlarini keyingi odamga ko'rsatib
+qo'yardi.
+
+Shuning uchun limit sahifadan **chiqarildi**. Endi u yuklangandan keyin
+alohida so'raladi va qurilmada nusxasi saqlanadi. Studio HTML'i hamma uchun
+**bayt-ma-bayt bir xil** — bu taxmin emas, o'lchandi: ikkita boshqa-boshqa
+hisob bilan kirib, serverdan kelgan javob solishtiriladi
+(`CACHEABLE_PAGES` ga yangi yo'l qo'shishdan oldin shu tekshiruv qayta
+o'tkazilishi shart).
+
+**Hisob, kassa, zakazlar va admin sahifalari keshlanmaydi** — ularda bitta
+odamning raqamlari turadi.
+
+### Internetsiz eksport
+
+Eksport ishlaydi, lekin **server oldin bergan ruxsat doirasida**. Qolgan
+eksportlar soni qurilmadagi nusxadan olinadi va shundan ayiriladi; qarz
+yozib qo'yiladi va aloqa tiklanganda hisobdan yechiladi. Ya'ni simni sug'urib
+qo'yish bilan qo'shimcha eksport olib bo'lmaydi, lekin peshtaxta oldida
+mijoz turganda internet o'chgani ish to'xtashiga sabab ham bo'lmaydi.
+
+Qarz **so'rovdan oldin** o'chiriladi: javob yo'qolsa, ikki marta yechilgandan
+ko'ra bir marta yechilmagani yaxshi. Obuna muddati o'tgan bo'lsa, internetsiz
+ham eksport rad etiladi — muddat mahalliy nusxada ham bor.
+
+Chiqishda (`Выйти`) qurilmadagi limit nusxasi ham, servis-ishchining keshi
+ham tozalanadi.
+
+### Bitta shart
+
+**Kamida bir marta internet bilan ochish kerak.** Servis-ishchi o'zini
+ro'yxatdan o'tkazgan sahifani ushlab qololmaydi, shuning uchun aktivlashgan
+zahoti studio sahifasini va uning JS/CSS fayllarini o'zi yuklab qo'yadi.
+
+Segmentatsiya modeli bundan mustasno: u ish paytida yuklanadi, ya'ni **bitta
+suratni internet bilan ishlab berish kerak** — shundan keyin model keshda
+qoladi va fon o'chirish internetsiz ham ishlaydi.
