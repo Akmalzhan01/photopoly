@@ -3,8 +3,11 @@
 import { useEffect, useState } from "react";
 
 /**
- * Registers the service worker and tells the user when the app is genuinely
- * usable offline — which, for this app, means the model is cached too.
+ * Registers the service worker and says when there is no connection.
+ *
+ * Whether the app would *survive* losing it is a different question, answered
+ * quietly in the header by `OfflineBadge` — a full-width banner for that would
+ * nag every shop that never loses its internet.
  */
 export function OfflineReady() {
   const [offline, setOffline] = useState(false);

@@ -27,11 +27,20 @@
  * copies indefinitely. v3 is the switch to Russian — v2 held the Uzbek offline
  * page and an Uzbek app name on the home screen.
  */
-const VERSION = "v4";
+const VERSION = "v5";
 const SHELL = `photopoly-shell-${VERSION}`;
 const ASSETS = `photopoly-assets-${VERSION}`;
-const MODEL = `photopoly-model-${VERSION}`;
 const PAGES = `photopoly-pages-${VERSION}`;
+
+/**
+ * The model cache is deliberately **not** versioned.
+ *
+ * The weights are tens of megabytes, content-addressed, and identical in every
+ * release — so tying them to VERSION meant every deploy silently made every
+ * shop download them again, over connections where that is the expensive part.
+ * Signing out still clears them along with everything else.
+ */
+const MODEL = "photopoly-model";
 
 /** The segmentation weights, which is the download worth never repeating. */
 const MODEL_HOST = "staticimgly.com";
@@ -115,9 +124,12 @@ self.addEventListener("activate", (event) => {
       .then((keys) =>
         Promise.all(
           // Drops every older version, including v1 caches that may hold
-          // another account's rendered pages.
+          // another account's rendered pages. The model survives on purpose.
           keys
-            .filter((key) => key.startsWith("photopoly-") && !key.endsWith(VERSION))
+            .filter(
+              (key) =>
+                key.startsWith("photopoly-") && key !== MODEL && !key.endsWith(VERSION),
+            )
             .map((key) => caches.delete(key)),
         ),
       )

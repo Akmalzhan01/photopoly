@@ -52,6 +52,7 @@ import { toPixels } from "@/lib/units";
 import { drawWatermark } from "@/lib/watermark";
 import { ThemeToggle } from "./ThemeToggle";
 import { MaskEditor } from "./MaskEditor";
+import { OfflineBadge } from "./OfflineBadge";
 import { OfflineReady } from "./OfflineReady";
 import { Panel } from "./Panel";
 import { Stage } from "./Stage";
@@ -674,6 +675,7 @@ export function Studio({ attireAssets }: { attireAssets: AttireAssetView[] }) {
             >
               {entitlement ? describeQuota(entitlement) : "Проверяем…"}
             </Link>
+            <OfflineBadge />
 
             <span className="hidden items-center gap-2 sm:flex">
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-safe" />

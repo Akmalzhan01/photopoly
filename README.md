@@ -482,12 +482,41 @@ ham eksport rad etiladi — muddat mahalliy nusxada ham bor.
 Chiqishda (`Выйти`) qurilmadagi limit nusxasi ham, servis-ishchining keshi
 ham tozalanadi.
 
-### Bitta shart
+### Tayyorlik ko'rsatkichi
 
-**Kamida bir marta internet bilan ochish kerak.** Servis-ishchi o'zini
-ro'yxatdan o'tkazgan sahifani ushlab qololmaydi, shuning uchun aktivlashgan
-zahoti studio sahifasini va uning JS/CSS fayllarini o'zi yuklab qo'yadi.
+Ish stoli sarlavhasida kichik belgi turadi — **internetsiz ishlashga tayyormi
+yoki yo'q**. Bu bezak emas: keshlash jimgina ketadi, va «hali tayyor emas»
+bilan «umuman ishlamaydi» tashqaridan bir xil ko'rinadi. Aynan shu sababdan
+bu funksiya bir marta «buzuq» deb xabar qilingan edi.
 
-Segmentatsiya modeli bundan mustasno: u ish paytida yuklanadi, ya'ni **bitta
-suratni internet bilan ishlab berish kerak** — shundan keyin model keshda
-qoladi va fon o'chirish internetsiz ham ishlaydi.
+To'rtta holat, do'kon aynan shu tartibda o'tadi:
+
+| Belgi | Ma'nosi |
+| --- | --- |
+| `Офлайн не готов` | Hali saqlanmoqda, bir necha soniya kuting |
+| `Офлайн: нужна перезагрузка` | Sahifa saqlandi, lekin bu varaq ishchidan chetlab o'tyapti — F5 bosing |
+| `Офлайн без удаления фона` | Redaktor ochiladi, lekin model yo'q — bitta suratni internet bilan ishlab bering |
+| `Офлайн готов` | Hammasi qurilmada |
+
+Uchinchi holat nega kerak: **servis-ishchi o'zini ro'yxatdan o'tkazgan
+sahifani ushlab qololmaydi**, va `clients.claim()` ham buni ishonchli
+o'zgartirmaydi (o'lchandi: aktivlashgandan keyin 25 soniya kutilsa ham varaq
+boshqarilmagan holda qoladi). Ya'ni birinchi tashrifda model so'rovlari keshga
+umuman tushmaydi — «suratni ishlab bering» deb aytish foydasiz maslahat
+bo'lardi. Shuning uchun belgi avval qayta yuklashni so'raydi.
+
+### Deploydan keyin
+
+Yangi versiya chiqqanda **bitta qo'shimcha tashrif kerak**: eski ishchi
+yangisini o'rnatadigan tashrifni o'zi xizmat qiladi. Shu sababdan deploydan
+keyin darhol sinab ko'rilsa, internetsiz ishlamayotgandek tuyuladi — bu
+kutilgan holat, belgi buni aytib turadi.
+
+Model keshi **versiyalanmagan** (`photopoly-model`). Ilgari u `VERSION` ga
+bog'langan edi, ya'ni har bir deploy jimgina har bir do'konga o'nlab megabaytni
+qaytadan yuklatardi. Chiqishda (`Выйти`) u ham tozalanadi.
+
+Ilova yorlig'i (`start_url`) endi `/studio` ga ishora qiladi, `/` ga emas:
+bosh sahifa keshlanmaydi (uning sarlavhasi kim kirganiga qarab o'zgaradi),
+ya'ni yorliqdan internetsiz ochilganda «нет соединения» sahifasi chiqardi va
+redaktorga umuman yetib borilmasdi.
