@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getCurrentUser, isAdmin } from "@/lib/server/dal";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { LogoutButton } from "./LogoutButton";
 
 function Wordmark() {
@@ -27,6 +28,7 @@ export async function Header() {
         <Wordmark />
 
         <nav className="ml-auto flex items-center gap-5">
+          <ThemeToggle />
           <Link href="/narxlar" className={NAV_LINK}>
             Цены
           </Link>
@@ -35,6 +37,12 @@ export async function Header() {
             <>
               <Link href="/studio" className={NAV_LINK}>
                 Редактор
+              </Link>
+              <Link href="/zakazlar" className={NAV_LINK}>
+                Заказы
+              </Link>
+              <Link href="/kassa" className={NAV_LINK}>
+                Касса
               </Link>
               <Link href="/hisob" className={NAV_LINK}>
                 Мой аккаунт
