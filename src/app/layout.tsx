@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Playfair_Display, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
+import { THEME_SCRIPT } from "@/lib/theme";
 import "./globals.css";
 
 /**
@@ -48,7 +49,12 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0a0908",
+  // The browser chrome around the page — the phone's status bar, the desktop
+  // title bar — should match whichever theme is showing, so both are declared.
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f4efe7" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0908" },
+  ],
 };
 
 export default function RootLayout({
@@ -60,7 +66,13 @@ export default function RootLayout({
     <html
       lang="ru"
       className={`${display.variable} ${sans.variable} ${mono.variable} h-full`}
+      // The script below writes `data-theme` before React sees the document,
+      // so the attribute is legitimately not what the server rendered.
+      suppressHydrationWarning
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+      </head>
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );

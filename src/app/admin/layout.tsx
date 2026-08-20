@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { LogoutButton } from "@/components/site/LogoutButton";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { requireAdmin } from "@/lib/server/dal";
 
 const TABS = [
@@ -28,6 +29,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
 
           <div className="ml-auto flex items-center gap-4">
             <span className="hidden font-mono text-[10px] text-dust sm:inline">{admin.email}</span>
+            <ThemeToggle />
             <Link
               href="/studio"
               className="font-mono text-[10px] uppercase tracking-[0.16em] text-dust transition-colors hover:text-chalk"

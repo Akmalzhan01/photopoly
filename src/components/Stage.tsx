@@ -148,7 +148,7 @@ export function Stage({
                 ))}
               </div>
 
-              <div className="relative min-h-0 border border-line-lit shadow-[0_30px_80px_-20px_rgba(0,0,0,0.9)]">
+              <div className="relative min-h-0 border border-line-lit shadow-[var(--shadow-stage)]">
                 <canvas
                   ref={canvasRef}
                   className={`block max-h-[62vh] max-w-full object-contain ${

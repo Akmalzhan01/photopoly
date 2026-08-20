@@ -15,6 +15,9 @@
   --color-safe-soft: #ff8a5c;
   --color-ember: #a83208;
 
+  --shadow-stage: 0 30px 80px -20px rgb(0 0 0 / 0.9);
+  --grain-opacity: 0.035;
+
   --font-display: var(--font-display), "Iowan Old Style", Georgia, serif;
   --font-sans: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-mono), ui-monospace, "SF Mono", monospace;
@@ -49,8 +52,94 @@
   }
 }
 
+/**
+ * The light theme: the same darkroom read as a lightbox rather than a safelight.
+ *
+ * Only the tokens change — every utility in the app already points at one of
+ * them, so nothing in the components needs to know which theme is on. The
+ * literals live in one place, `--l-*`, and are mapped onto the real tokens
+ * twice: once for an explicit choice, once for "follow the system". The second
+ * block is what makes the preference work before any JavaScript has run.
+ *
+ * The roles are kept, not the values. `pit` is the recessed surface, which on a
+ * dark page is the darkest thing and on a light one the brightest — an input
+ * well is white on paper. Likewise `safe-soft` is the accent that has to stay
+ * readable *as text*, so it goes lighter on dark and darker on light.
+ */
 html {
+  /* How the browser paints what we do not: date pickers, select menus,
+     scrollbars. The dark design is the default; the rules below take over. */
   color-scheme: dark;
+}
+
+:root {
+  --l-ink: #f4efe7;
+  --l-pit: #ffffff;
+  --l-slab: #fbf8f3;
+  --l-riser: #efe7db;
+  --l-line: #ddd3c4;
+  --l-line-lit: #b6a795;
+  --l-chalk: #1c1815;
+  --l-ash: #554d45;
+  --l-dust: #6d635a;
+  /* Measured, not eyeballed: #c4430f came to 4.41:1 on the page background,
+     just under the 4.5 needed for small text. */
+  --l-safe: #b93d0b;
+  --l-safe-soft: #a5380c;
+  --l-ember: #8c2a06;
+  /* Paper does not sit in a black void; the same shadow would read as soot. */
+  --l-shadow-stage: 0 24px 60px -24px rgb(58 42 28 / 0.32);
+  /* Dark noise on a light page looks like dirt rather than film. */
+  --l-grain-opacity: 0.02;
+}
+
+/**
+ * Unlayered, and it has to be.
+ *
+ * An unlayered rule outranks every `@layer`, whatever the specificity — so the
+ * plain `html { color-scheme: dark }` below quietly beat these overrides while
+ * they sat in `@layer base`. The colours still switched, because they come from
+ * `@theme` which is itself layered, but `color-scheme` did not: the light theme
+ * rendered with dark date pickers, select menus and scrollbars.
+ */
+html[data-theme="light"] {
+  color-scheme: light;
+  --color-ink: var(--l-ink);
+  --color-pit: var(--l-pit);
+  --color-slab: var(--l-slab);
+  --color-riser: var(--l-riser);
+  --color-line: var(--l-line);
+  --color-line-lit: var(--l-line-lit);
+  --color-chalk: var(--l-chalk);
+  --color-ash: var(--l-ash);
+  --color-dust: var(--l-dust);
+  --color-safe: var(--l-safe);
+  --color-safe-soft: var(--l-safe-soft);
+  --color-ember: var(--l-ember);
+  --shadow-stage: var(--l-shadow-stage);
+  --grain-opacity: var(--l-grain-opacity);
+}
+
+/* No stored choice: follow the screen. This is what makes the preference work
+   before any JavaScript has run, and for anyone browsing without it. */
+@media (prefers-color-scheme: light) {
+  html:not([data-theme]) {
+    color-scheme: light;
+    --color-ink: var(--l-ink);
+    --color-pit: var(--l-pit);
+    --color-slab: var(--l-slab);
+    --color-riser: var(--l-riser);
+    --color-line: var(--l-line);
+    --color-line-lit: var(--l-line-lit);
+    --color-chalk: var(--l-chalk);
+    --color-ash: var(--l-ash);
+    --color-dust: var(--l-dust);
+    --color-safe: var(--l-safe);
+    --color-safe-soft: var(--l-safe-soft);
+    --color-ember: var(--l-ember);
+    --shadow-stage: var(--l-shadow-stage);
+    --grain-opacity: var(--l-grain-opacity);
+  }
 }
 
 body {
@@ -67,7 +156,7 @@ body::after {
   inset: 0;
   z-index: 50;
   pointer-events: none;
-  opacity: 0.035;
+  opacity: var(--grain-opacity);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
