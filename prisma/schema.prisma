@@ -43,6 +43,22 @@ enum PaymentProvider {
   MANUAL
 }
 
+enum LedgerKind {
+  INCOME
+  EXPENSE
+}
+
+/// Where a job has got to. The first five are the board, left to right;
+/// `CANCELLED` is off the board entirely — see the note on `Order`.
+enum OrderStage {
+  NEW
+  EDITING
+  PRINTING
+  READY
+  DONE
+  CANCELLED
+}
+
 model User {
   id           String   @id @default(cuid())
   /// Always stored lowercased and trimmed; the unique index is what stops duplicates.
@@ -64,6 +80,8 @@ model User {
   subscriptions Subscription[]
   payments      Payment[]
   usage         UsageEvent[]
+  ledger        LedgerEntry[]
+  orders        Order[]
   auditLogs     AuditLog[]     @relation("AuditActor")
 
   @@index([createdAt])
@@ -172,6 +190,91 @@ model UsageEvent {
   createdAt DateTime @default(now())
 
   @@index([userId, createdAt])
+}
+
+/// A studio's own cash book — what it took from its customers and what it spent
+/// running the shop.
+///
+/// Nothing to do with `Payment`, which is money paid *to photopoly* for a
+/// subscription. These two are deliberately separate tables: they answer to
+/// different owners, and mixing them would put a shop's takings in the same
+/// place as our billing, where an admin screen could show them by accident.
+/// Rows here are readable only by the account that wrote them.
+model LedgerEntry {
+  id     String     @id @default(cuid())
+  userId String
+  user   User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind   LedgerKind
+  /// Whole som, always positive — `kind` carries the sign. Storing a signed
+  /// amount would let an income row secretly subtract.
+  amountSom Int
+  /// One of the codes in `src/lib/ledger.ts`. Plain text rather than an enum so
+  /// a shop's own categories can be added later without a migration.
+  category String
+  note     String?
+  /// The day the money moved, which is not the day it was typed in — a shop
+  /// enters Saturday's takings on Monday. Date only: a cash book has no use for
+  /// the hour, and storing one would drag time zones into every total.
+  occurredAt DateTime @db.Date
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  /// Set when this line was written from a finished order rather than typed by
+  /// hand. Optional in both directions — most lines have no order behind them.
+  order Order?
+
+  @@index([userId, occurredAt])
+}
+
+/// A job taken in over the counter, followed from "accepted" to "handed over".
+///
+/// Same ownership rule as the cash book: every query filters on `userId`, and no
+/// admin screen reads this table. A shop's customer list is its own.
+model Order {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// Counts from 1 within each shop, so an assistant can call out "заказ 12"
+  /// instead of reading a cuid off the screen. Unique per shop, not globally —
+  /// allocated under the unique index below, which is what actually stops two
+  /// orders taken at the same moment from sharing a number.
+  number Int
+
+  clientName String
+  phone      String?
+  /// One of the INCOME categories in `src/lib/ledger.ts`. Deliberately the same
+  /// list the cash book uses: an order written to the till has to land in a
+  /// category the reports already know how to add up.
+  service    String
+  /// How many prints. Kept apart from the price because a shop quotes a total
+  /// but counts sheets when it comes to printing them.
+  qty        Int       @default(1)
+  /// Whole som, the agreed total. Zero means "not settled yet" rather than free.
+  priceSom   Int       @default(0)
+  note       String?
+  /// When it was promised. Date only, for the same reason the cash book is:
+  /// a due date has no hour, and storing one would drag time zones in.
+  dueOn      DateTime? @db.Date
+
+  /// `CANCELLED` deliberately has no column on the board — a dead order should
+  /// not take up room next to live work, but deleting it would lose the fact
+  /// that a customer walked. It shows on the archive page instead.
+  stage OrderStage @default(NEW)
+
+  /// The cash-book line this order was written to, once it has been. Nullable
+  /// and unique: an order is worth at most one entry, and `SetNull` means
+  /// deleting the entry in the till frees the order to be written again rather
+  /// than leaving a link to a row that is gone.
+  ledgerEntryId String?      @unique
+  ledgerEntry   LedgerEntry? @relation(fields: [ledgerEntryId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, number])
+  @@index([userId, stage])
+  @@index([userId, dueOn])
 }
 
 /// Every administrative action, so a shared superadmin account is still traceable.
