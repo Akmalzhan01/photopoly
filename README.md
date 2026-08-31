@@ -349,6 +349,19 @@ tugatilgan ish haqida «просрочен» deyish shunchaki yolg'on.
 ko'chirish va o'chirish esa `id` **va** egasi bo'yicha mos keladi. Admin
 panelida mijozlar ro'yxati ko'rsatilmaydi.
 
+## Keyingi mijoz
+
+Suratni almashtirish uchun **sahifani qayta yuklash shart emas**. Panelda,
+«Печать» tugmasi ostida — «Новое фото». O'lcham, kadrlash va qolgan sozlamalar
+joyida qoladi.
+
+Bunday tugma ilgari ham bor edi, lekin kanvas ostida 10px kulrang matn bo'lib
+turardi — ish tugaydigan joydan uzoqda. Natijada odamlar sahifani qayta
+yuklashardi va har safar sozlamalarini yo'qotishardi. Fayl tanlagich endi
+`Studio` da turadi, chunki uni ham kanvas, ham panel ochadi.
+
+Sudrab tashlash va Ctrl+V ham hamma vaqt ishlaydi.
+
 ## Kadrlash
 
 Masshtab, burilish va siljish — foydalanuvchining **o'z** kompozitsiyasi, shuning
@@ -482,28 +495,49 @@ ham eksport rad etiladi — muddat mahalliy nusxada ham bor.
 Chiqishda (`Выйти`) qurilmadagi limit nusxasi ham, servis-ishchining keshi
 ham tozalanadi.
 
+### Model oldindan yuklanadi
+
+Fon o'chirish **internetsiz ham ishlaydi**. Buning uchun model ish stoli
+ochilgandan ~2.5 soniya keyin fonda yuklab olinadi — birinchi suratni kutmasdan,
+chunki birinchi surat odatda mijoz peshtaxta oldida turganda keladi.
+
+Kutubxona modelni **o'zi keshlamaydi** (`resources.json` ni har safar qaytadan
+so'raydi), shuning uchun buni `cacheModel()` qiladi. U `preload()` chaqiradi va
+shu paytda `fetch` ni vaqtincha o'raydi: kutubxona chunk manzillarini ish
+paytida manifestdan hisoblaydi va tashqariga bermaydi, ya'ni u nimani
+yuklaganini bilishning yagona halol yo'li — yuklashini kuzatish. O'ram allaqachon
+kelayotgan baytlarni saqlaydi, ikkinchi marta so'ramaydi — do'kon aloqasida
+farqi shunda.
+
+Servis-ishchiga tayanilmadi: **u o'zini ro'yxatdan o'tkazgan tashrifni ushlab
+qololmaydi**, ya'ni birinchi tashrifda model kesh yonidan o'tib ketardi.
+Sahifaning o'zi keshlagani birinchi tashrifdayoq ishlaydi.
+
+Faqat tanlangan sifat yuklanadi — ikkalasi o'nlab megabaytni ikki barobar
+qilardi.
+
 ### Tayyorlik ko'rsatkichi
 
-Ish stoli sarlavhasida kichik belgi turadi — **internetsiz ishlashga tayyormi
-yoki yo'q**. Bu bezak emas: keshlash jimgina ketadi, va «hali tayyor emas»
-bilan «umuman ishlamaydi» tashqaridan bir xil ko'rinadi. Aynan shu sababdan
-bu funksiya bir marta «buzuq» deb xabar qilingan edi.
-
-To'rtta holat, do'kon aynan shu tartibda o'tadi:
+Ish stoli sarlavhasida kichik belgi turadi. Bu bezak emas: keshlash jimgina
+ketadi, va «hali tayyor emas» bilan «umuman ishlamaydi» tashqaridan bir xil
+ko'rinadi. Aynan shu sababdan bu funksiya bir marta «buzuq» deb xabar qilingan
+edi.
 
 | Belgi | Ma'nosi |
 | --- | --- |
-| `Офлайн не готов` | Hali saqlanmoqda, bir necha soniya kuting |
-| `Офлайн: нужна перезагрузка` | Sahifa saqlandi, lekin bu varaq ishchidan chetlab o'tyapti — F5 bosing |
-| `Офлайн без удаления фона` | Redaktor ochiladi, lekin model yo'q — bitta suratni internet bilan ishlab bering |
+| `Офлайн не готов` | Redaktor hali saqlanmoqda |
+| `Готовим офлайн…` | Model yuklanmoqda — uzilmang |
+| `Офлайн без удаления фона` | Redaktor bor, model yo'q |
 | `Офлайн готов` | Hammasi qurilmada |
 
-Uchinchi holat nega kerak: **servis-ishchi o'zini ro'yxatdan o'tkazgan
-sahifani ushlab qololmaydi**, va `clients.claim()` ham buni ishonchli
-o'zgartirmaydi (o'lchandi: aktivlashgandan keyin 25 soniya kutilsa ham varaq
-boshqarilmagan holda qoladi). Ya'ni birinchi tashrifda model so'rovlari keshga
-umuman tushmaydi — «suratni ishlab bering» deb aytish foydasiz maslahat
-bo'lardi. Shuning uchun belgi avval qayta yuklashni so'raydi.
+**Belgi bir marta yolg'on aytdi va tuzatildi.** «Keshda biror narsa bormi»
+degan tekshiruv keshda faqat manifest turganda ham `Офлайн готов` deb
+ko'rsatardi — ya'ni u aynan o'zi oldini olishi kerak bo'lgan xatoni qildi. Endi
+manifest keshdan qaytadan o'qiladi va **u sanab o'tgan har bir chunk** joyida
+ekani tekshiriladi. Rantayim — bir oila (simd, threaded, jsep), qaysi birini
+brauzer tanlashi o'ziga bog'liq, shuning uchun ulardan **bittasi** to'liq
+bo'lsa yetarli; aniq bittasini talab qilish boshqa brauzerlarda abadiy «tayyor
+emas» berardi.
 
 ### Deploydan keyin
 

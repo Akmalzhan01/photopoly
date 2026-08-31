@@ -60,6 +60,8 @@ type PanelProps = {
   photoWmm: number;
   photoHmm: number;
   onPrint: () => void;
+  /** Opens the file picker, so the next customer can be started from here. */
+  onNewPhoto: () => void;
   printWmm: number;
   printHmm: number;
   onEdit: () => void;
@@ -86,6 +88,7 @@ export function Panel({
   photoWmm,
   photoHmm,
   onPrint,
+  onNewPhoto,
   printWmm,
   printHmm,
   onEdit,
@@ -831,6 +834,29 @@ export function Panel({
                 : ""}
             </p>
           </div>
+
+          {/* Where the next customer starts. There has always been a way to
+              swap the photo — a small grey line under the canvas — but it sat
+              nowhere near the moment the job ends, so people reloaded the page
+              instead, losing their settings each time. */}
+          {hasImage ? (
+            <div className="border-t border-line pt-4">
+              <button
+                type="button"
+                onClick={onNewPhoto}
+                className="w-full border border-line px-4 py-3 transition-colors duration-200 hover:border-line-lit hover:bg-riser/60"
+              >
+                <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-ash">
+                  Новое фото
+                </span>
+              </button>
+              <p className="mt-2 text-[10px] leading-snug text-dust">
+                Размер, кадрирование и остальные настройки останутся — перезагружать
+                страницу не нужно. Фото можно и просто перетащить сюда или вставить
+                через Ctrl+V.
+              </p>
+            </div>
+          ) : null}
         </div>
       </Section>
 

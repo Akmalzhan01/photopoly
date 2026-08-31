@@ -15,7 +15,7 @@ import {
 import type { AttireAssetView } from "@/lib/attire";
 import { useAttireImage } from "@/lib/use-attire-image";
 import { adjustSource, isNeutral, type Adjustments } from "@/lib/colour";
-import { removeBackground, type Progress } from "@/lib/cutout";
+import { cacheModel, removeBackground, type Progress } from "@/lib/cutout";
 import { isTypingTarget, useHistory, type Doc } from "@/lib/history";
 import {
   alphaBounds,
@@ -99,6 +99,7 @@ export function Studio({ attireAssets }: { attireAssets: AttireAssetView[] }) {
    */
   const allowed = entitlement === null ? true : usableOffline(entitlement);
 
+
   /**
    * Learn the allowance, and settle anything taken during an outage.
    *
@@ -137,6 +138,38 @@ export function Studio({ attireAssets }: { attireAssets: AttireAssetView[] }) {
   }, []);
 
   const [settings, setSettings] = useState<Settings>(initialSettings);
+  /**
+   * Fetch the weights ahead of time so background removal survives an outage.
+   *
+   * Deliberately not left to the first photo: that is usually the moment a
+   * customer is already standing there, and it only lands in the cache if the
+   * worker happened to be in charge of the tab. Kept to the model actually
+   * selected — pulling both doubles a download measured in tens of megabytes.
+   */
+  const [warming, setWarming] = useState(false);
+  useEffect(() => {
+    if (typeof navigator !== "undefined" && !navigator.onLine) return;
+
+    let alive = true;
+    // A little after load: the editor should paint first, and a shop that opens
+    // the tab only to close it again should not pay for the model.
+    const timer = setTimeout(async () => {
+      if (!alive) return;
+      setWarming(true);
+      try {
+        await cacheModel(settings.model);
+      } catch {
+        // Offline, or the CDN is unreachable. The next visit tries again.
+      } finally {
+        if (alive) setWarming(false);
+      }
+    }, 2500);
+
+    return () => {
+      alive = false;
+      clearTimeout(timer);
+    };
+  }, [settings.model]);
   const [file, setFile] = useState<File | null>(null);
   const [original, setOriginal] = useState<Source | null>(null);
   const [cutout, setCutout] = useState<{ job: string; source: Source } | null>(null);
@@ -192,6 +225,9 @@ export function Studio({ attireAssets }: { attireAssets: AttireAssetView[] }) {
       };
     });
   }, []);
+
+  const pickerRef = useRef<HTMLInputElement>(null);
+  const onPick = useCallback(() => pickerRef.current?.click(), []);
 
   const onFile = useCallback((next: File) => {
     setError(null);
@@ -675,7 +711,7 @@ export function Studio({ attireAssets }: { attireAssets: AttireAssetView[] }) {
             >
               {entitlement ? describeQuota(entitlement) : "Проверяем…"}
             </Link>
-            <OfflineBadge />
+            <OfflineBadge quality={settings.model} warming={warming} />
 
             <span className="hidden items-center gap-2 sm:flex">
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-safe" />
@@ -715,6 +751,18 @@ export function Studio({ attireAssets }: { attireAssets: AttireAssetView[] }) {
       ) : null}
 
       <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
+        <input
+          ref={pickerRef}
+          type="file"
+          accept="image/*"
+          className="sr-only"
+          onChange={(event) => {
+            const chosen = event.target.files?.[0];
+            if (chosen) onFile(chosen);
+            // Cleared so choosing the same file twice still fires a change.
+            event.target.value = "";
+          }}
+        />
         <Stage
           canvasRef={canvasRef}
           hasImage={Boolean(source)}
@@ -726,9 +774,11 @@ export function Studio({ attireAssets }: { attireAssets: AttireAssetView[] }) {
           dpi={sheeting ? sheetDpi : settings.dpi}
           transparent={!sheeting && settings.background === "transparent"}
           onFile={onFile}
+          onPick={onPick}
         />
         <aside className="w-full shrink-0 border-t border-line lg:h-full lg:w-88 lg:border-l lg:border-t-0">
           <Panel
+            onNewPhoto={onPick}
             settings={settings}
             patch={patch}
             attireAssets={attireAssets}

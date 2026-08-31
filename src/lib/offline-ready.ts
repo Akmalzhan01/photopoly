@@ -10,22 +10,21 @@
  * believe we asked for.
  */
 
+import type { ModelQuality } from "./cutout";
+
 /** Kept in step with `public/sw.js`; a stale prefix silently reports "not ready". */
 const CACHE_PREFIX = "photopoly-";
 
+/** Mirrors `cutout.ts`; the manifest keys the weights by these names. */
+const MODEL_BY_QUALITY: Record<ModelQuality, string> = {
+  fast: "isnet_quint8",
+  fine: "isnet_fp16",
+};
+
 export type Readiness =
-  /** No worker, or the editor is not stored yet. */
+  /** The editor itself is not stored yet. */
   | "none"
-  /**
-   * Stored, but this tab is not going through the worker.
-   *
-   * A worker cannot intercept the visit that installed it, and `clients.claim()`
-   * does not reliably change that. So anything this tab fetches from here on —
-   * the segmentation model above all — bypasses the cache entirely. One reload
-   * fixes it, and nothing else will.
-   */
-  | "reload"
-  /** Going through the worker, editor stored, model still missing. */
+  /** The editor opens offline, but the weights are not all here yet. */
   | "partial"
   /** Everything the studio needs is on the device. */
   | "full";
@@ -36,7 +35,44 @@ async function cacheNamed(fragment: string): Promise<Cache | null> {
   return match ? caches.open(match) : null;
 }
 
-export async function checkReadiness(): Promise<Readiness> {
+/**
+ * Whether the weights for one model are genuinely all there.
+ *
+ * "The cache is not empty" is not the same question, and answering that one
+ * instead is how this badge came to report `Офлайн готов` when the only thing
+ * stored was the manifest — the very failure it exists to prevent. So the
+ * manifest is read back out of the cache and every chunk it names is checked.
+ *
+ * The runtime is a family of builds — simd, threaded, jsep — and which one a
+ * browser picks depends on what it supports. Any one of them complete is
+ * enough; demanding a particular one would report "not ready" forever on the
+ * browsers that chose differently.
+ */
+async function weightsReady(cache: Cache, quality: ModelQuality): Promise<boolean> {
+  const stored = await cache.keys();
+  const manifestRequest = stored.find((request) => request.url.endsWith("resources.json"));
+  if (!manifestRequest) return false;
+
+  const manifest = await cache.match(manifestRequest);
+  if (!manifest) return false;
+
+  const map: Record<string, { chunks?: { name: string }[] }> = await manifest.json();
+  const base = manifestRequest.url.replace(/resources\.json$/, "");
+  const urlsFor = (key: string) => (map[key]?.chunks ?? []).map((chunk) => base + chunk.name);
+  const held = new Set(stored.map((request) => request.url));
+
+  const weights = urlsFor(`/models/${MODEL_BY_QUALITY[quality]}`);
+  if (weights.length === 0 || !weights.every((url) => held.has(url))) return false;
+
+  return Object.keys(map)
+    .filter((key) => key.startsWith("/onnxruntime-web/"))
+    .some((key) => {
+      const chunks = urlsFor(key);
+      return chunks.length > 0 && chunks.every((url) => held.has(url));
+    });
+}
+
+export async function checkReadiness(quality: ModelQuality): Promise<Readiness> {
   if (typeof window === "undefined" || !("caches" in window)) return "none";
 
   try {
@@ -55,12 +91,7 @@ export async function checkReadiness(): Promise<Readiness> {
     if (!scripts) return "none";
 
     const model = await cacheNamed("model");
-    const weights = model ? (await model.keys()).length > 0 : false;
-    if (weights) return "full";
-
-    // Order matters: an uncontrolled tab cannot fetch the model *into* the
-    // cache, so telling it to process a photo would be advice that cannot work.
-    return navigator.serviceWorker?.controller ? "partial" : "reload";
+    return model && (await weightsReady(model, quality)) ? "full" : "partial";
   } catch {
     // A browser that refuses the Cache API cannot promise anything offline.
     return "none";
@@ -72,15 +103,10 @@ export const READINESS_COPY: Record<Readiness, { label: string; title: string }>
     label: "Офлайн не готов",
     title: "Сохраняем редактор на устройство — подождите несколько секунд",
   },
-  reload: {
-    label: "Офлайн: нужна перезагрузка",
-    title:
-      "Редактор сохранён. Обновите страницу (F5) при работающем интернете — после этого удаление фона тоже станет доступно без связи",
-  },
   partial: {
     label: "Офлайн без удаления фона",
     title:
-      "Редактор откроется без интернета, но удаление фона — нет. Обработайте одно фото со связью, чтобы модель сохранилась",
+      "Редактор откроется без интернета, но удаление фона — нет: модель ещё скачивается. Не отключайтесь, пока не появится «Офлайн готов»",
   },
   full: {
     label: "Офлайн готов",

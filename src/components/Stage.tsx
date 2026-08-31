@@ -1,6 +1,6 @@
 "use client";
 
-import { type RefObject, useEffect, useRef, useState } from "react";
+import { type RefObject, useEffect, useState } from "react";
 import type { Progress } from "@/lib/cutout";
 import { fromPixels, tickStep, type Unit } from "@/lib/units";
 
@@ -15,6 +15,8 @@ type StageProps = {
   dpi: number;
   transparent: boolean;
   onFile: (file: File) => void;
+  /** Opens the file picker, which Studio owns so the panel can open it too. */
+  onPick: () => void;
 };
 
 function ticksFor(spanPx: number, unit: Unit, dpi: number) {
@@ -39,10 +41,10 @@ export function Stage({
   dpi,
   transparent,
   onFile,
+  onPick,
 }: StageProps) {
   const [box, setBox] = useState({ w: 0, h: 0 });
   const [dragging, setDragging] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   // The rulers have to track the canvas at whatever size the layout gives it.
   useEffect(() => {
@@ -93,18 +95,6 @@ export function Stage({
         style={{
           background:
             "radial-gradient(closest-side, var(--color-safe) 0%, transparent 72%)",
-        }}
-      />
-
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/*"
-        className="sr-only"
-        onChange={(event) => {
-          const file = event.target.files?.[0];
-          if (file) onFile(file);
-          event.target.value = "";
         }}
       />
 
@@ -172,7 +162,7 @@ export function Stage({
               <span className="h-px flex-1 bg-line" />
               <button
                 type="button"
-                onClick={() => inputRef.current?.click()}
+                onClick={onPick}
                 className="font-mono text-[10px] uppercase tracking-[0.16em] text-ash transition-colors hover:text-safe"
               >
                 Другое фото
@@ -184,7 +174,7 @@ export function Stage({
         <div className="relative flex min-h-0 flex-1 items-center justify-center p-6">
           <button
             type="button"
-            onClick={() => inputRef.current?.click()}
+            onClick={onPick}
             className={`group flex w-full max-w-lg animate-rise flex-col items-center gap-6 border border-dashed px-8 py-16 transition-all duration-300 ${
               dragging
                 ? "border-safe bg-safe/8"

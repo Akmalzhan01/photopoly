@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { ModelQuality } from "@/lib/cutout";
 import { checkReadiness, READINESS_COPY, type Readiness } from "@/lib/offline-ready";
 
 /**
@@ -17,7 +18,14 @@ import { checkReadiness, READINESS_COPY, type Readiness } from "@/lib/offline-re
  * internet should be able to ignore it, and one that is about to should be able
  * to glance at it.
  */
-export function OfflineBadge() {
+export function OfflineBadge({
+  quality,
+  warming = false,
+}: {
+  /** Only the selected model has to be present; the other is a different download. */
+  quality: ModelQuality;
+  warming?: boolean;
+}) {
   const [readiness, setReadiness] = useState<Readiness | null>(null);
 
   useEffect(() => {
@@ -25,7 +33,7 @@ export function OfflineBadge() {
     let timer: ReturnType<typeof setTimeout>;
 
     const look = async () => {
-      const state = await checkReadiness();
+      const state = await checkReadiness(quality);
       if (!alive) return;
       setReadiness(state);
       // Keep looking until everything is stored: the page lands seconds after
@@ -41,14 +49,20 @@ export function OfflineBadge() {
       clearTimeout(timer);
       navigator.serviceWorker?.removeEventListener("controllerchange", look);
     };
-  }, []);
+  }, [quality]);
 
   // Says nothing until it knows, and nothing at all where service workers are
   // absent — a permanent "not ready" in a browser that can never be ready is a
   // complaint, not information.
   if (readiness === null) return null;
 
-  const copy = READINESS_COPY[readiness];
+  // While the weights are coming down, say that rather than the state they are
+  // about to leave — "офлайн без удаления фона" during the very download that
+  // fixes it reads as a fault.
+  const copy =
+    warming && readiness !== "full"
+      ? { label: "Готовим офлайн…", title: "Скачиваем модель, чтобы удаление фона работало без интернета" }
+      : READINESS_COPY[readiness];
   return (
     <span
       title={copy.title}
