@@ -380,6 +380,67 @@ qoldirishi kerak bo'lgan devor biglar orasida `L + T` bo'ladi — har ikki uchid
 yarim qalinlikdan. Buni tashlab ketsangiz har bir quti tor chiqadi; qo'lda
 yasalgan yoyilmalardagi eng ko'p uchraydigan nuqson shu.
 
+### O'lchamda chegara yo'q
+
+Xohlagan son: 8 mm ham, 3500 mm ham, 62,5 mm ham. Vergul ham, nuqta ham
+qabul qilinadi. Chegara **taqiq emas, maslahat**: g'ayrioddiy son ekranda
+ogohlantirish beradi, lekin chizma baribir chiziladi.
+
+Buning uchun `NumberField` qayta yozildi va u **butun ilovada umumiy** — ya'ni
+studioda ham shu nuqson bor edi. Eski versiya har bosishda o'qib, chegaraga
+qisardi: 200 turgan maydonga yozsangiz bir lahzaga 2006 bo'lib maksimumga
+qisilardi, keyin har bosish yana maksimum berardi va **maydon o'sha yerda
+qotib qolardi**. Tozalasangiz ham yordam bermasdi — bo'sh satr son emas,
+shuning uchun eski qiymat kursor ostida qaytib kelardi. Kasr ham shuning
+uchun kiritilmasdi: «62.» — bu 62, va nuqta yozilishi bilanoq yeyilardi.
+
+Endi maydon yozilayotgan matnni **o'zida ushlaydi** va faqat o'qiy olgan
+sonini xabar qiladi. Tekshiruv maydondan chiqqanda bo'ladi, bosishlar orasida
+emas: yarim yozilgan son noto'g'ri emas — u yarim yozilgan.
+
+`type="number"` emas, `type="text"` + `inputMode="decimal"`: raqam maydoni
+«62,» ni umuman ushlab turolmaydi, vergul esa bu interfeysni o'qiydiganlarning
+yarmi uchun kasr belgisi.
+
+### Burchaklar o'zingizniki
+
+«Тонкая настройка» bo'limida — men formulaga qo'ygan barcha nisbatlar:
+yelim qanoti, qanot chuqurligi, prorez kengligi, burchak tilchasi, qopqoq
+zazori, yoy balandligi, qulf tili, changdan himoya qanoti. Har birining yonida
+formula bergan qiymat turadi va bir bosishda qaytariladi.
+
+Bular **konventsiya, xulosa emas** — o'z kartonini va yelim mashinasini
+biladigan ustaxona yelim qanoti qanday bo'lishini formuladan yaxshiroq biladi.
+O'zgartirilgan qiymat chizmaga ham, DXF ga ham tushadi.
+
+Yumaloqlash alohida: faqat **erkin** burchaklar yumaloqlanadi. Bigovka
+uchraydigan burchak — bu karton bukiladigan joy, uni yumaloqlash bukilishni
+ham olib ketadi. Prorez tubi esa aksincha yumaloqlangani yaxshi — karton aynan
+o'tkir prorez uchida yirtiladi — lekin u odatda radius sig'adigan darajada
+uzun emas, va tekshiruv qirrani yeyish o'rniga rad etadi.
+
+### Nima hosil bo'lishini ko'rish
+
+O'ng tomonda quti **yig'iladi**. Ползунок 0 da — yassi varaq, 1 da — quti,
+oradagi har qanday holatda — bukilish jarayoni. Sichqoncha bilan sudrab
+aylantirish mumkin.
+
+Qo'shimcha kutubxona yo'q, oddiy CSS transform. Geometriya allaqachon aniq
+ma'lum — har bir panel to'rtburchak, har bir bigovka uning qirrasi — hal
+qiladigan narsa yo'q, faqat burish. Kutubxonasiz sahifa esa internet
+uzilganda ham ishlaydi.
+
+`src/lib/box-assemble.ts` o'sha burishlarni **JS da ham** hisoblaydi, aynan CSS
+qoidalari bilan. Shuning uchun ko'rinish markazlanadi, o'lchamga moslanadi —
+va **tekshirsa bo'ladi**: yig'ilgan qutining o'lchami so'ralgan qutiga mos
+kelishini sinov o'lchaydi. Shu sinov haqiqiy nuqsonni tutdi — yelim qanoti
+quvurning teskari tomoniga bukilib, qutiga 40 mm qo'shib yuborgandi.
+Ekranda buni payqash qiyin, o'lchovda esa darhol ko'rinadi.
+
+Yostiq-qutining uchlari **taxminiy**: ular 80° da buklanadi va bir-birining
+ustiga tushadi, shuning uchun quvurdan bir oz chiqib turadi — bu ataylab, va
+sinovda `yoy × cos80°` deb aniq yozilgan.
+
 ### Ikki fayl, ikki o'quvchi
 
 **DXF** — ishchi fayl: 1:1, millimetrda, kesish va bigovka **alohida

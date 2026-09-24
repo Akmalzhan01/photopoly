@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 
 export function Section({
   index,
@@ -76,14 +76,36 @@ export function Segmented<T extends string>({
   );
 }
 
+/**
+ * Reads a number the way a person types one: one character at a time.
+ *
+ * The old version parsed and clamped on every keystroke, which made it
+ * impossible to use. Typing into a field holding 200 gave 2006 for an instant,
+ * that clamped to the maximum, and from then on every further keypress
+ * re-clamped to the maximum — the field stuck there and could not be brought
+ * back down. Emptying it did not help either: an empty string does not parse,
+ * so the old value was restored under the cursor. Decimals were unreachable for
+ * the same reason — "62." parses as 62, and the dot was eaten as it was typed.
+ *
+ * So the field holds the text while it is being edited and only reports numbers
+ * it can actually read. Checking happens when the field is left, not between
+ * keystrokes, because half-typed input is not wrong — it is half-typed.
+ *
+ * `type="text"` rather than `type="number"`: a number input refuses to hold
+ * "62," at all, and a comma is how half of this interface's readers write a
+ * decimal point.
+ */
 export function NumberField({
   label,
   value,
   onChange,
   min = 1,
   max = 100000,
-  step = 1,
+  step,
   suffix,
+  hint,
+  clamp = true,
+  placeholder,
 }: {
   label: string;
   value: number;
@@ -92,27 +114,56 @@ export function NumberField({
   max?: number;
   step?: number;
   suffix?: string;
+  hint?: string;
+  /** When false the range is advice, not a fence — the caller warns instead. */
+  clamp?: boolean;
+  placeholder?: string;
 }) {
+  // `null` means "whatever the value is"; a string means the person is typing.
+  // Held as state rather than synced from the prop in an effect, so there is
+  // never a render where the field disagrees with itself.
+  const [draft, setDraft] = useState<string | null>(null);
+
+  const show = (n: number) =>
+    Number.isFinite(n) ? String(Math.round(n * 1000) / 1000).replace(".", ",") : "";
+
+  const read = (text: string): number | null => {
+    const cleaned = text.replace(/\s/g, "").replace(",", ".");
+    if (cleaned === "") return null;
+    const parsed = Number.parseFloat(cleaned);
+    return Number.isFinite(parsed) ? parsed : null;
+  };
+
   return (
-    <label className="group flex flex-col gap-1.5">
+    <label className="group flex min-w-0 flex-col gap-1.5">
       <Label>{label}</Label>
       <div className="flex items-center border border-line bg-pit transition-colors focus-within:border-safe/50">
         <input
-          type="number"
-          value={Number.isFinite(value) ? value : ""}
-          min={min}
-          max={max}
+          type="text"
+          inputMode="decimal"
           step={step}
+          placeholder={placeholder}
+          value={draft ?? show(value)}
           onChange={(event) => {
-            const next = Number.parseFloat(event.target.value);
-            if (Number.isFinite(next)) onChange(Math.min(max, Math.max(min, next)));
+            setDraft(event.target.value);
+            const next = read(event.target.value);
+            // Report it as soon as it reads as a number so the drawing keeps up,
+            // but leave the text exactly as typed.
+            if (next !== null) onChange(clamp ? Math.min(max, Math.max(min, next)) : next);
           }}
-          className="w-full bg-transparent px-2.5 py-2 font-mono text-sm text-chalk outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+          onBlur={(event) => {
+            const next = read(event.target.value);
+            // Nothing readable in there — put back the last number that was.
+            if (next !== null && clamp) onChange(Math.min(max, Math.max(min, next)));
+            setDraft(null);
+          }}
+          className="w-full min-w-0 bg-transparent px-2.5 py-2 font-mono text-sm text-chalk outline-none placeholder:text-dust"
         />
         {suffix ? (
-          <span className="pr-2.5 font-mono text-[10px] text-dust">{suffix}</span>
+          <span className="shrink-0 pr-2.5 font-mono text-[10px] text-dust">{suffix}</span>
         ) : null}
       </div>
+      {hint ? <span className="font-mono text-[10px] text-dust">{hint}</span> : null}
     </label>
   );
 }
