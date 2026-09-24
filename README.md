@@ -140,6 +140,7 @@ Next qabul qilgan narsani platforma ham qabul qiladi.
 | `/hisob` | Obuna holati va to'lovlar tarixi |
 | `/kassa` | Do'konning kirim-chiqim daftari — kirish talab qilinadi |
 | `/zakazlar` | Mijoz zakazlari doskasi — kirish talab qilinadi |
+| `/karobka` | Quti chizmasi va tipografiya fayli — kirish talab qilinadi |
 | `/admin` | Admin panel — ADMIN yoki SUPERADMIN |
 | `/api/webhooks/finik` | Finik to'lov tasdig'i |
 
@@ -348,6 +349,79 @@ tugatilgan ish haqida «просрочен» deyish shunchaki yolg'on.
 `src/lib/server/orders.ts` dagi har bir so'rov `userId` bo'yicha filtrlaydi,
 ko'chirish va o'chirish esa `id` **va** egasi bo'yicha mos keladi. Admin
 panelida mijozlar ro'yxati ko'rsatilmaydi.
+
+## Karobka
+
+`/karobka` — qutining o'lchamidan **развёртка** (yoyilma) va tipografiyaga
+beriladigan fayl. Sof geometriya: server ham, model ham kerak emas, hammasi
+brauzerda hisoblanadi.
+
+To'rtta tur, 95% buyurtma shularga kiradi:
+
+| Tur | Nima |
+| --- | --- |
+| Обычная | To'rt qanotli, yondan yelimlanadi. FEFCO 0201 |
+| С крышкой | Ikki detal: tag va qopqoq |
+| Подушка | Torslari yelimsiz, chetlari yoy |
+| С замком | Tili ichkariga qistiriladi, skotch kerak emas |
+
+### Ichki yoki tashqi
+
+Birinchi va eng qimmat savol. 200 mm **ichki** deb aytilgan joyda tipografiya
+**tashqi** deb tushunsa — shtamp chiqindiga ketadi, bu tuzatma emas. Shuning
+uchun bu jimgina qabul qilinadigan taxmin emas, ko'rinadigan tugmacha, va
+chizmada **ikkalasi ham** yoziladi.
+
+### Qalinlikka tuzatma
+
+Karton qog'oz emas: u burchakdan aylanib o'tishi kerak, va buklanish materialning
+ichki yuzasidan emas, **o'rtasidan** o'tadi. Shuning uchun ichida `L` joy
+qoldirishi kerak bo'lgan devor biglar orasida `L + T` bo'ladi — har ikki uchida
+yarim qalinlikdan. Buni tashlab ketsangiz har bir quti tor chiqadi; qo'lda
+yasalgan yoyilmalardagi eng ko'p uchraydigan nuqson shu.
+
+### Ikki fayl, ikki o'quvchi
+
+**DXF** — ishchi fayl: 1:1, millimetrda, kesish va bigovka **alohida
+qatlamda** (`CUT` qizil, `CREASE` ko'k — tipografiya aynan shuni qidiradi).
+R12 ataylab: bosmaxonadagi har qanday eski CAD ham ochadi, yoyilmaga esa
+chiziq va yoydan boshqa hech narsa kerak emas.
+
+**Chizma (PDF/SVG)** — odam uchun: masshtabda, o'lchov chiziqlari va shtamp
+bilan. Masshtab standart qatordan olinadi (1:1, 1:2, 1:2,5, 1:4, 1:5, 1:10 …),
+chunki 1:3,7 dagi chizmani lineyka bilan hech kim tekshira olmaydi. Qog'oz va
+yo'nalish so'ralmaydi — eng yirik masshtab beradigan variant o'zi tanlanadi,
+teng bo'lsa kichikroq qog'oz.
+
+Yozuvlar **varaq millimetrida** o'lchanadi, chizma millimetrida emas: 1:20 da
+ham shrift 2,5 mm bo'lib qoladi, mikroskopik emas.
+
+### Nimani sinov tutdi
+
+Yoylar SVG da **teskari chizilgan edi** — ichkariga botib. Geometriya to'g'ri,
+fayl yaroqli, sahifadan chiqmagan, hamma sinov yashil. Lekin quti noto'g'ri.
+Sabab — SVG `sweep` bayrog'i: y o'qini ag'darish yoyning yo'nalishini teskari
+qiladi. Buni tutgan sinov chizilgan chiziqning o'lchamini hisoblangan o'lcham
+bilan solishtiradi (`box-browser.mjs`) — teskari yoy ikki yoy balandligiga
+xato beradi.
+
+Bundan keyin qo'shilgani: **chizma shtamp ustiga chiqmaydi** degan tekshiruv,
+`#drawing` va `#title` guruhlarini alohida o'lchab. Tashqaridan qaraganda
+chizmaning shtampga chiqishi sig'ib turganidan farq qilmaydi.
+
+### Kassa bilan
+
+Yangi kategoriya — `boxes` / «Коробки и упаковка». Eski kodlar (`documents`,
+`printing`, `retouch`, `other`) **o'zgarmadi**: o'tgan oyda yozilgan qatorlar
+shu satrlarga tayanadi, birini o'zgartirsangiz haqiqiy tushum nomsiz songa
+aylanadi.
+
+### Hozircha yo'q
+
+Sahifa internetsiz ochilmaydi. Hisob-kitobning o'ziga tarmoq kerak emas, lekin
+sahifa `(site)` guruhida — shapkasi hisobga qarab farq qiladi (admin havolasi),
+shuning uchun servis-ishchi uni keshlay olmaydi. Studio buning uchun alohida
+layoutda turadi.
 
 ## Keyingi mijoz
 

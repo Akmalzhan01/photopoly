@@ -24,10 +24,14 @@ export async function Header() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-line bg-ink/85 backdrop-blur">
-      <div className="mx-auto flex h-14 max-w-6xl items-center gap-6 px-5">
+      {/* Wraps below `sm` rather than running off the side. With seven links a
+          phone could not reach the last of them, and the whole page scrolled
+          sideways to show a navigation bar nobody was trying to read. A taller
+          header on a phone is the cheaper of the two. */}
+      <div className="mx-auto flex min-h-14 max-w-6xl flex-wrap items-center gap-x-6 gap-y-1 px-5 py-2 sm:flex-nowrap sm:py-0">
         <Wordmark />
 
-        <nav className="ml-auto flex items-center gap-5">
+        <nav className="ml-auto flex flex-wrap items-center justify-end gap-x-5 gap-y-1.5">
           <ThemeToggle />
           <Link href="/narxlar" className={NAV_LINK}>
             Цены
@@ -37,6 +41,9 @@ export async function Header() {
             <>
               <Link href="/studio" className={NAV_LINK}>
                 Редактор
+              </Link>
+              <Link href="/karobka" className={NAV_LINK}>
+                Коробки
               </Link>
               <Link href="/zakazlar" className={NAV_LINK}>
                 Заказы

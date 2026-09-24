@@ -23,6 +23,7 @@ export const CATEGORIES: Record<LedgerKind, readonly Category[]> = {
     { code: "documents", label: "Фото на документы" },
     { code: "printing", label: "Печать фото" },
     { code: "retouch", label: "Ретушь и обработка" },
+    { code: "boxes", label: "Коробки и упаковка" },
     { code: "other", label: "Другое" },
   ],
   EXPENSE: [

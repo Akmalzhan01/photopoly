@@ -1,3 +1,4 @@
+import { sanitiseSpec, type BoxSpec } from "./box";
 import type { ModelQuality } from "./cutout";
 import type { ExportFormat } from "./imaging";
 import type { FitMode } from "./presets";
@@ -5,6 +6,7 @@ import { initialSettings, type Settings } from "./settings";
 import type { Unit } from "./units";
 
 const KEY = "photopoly.settings";
+const BOX_KEY = "photopoly.box";
 
 /**
  * Anything can end up in localStorage — an older build, a half-written value, a
@@ -101,6 +103,29 @@ export function saveSettings(settings: Settings): void {
     window.localStorage.setItem(KEY, JSON.stringify(settings));
   } catch {
     // Private mode or a full quota — remembering settings is not worth an error.
+  }
+}
+
+/**
+ * The box last worked on, kept for the same reason the editor's settings are:
+ * a shop quoting three sizes of the same carton should not retype the board
+ * thickness each time.
+ */
+export function loadBox(): BoxSpec | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(BOX_KEY);
+    return raw ? sanitiseSpec(JSON.parse(raw)) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveBox(spec: BoxSpec): void {
+  try {
+    window.localStorage.setItem(BOX_KEY, JSON.stringify(spec));
+  } catch {
+    // Same as above.
   }
 }
 
