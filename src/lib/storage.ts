@@ -2,11 +2,13 @@ import { sanitiseSpec, type BoxSpec } from "./box";
 import type { ModelQuality } from "./cutout";
 import type { ExportFormat } from "./imaging";
 import type { FitMode } from "./presets";
+import { initialQuality, type Quality } from "./quality";
 import { initialSettings, type Settings } from "./settings";
 import type { Unit } from "./units";
 
 const KEY = "photopoly.settings";
 const BOX_KEY = "photopoly.box";
+const QUALITY_KEY = "photopoly.quality";
 
 /**
  * Anything can end up in localStorage — an older build, a half-written value, a
@@ -128,6 +130,45 @@ export function loadBox(): BoxSpec | null {
 export function saveBox(spec: BoxSpec): void {
   try {
     window.localStorage.setItem(BOX_KEY, JSON.stringify(spec));
+  } catch {
+    // Same as above.
+  }
+}
+
+/**
+ * The quality service's own dials, kept apart from the editor's on purpose.
+ *
+ * The same three numbers mean different things on the two pages — the editor
+ * repairs a document photograph on its way to an exact size, this repairs
+ * whatever was brought in — and a shop that has found a setting for one should
+ * not have it moved by work done on the other.
+ */
+export function sanitiseQuality(raw: unknown): Quality {
+  const base = initialQuality();
+  if (!raw || typeof raw !== "object") return base;
+  const v = raw as Record<string, unknown>;
+  return {
+    tone: num(v.tone, base.tone, 0, 1),
+    denoise: num(v.denoise, base.denoise, 0, 1),
+    sharpen: num(v.sharpen, base.sharpen, 0, 1),
+    scale: num(v.scale, base.scale, 1, 4),
+    format: pick(v.format, ["image/jpeg", "image/png"] as const, base.format),
+  };
+}
+
+export function loadQuality(): Quality | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(QUALITY_KEY);
+    return raw ? sanitiseQuality(JSON.parse(raw)) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveQuality(quality: Quality): void {
+  try {
+    window.localStorage.setItem(QUALITY_KEY, JSON.stringify(quality));
   } catch {
     // Same as above.
   }

@@ -64,11 +64,17 @@ export function initialEnhance(): Enhance {
   return { on: false, tone: 0.75, denoise: 0.45, sharpen: 0.45 };
 }
 
-/** Whether running this would change anything. */
-export function idle(settings: Enhance): boolean {
-  return (
-    !settings.on || (settings.tone === 0 && settings.denoise === 0 && settings.sharpen === 0)
-  );
+/**
+ * Whether running this would change anything.
+ *
+ * The growth matters: with every dial at zero and an enlargement still asked
+ * for, there is work to do — the resampling filter — and treating that as idle
+ * handed back the small photograph untouched.
+ */
+export function idle(settings: Enhance, growth = 1): boolean {
+  if (!settings.on) return true;
+  if (growth > 1.05) return false;
+  return settings.tone === 0 && settings.denoise === 0 && settings.sharpen === 0;
 }
 
 /** Never enlarge beyond this: past it the extra pixels carry nothing. */
@@ -122,7 +128,15 @@ function blurred(canvas: HTMLCanvasElement, radius: number): ImageData {
 }
 
 /**
- * Exposure and colour, from the photograph's own histogram.
+ * What the exposure correction is, as numbers — before any of it is applied.
+ *
+ * Kept separate from applying it so the same correction can be worked out on
+ * one picture and used on another. A window cut out of a photograph has its
+ * own histogram, usually a much narrower one, so a preview that looked at only
+ * that window showed a correction several times stronger than the file would
+ * get — a cheek at three-to-one came out orange. The quality page therefore
+ * measures the whole photograph once and hands the answer to every view, so
+ * what is on the screen is what lands in the file.
  *
  * The black and white points are the levels a quarter of a percent of the
  * picture falls outside — not the darkest and lightest pixels, which are
@@ -133,8 +147,9 @@ function blurred(canvas: HTMLCanvasElement, radius: number): ImageData {
  * background has been cut out and replaced with white, the histogram is mostly
  * background, and tuning the exposure to that would darken every face.
  */
-function tone(data: ImageData, strength: number): ImageData {
-  if (strength <= 0) return data;
+export type Levels = { low: number; stretch: number; gains: number[] };
+
+export function levelsOf(data: ImageData): Levels | null {
   const { data: px } = data;
 
   const histogram = new Uint32Array(256);
@@ -149,7 +164,7 @@ function tone(data: ImageData, strength: number): ImageData {
     channelSum[2] += px[i + 2];
     counted++;
   }
-  if (counted < 64) return data;
+  if (counted < 64) return null;
 
   const edge = Math.max(1, Math.floor(counted * 0.0025));
   let low = 0;
@@ -168,21 +183,28 @@ function tone(data: ImageData, strength: number): ImageData {
       break;
     }
   }
-  if (high - low < 8) return data;
-
-  const stretch = Math.min(255 / (high - low), 2.5);
+  if (high - low < 8) return null;
 
   // Grey-world, held back hard. A photograph that is legitimately warm — a red
   // jumper filling the frame — is not a white balance error, and correcting it
   // fully would drain it.
   const mean = channelSum.map((sum) => sum / counted);
   const grey = (mean[0] + mean[1] + mean[2]) / 3;
-  const gains = mean.map((m) => (m > 8 ? Math.min(1.25, Math.max(0.8, grey / m)) : 1));
 
+  return {
+    low,
+    stretch: Math.min(255 / (high - low), 2.5),
+    gains: mean.map((m) => (m > 8 ? Math.min(1.25, Math.max(0.8, grey / m)) : 1)),
+  };
+}
+
+function tone(data: ImageData, strength: number, levels: Levels): ImageData {
+  if (strength <= 0) return data;
+  const { data: px } = data;
   const out = new ImageData(data.width, data.height);
   for (let i = 0; i < px.length; i += 4) {
     for (let k = 0; k < 3; k++) {
-      const stretched = (px[i + k] - low) * stretch * gains[k];
+      const stretched = (px[i + k] - levels.low) * levels.stretch * levels.gains[k];
       const mixed = px[i + k] + (stretched - px[i + k]) * strength;
       out.data[i + k] = Math.max(0, Math.min(255, mixed));
     }
@@ -401,10 +423,35 @@ export function resample(canvas: HTMLCanvasElement, width: number, height: numbe
  * app. Shrinking a large photograph is something the browser already does well,
  * and doing it here would cost seconds for nothing.
  */
-function growth(bounds: Bounds, want: { w: number; h: number } | undefined): number {
+export function growthFor(bounds: Bounds, want: { w: number; h: number } | undefined): number {
   if (!want) return 1;
   const need = Math.max(want.w / Math.max(1, bounds.w), want.h / Math.max(1, bounds.h));
   return need <= 1.05 ? 1 : Math.min(need, MAX_GROWTH);
+}
+
+/**
+ * The pixel size an enlargement actually comes out at, held to the raster cap.
+ *
+ * The cap used to be applied to each axis on its own, which quietly squashed
+ * anything that crossed it on one side only: a 4000 × 3000 photograph asked to
+ * double became 6000 × 6000 — the right number of pixels, the wrong shape, and
+ * a face stretched by a third. The limit belongs to the scale, so both axes
+ * come back down together.
+ *
+ * Exported because the quality page states the result size before producing it,
+ * and a page that promises one size while the pipeline writes another is worse
+ * than one that says nothing.
+ */
+export function plannedSize(
+  base: { w: number; h: number },
+  wanted: number,
+): { w: number; h: number; scale: number } {
+  const scale = Math.min(wanted, MAX_EDGE / Math.max(1, base.w, base.h));
+  return {
+    w: Math.max(1, Math.round(base.w * scale)),
+    h: Math.max(1, Math.round(base.h * scale)),
+    scale,
+  };
 }
 
 /**
@@ -425,18 +472,21 @@ export function enhanceSource(
   source: Source,
   settings: Enhance,
   want?: { w: number; h: number },
+  /** The exposure measured elsewhere — see `levelsOf`. */
+  levels?: Levels | null,
 ): Source {
-  if (idle(settings)) return source;
+  const asked = growthFor(source.bounds, want);
+  if (idle(settings, asked)) return source;
 
-  const scale = growth(source.bounds, want);
   const base = asCanvas(source.bitmap);
-  const target = {
-    w: Math.min(MAX_EDGE, Math.round(base.width * scale)),
-    h: Math.min(MAX_EDGE, Math.round(base.height * scale)),
-  };
+  const target = plannedSize({ w: base.width, h: base.height }, asked);
 
   let canvas = base;
-  if (settings.tone > 0) canvas = paint(tone(pixels(canvas), settings.tone));
+  if (settings.tone > 0) {
+    const image = pixels(canvas);
+    const measured = levels ?? levelsOf(image);
+    if (measured) canvas = paint(tone(image, settings.tone, measured));
+  }
   if (settings.denoise > 0) canvas = paint(denoise(canvas, settings.denoise));
   if (target.w !== canvas.width || target.h !== canvas.height) {
     canvas = resample(canvas, target.w, target.h);

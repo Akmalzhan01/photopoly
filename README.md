@@ -137,6 +137,7 @@ Next qabul qilgan narsani platforma ham qabul qiladi.
 | `/narxlar` | Tariflar va savol-javob |
 | `/kirish`, `/royxat` | Kirish va ro'yxatdan o'tish |
 | `/studio` | Ish stoli — kirish talab qilinadi |
+| `/sifat` | Surat sifatini yaxshilash — kirish talab qilinadi |
 | `/hisob` | Obuna holati va to'lovlar tarixi |
 | `/kassa` | Do'konning kirim-chiqim daftari — kirish talab qilinadi |
 | `/zakazlar` | Mijoz zakazlari doskasi — kirish talab qilinadi |
@@ -352,9 +353,41 @@ panelida mijozlar ro'yxati ko'rsatilmaydi.
 
 ## Sifatni yaxshilash
 
-Panelning «03 Качество» bo'limi: ekspozitsiya, shovqin, kattalashtirish va
-o'tkirlik. Standart holatda **o'chiq** — u suratni o'zgartiradi, va bu yo'lda
-qaror ustaxonaniki, ilovaniki emas.
+Ikki joyda, ikki xil ish uchun:
+
+| Qayerda | Nima uchun |
+| --- | --- |
+| `/sifat` — **alohida xizmat** | Mijoz yomon suratni olib keladi: qorong'i telefon kadri, messenjerdagi mayda rasm, skanerdagi eski chop. Natijaning o'zi — mahsulot. |
+| `/studio` — «03 Качество» bo'limi | Hujjat surati aniq o'lchamga ketayotganda yo'l-yo'lakay tuzatiladi. Standart holatda **o'chiq**. |
+
+Arifmetika bitta — `enhance.ts`, quyidagi jadvallar bilan birga. Farqi: xizmatda
+kattalashtirishni **siz** tanlaysiz, redaktorda esa uni hujjat o'lchami
+belgilaydi.
+
+### Xizmat sahifasi
+
+Kadr kesilmaydi, fon tegilmaydi, hech narsa kompozitsiya qilinmaydi: kirgan
+kadr — chiqqan kadr. Ikkita ko'rinish bor, chunki ular **har xil haqiqatni**
+aytadi:
+
+| Ko'rinish | Nimaga ishonish mumkin |
+| --- | --- |
+| «Целиком» | Ekspozitsiya va rang. Zarracha haqida **optimist**: kichraytirish uni o'rtachalab yuboradi. |
+| «1:1» | Zarracha, o'tkirlik, kattalashtirish. Hech narsa kichraytirilmagan — qog'ozda shunday chiqadi. |
+
+«1:1» da chap tomon — brauzer o'zi qanday kattalashtirsa, o'ng tomon — biz
+qanday qilamiz. Ya'ni taqqoslanayotgani aynan shu ishning foydasi.
+
+**Ekspozitsiya butun suratdan o'lchanadi**, ko'rinayotgan bo'lakdan emas. Tekis
+yuz bo'lagining o'z gistogrammasi deyarli yo'q, shuning uchun faqat o'sha
+oynadan hisoblangan tuzatish fayldagisidan bir necha barobar kuchli chiqardi —
+3× dagi yonoq apelsin rangiga kirardi. Endi o'lchov bir marta olinadi va ikkala
+ko'rinishga ham, **faylga ham** o'sha beriladi: ekranda ko'rgan narsangiz
+fayldagi narsa.
+
+Sinov buni tekshiradi: tekis uchastok «Целиком» da ham, «1:1» 3× da ham bir xil
+(101,0 ga 101,0). Fayl esa va'da qilingan o'lchamda chiqishi sarlavha
+baytlaridan o'qib tasdiqlanadi — 2800 × 2100 deyilgan bo'lsa, 2800 × 2100.
 
 ### Hech narsa o'ylab topilmaydi
 
@@ -364,7 +397,7 @@ cheklov emas, **ataylab**: ilovaning asosiy ishi hujjat surati, model esa yuzni
 
 Sinov buni raqam bilan tekshiradi: suratga mutlaqo silliq kvadrat qo'yiladi va
 yaxshilashdan keyin uning tarqalishi hamon ~0 bo'lishi kerak. Agar biror joydan
-«fakturа» paydo bo'lsa — demak biror narsa o'ylab topilgan.
+«faktura» paydo bo'lsa — demak biror narsa o'ylab topilgan.
 
 ### O'lchangan foyda
 
@@ -397,7 +430,7 @@ nisbatan, tafsilot — chekka energiyasi):
 Ekspozitsiya va o'tkirlik hal qilingan — tafsilot deyarli ikki barobar.
 **Shovqin esa yo'q**, va o'rtadagi qatorlar sababini aytadi: silliqlash
 tafsilotni zarracha bilan birga olib ketadi, chunki arifmetika siqilish
-artefaktini kipriқdan ajrata olmaydi.
+artefaktini kiprikdan ajrata olmaydi.
 
 **Model aynan shu uchun kerak bo'ladi** — ekspozitsiya va o'tkirlik uchun emas.
 Hozircha shovqin dastagi deyarli bepul joyda turibdi, rostdan donador surat
@@ -415,6 +448,22 @@ va natija kirgandan ko'ra shovqinliroq chiqadi.
 Shu sababdan silliqlash ostonasi ham, o'tkirlik ostonasi ham **suratning o'zidan
 o'lchanadi** (|piksel − xira nusxa| ning medianasi), qat'iy son emas. Qat'iy son
 bilan o'tkirlik endigina olingan shovqinni qaytarib qo'yardi.
+
+### Chegara proporsiyani buzmaydi
+
+Rastr chegarasi 6000 piksel har tomonda. Ilgari u **har o'qqa alohida**
+qo'yilardi: 4000 × 3000 suratni 2× so'rasangiz 6000 × 6000 chiqardi — piksel
+soni to'g'ri, shakli noto'g'ri, yuz uchdan birga cho'zilgan. Endi chegara
+masshtabga qo'yiladi, ikkala tomon birga tushadi, va sahifa «Станет»
+qatorida qaysi o'lcham chiqishini oldindan aytadi.
+
+### Eksport hisobi
+
+Ikkala sahifa ham bitta `useExports()` ni ishlatadi: aloqa yo'qligida ham
+server bergan limitdan ortiq yozilmaydi, qarz esa ulanish qaytganda **bir
+marta** to'lanadi. Limit tugaganda redaktorda tugma o'chadi, xizmat sahifasida
+esa sabab va tarif havolasi ko'rsatiladi — ikkalasida ham ko'rinayotgan
+natijaga suv belgisi tushadi, chunki ekrandan olish ham eksport.
 
 ## Karobka
 

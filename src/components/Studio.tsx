@@ -2,21 +2,18 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { settleOfflineExports, spendExport, viewEntitlement } from "@/app/actions/usage";
-import { describeQuota, type EntitlementView } from "@/lib/entitlement-view";
-import {
-  readPending,
-  readQuota,
-  spendLocally,
-  usableOffline,
-  writePending,
-  writeQuota,
-} from "@/lib/offline-quota";
+import { describeQuota } from "@/lib/entitlement-view";
+import { useExports } from "@/lib/use-exports";
 import type { AttireAssetView } from "@/lib/attire";
 import { useAttireImage } from "@/lib/use-attire-image";
 import { adjustSource, isNeutral, type Adjustments } from "@/lib/colour";
 import { cacheModel, removeBackground, type Progress } from "@/lib/cutout";
-import { enhanceSource, idle as idleEnhance, type Enhance } from "@/lib/enhance";
+import {
+  enhanceSource,
+  growthFor,
+  idle as idleEnhance,
+  type Enhance,
+} from "@/lib/enhance";
 import { isTypingTarget, useHistory, type Doc } from "@/lib/history";
 import {
   alphaBounds,
@@ -24,6 +21,7 @@ import {
   download,
   exportCanvas,
   extensionFor,
+  fileStem,
   fullBounds,
   MAX_EDGE,
   type ComposeSpec,
@@ -56,6 +54,7 @@ import { MaskEditor } from "./MaskEditor";
 import { OfflineBadge } from "./OfflineBadge";
 import { OfflineReady } from "./OfflineReady";
 import { Panel } from "./Panel";
+import { QuotaWall } from "./QuotaWall";
 import { Stage } from "./Stage";
 
 /**
@@ -71,11 +70,6 @@ function proofCanvas(canvas: HTMLCanvasElement): number | null {
   return shiftedShare(result);
 }
 
-function baseName(name: string): string {
-  const stem = name.replace(/\.[^.]+$/, "").replace(/[^\p{L}\p{N}_-]+/gu, "-");
-  return stem.slice(0, 48) || "photopoly";
-}
-
 export function Studio({ attireAssets }: { attireAssets: AttireAssetView[] }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -85,58 +79,10 @@ export function Studio({ attireAssets }: { attireAssets: AttireAssetView[] }) {
    * It used to be rendered into the HTML, and that is exactly what made this
    * page impossible to cache — the finished markup differed per account. It is
    * fetched after load and mirrored in local storage instead, so the editor
-   * still knows what it may do when the connection is gone. `null` means we
-   * have not learned it yet.
+   * still knows what it may do when the connection is gone. The hook is shared
+   * with the quality page, which spends the same allowance.
    */
-  const [entitlement, setEntitlement] = useState<EntitlementView | null>(null);
-  const [blocked, setBlocked] = useState(false);
-
-  /**
-   * What the editor acts on.
-   *
-   * An allowance we have not learned yet reads as allowed: the first export
-   * asks the server anyway, and stamping a watermark across a paying
-   * customer's photo while that check is in flight is the worse mistake.
-   */
-  const allowed = entitlement === null ? true : usableOffline(entitlement);
-
-
-  /**
-   * Learn the allowance, and settle anything taken during an outage.
-   *
-   * The stored copy is shown first so a returning operator sees their count
-   * immediately, then the server corrects it. With no connection the fetch
-   * throws and the stored copy simply stands.
-   */
-  useEffect(() => {
-    let alive = true;
-
-    const sync = async () => {
-      const stored = readQuota();
-      if (stored && alive) setEntitlement(stored);
-
-      try {
-        const owed = readPending();
-        // Clear the debt before the request, not after: a settlement that
-        // succeeds but whose reply is lost must not be charged twice.
-        if (owed > 0) writePending(0);
-        const fresh = owed > 0 ? await settleOfflineExports(owed) : await viewEntitlement();
-        if (fresh && alive) {
-          setEntitlement(fresh);
-          writeQuota(fresh);
-        }
-      } catch {
-        // No connection. The stored allowance is what we go on.
-      }
-    };
-
-    void sync();
-    window.addEventListener("online", sync);
-    return () => {
-      alive = false;
-      window.removeEventListener("online", sync);
-    };
-  }, []);
+  const { entitlement, allowed, blocked, dismiss, claim, problem, clearProblem } = useExports();
 
   const [settings, setSettings] = useState<Settings>(initialSettings);
   /**
@@ -363,7 +309,7 @@ export function Studio({ attireAssets }: { attireAssets: AttireAssetView[] }) {
       : plain;
 
   useEffect(() => {
-    if (!plain || idleEnhance(repair)) return;
+    if (!plain || idleEnhance(repair, growthFor(plain.bounds, { w: targetW, h: targetH }))) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect -- shows the work is running
     setRepairing(true);
     let alive = true;
@@ -605,62 +551,9 @@ export function Studio({ attireAssets }: { attireAssets: AttireAssetView[] }) {
   const printWmm = sheeting ? settings.sheetW : photoWmm;
   const printHmm = sheeting ? settings.sheetH : photoHmm;
 
-  /**
-   * Books one export before the file is produced.
-   *
-   * Charging up front rather than after the write means a crash halfway through
-   * costs the user an export — the alternative, charging afterwards, means a
-   * refused export still produced the file, which is worse.
-   */
-  const claimExport = useCallback(async (): Promise<boolean> => {
-    // The server is still the authority when it can be reached — this copy can
-    // be stale, and a refusal there is what actually stops the file. But when
-    // the allowance is already known to be gone, there is nothing to ask about.
-    if (!allowed) {
-      setBlocked(true);
-      return false;
-    }
-
-    try {
-      const result = await spendExport();
-      if (result.entitlement) {
-        setEntitlement(result.entitlement);
-        writeQuota(result.entitlement);
-      }
-      if (!result.ok) {
-        if (result.reason === "auth") {
-          setError("Сессия истекла. Войдите заново.");
-        } else {
-          setBlocked(true);
-        }
-        return false;
-      }
-      return true;
-    } catch {
-      /*
-       * The connection is gone mid-job.
-       *
-       * The export goes ahead, charged against what this same server last
-       * granted — never more. The debt is written down first and sent on the
-       * next reconnection. A shop whose internet drops with a customer at the
-       * counter should not be told to come back later; nobody gains an export
-       * by pulling the cable out either.
-       */
-      if (!entitlement) {
-        setError("Нет связи, и лимит ещё не известен. Подключитесь один раз.");
-        return false;
-      }
-      const next = spendLocally(entitlement);
-      setEntitlement(next);
-      writeQuota(next);
-      writePending(readPending() + 1);
-      return true;
-    }
-  }, [allowed, entitlement]);
-
   const handlePrint = useCallback(async () => {
     if (!graded) return;
-    if (!(await claimExport())) return;
+    if (!(await claim())) return;
     try {
       const canvas = build(true);
       if (!canvas) return;
@@ -672,11 +565,11 @@ export function Studio({ attireAssets }: { attireAssets: AttireAssetView[] }) {
     } catch {
       setError("Не удалось открыть печать.");
     }
-  }, [graded, build, printWmm, printHmm, claimExport, sheeting, sheetDpi, settings.dpi]);
+  }, [graded, build, printWmm, printHmm, claim, sheeting, sheetDpi, settings.dpi]);
 
   const handleDownload = useCallback(async () => {
     if (!graded) return;
-    if (!(await claimExport())) return;
+    if (!(await claim())) return;
     try {
       const canvas = build(true);
       if (!canvas) return;
@@ -686,7 +579,7 @@ export function Studio({ attireAssets }: { attireAssets: AttireAssetView[] }) {
         settings.quality,
         sheeting ? sheetDpi : settings.dpi,
       );
-      const stem = file ? baseName(file.name) : "photopoly";
+      const stem = file ? fileStem(file.name) : "photopoly";
       // Transliterated rather than Cyrillic: this ends up as a filename, and
       // print shops still hand out USB sticks and kiosks that mangle non-ASCII.
       const tag = sheeting
@@ -710,7 +603,7 @@ export function Studio({ attireAssets }: { attireAssets: AttireAssetView[] }) {
     file,
     targetW,
     targetH,
-    claimExport,
+    claim,
   ]);
 
   return (
@@ -781,15 +674,21 @@ export function Studio({ attireAssets }: { attireAssets: AttireAssetView[] }) {
 
       <OfflineReady />
 
-      {error ? (
+      {/* The allowance has its own troubles to report — an expired session, a
+          connection that went down before the limit was ever known — and they
+          belong in the same line as everything else that went wrong. */}
+      {error ?? problem ? (
         <div className="flex shrink-0 items-center gap-3 border-b border-ember/50 bg-ember/12 px-5 py-2.5">
           <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-safe">
             Xato
           </span>
-          <p className="text-[12px] text-chalk">{error}</p>
+          <p className="text-[12px] text-chalk">{error ?? problem}</p>
           <button
             type="button"
-            onClick={() => setError(null)}
+            onClick={() => {
+              setError(null);
+              clearProblem();
+            }}
             className="ml-auto font-mono text-[10px] text-ash transition-colors hover:text-safe"
           >
             yopish
@@ -855,43 +754,11 @@ export function Studio({ attireAssets }: { attireAssets: AttireAssetView[] }) {
       </div>
 
       {blocked ? (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="quota-title"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-ink/85 p-5 backdrop-blur-sm"
-        >
-          <div className="w-full max-w-md animate-rise border border-line bg-slab p-7">
-            <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-ember">
-              Лимит исчерпан
-            </span>
-            <h2 id="quota-title" className="mt-3 font-display text-[28px] leading-tight text-chalk">
-              {entitlement?.source === "subscription"
-                ? "Экспорты по тарифу закончились."
-                : "Бесплатные экспорты закончились."}
-            </h2>
-            <p className="mt-3 text-[13px] leading-relaxed text-ash">
-              {entitlement?.source === "subscription"
-                ? "Выберите новый тариф и продолжайте. Фото в редакторе останется на месте."
-                : `Пробные экспорты (${entitlement?.freeLimit ?? 0}) израсходованы. Выберите тариф — фото и настройки останутся на месте.`}
-            </p>
-            <div className="mt-6 flex flex-wrap gap-2">
-              <Link
-                href="/narxlar"
-                className="inline-flex items-center border border-safe bg-safe/12 px-4 py-2.5 font-mono text-[11px] uppercase tracking-[0.14em] text-safe-soft transition-colors hover:bg-safe/20"
-              >
-                Смотреть тарифы
-              </Link>
-              <button
-                type="button"
-                onClick={() => setBlocked(false)}
-                className="inline-flex items-center border border-line px-4 py-2.5 font-mono text-[11px] uppercase tracking-[0.14em] text-ash transition-colors hover:border-line-lit hover:text-chalk"
-              >
-                Остаться в редакторе
-              </button>
-            </div>
-          </div>
-        </div>
+        <QuotaWall
+          entitlement={entitlement}
+          onClose={dismiss}
+          stayLabel="Остаться в редакторе"
+        />
       ) : null}
 
       {editing && original && ready ? (

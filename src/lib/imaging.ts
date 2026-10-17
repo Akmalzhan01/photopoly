@@ -177,6 +177,18 @@ export function download(blob: Blob, filename: string): void {
   setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }
 
+/**
+ * A filename stem taken from whatever was uploaded.
+ *
+ * Transliteration is not attempted, but anything that is not a letter, a digit
+ * or a dash is folded to one — print shops still hand out USB sticks and kiosks
+ * that mangle the rest.
+ */
+export function fileStem(name: string): string {
+  const stem = name.replace(/\.[^.]+$/, "").replace(/[^\p{L}\p{N}_-]+/gu, "-");
+  return stem.slice(0, 48) || "photopoly";
+}
+
 export function extensionFor(format: ExportFormat): string {
   if (format === "image/jpeg") return "jpg";
   if (format === "image/webp") return "webp";
