@@ -29,6 +29,16 @@ export type Settings = {
   saturation: number;
   warmth: number;
   /**
+   * Repairing a poor photograph: exposure, noise, enlargement, edges. Off
+   * unless asked for — it changes the photograph, and on this path that is a
+   * decision the shop makes, not one the app makes for them.
+   */
+  enhance: boolean;
+  /** Each 0–1. See `enhance.ts` for what they do and what they refuse to do. */
+  enhanceTone: number;
+  enhanceDenoise: number;
+  enhanceSharpen: number;
+  /**
    * Which uploaded suit is laid over the photo, or null for none. An id that no
    * longer exists simply draws nothing, so a deleted suit cannot strand anyone.
    */
@@ -93,6 +103,10 @@ export const DEFAULT_SETTINGS: Settings = {
   contrast: 0,
   saturation: 0,
   warmth: 0,
+  enhance: false,
+  enhanceTone: 0.75,
+  enhanceDenoise: 0.45,
+  enhanceSharpen: 0.45,
   attireAssetId: null,
   attireScale: 1.2,
   attireOffsetX: 0,

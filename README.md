@@ -350,6 +350,72 @@ tugatilgan ish haqida «просрочен» deyish shunchaki yolg'on.
 ko'chirish va o'chirish esa `id` **va** egasi bo'yicha mos keladi. Admin
 panelida mijozlar ro'yxati ko'rsatilmaydi.
 
+## Sifatni yaxshilash
+
+Panelning «03 Качество» bo'limi: ekspozitsiya, shovqin, kattalashtirish va
+o'tkirlik. Standart holatda **o'chiq** — u suratni o'zgartiradi, va bu yo'lda
+qaror ustaxonaniki, ilovaniki emas.
+
+### Hech narsa o'ylab topilmaydi
+
+Bu yerdagi hammasi — mavjud piksellar ustida arifmetika. Model yo'q, va bu
+cheklov emas, **ataylab**: ilovaning asosiy ishi hujjat surati, model esa yuzni
+«yaxshilaganda» qiyofani o'zgartiradi. Konsullik uchun bu rad etish sababi.
+
+Sinov buni raqam bilan tekshiradi: suratga mutlaqo silliq kvadrat qo'yiladi va
+yaxshilashdan keyin uning tarqalishi hamon ~0 bo'lishi kerak. Agar biror joydan
+«fakturа» paydo bo'lsa — demak biror narsa o'ylab topilgan.
+
+### O'lchangan foyda
+
+Kichik suratni 3× kattalashtirib, asl nusxa bilan solishtirib:
+
+| Usul | Aniqlik | O'tkirlik |
+| --- | --- | --- |
+| Brauzerning o'zi | 23,69 dB | 2,38 |
+| + o'tkirlik | 23,88 dB | 2,72 |
+| Lanczos | 23,91 dB | 3,04 |
+| Lanczos + o'tkirlik | 24,02 dB | 3,53 |
+| **Asl nusxa** | — | **6,66** |
+
+Halol o'qish: chop etishda sezilarli o'tkirroq, va deyarli bir xil aniq.
+Messenjer yo'q qilgan tafsilot **qaytmaydi**.
+
+### Qayerda to'xtaydi
+
+Siqilgan, qorong'i telefon surati ustida (zarracha — suratning o'z diapazoniga
+nisbatan, tafsilot — chekka energiyasi):
+
+| Sozlama | Zarracha | Tafsilot |
+| --- | --- | --- |
+| O'chiq | 23,1% | 5,97 |
+| Shovqin 0,45 | 22,3% | 5,71 |
+| Shovqin 1,00 | 18,7% | **3,68** |
+| Faqat ekspozitsiya | 21,0% | 10,85 |
+| **Standart (75/45/45)** | 22,5% | **11,15** |
+
+Ekspozitsiya va o'tkirlik hal qilingan — tafsilot deyarli ikki barobar.
+**Shovqin esa yo'q**, va o'rtadagi qatorlar sababini aytadi: silliqlash
+tafsilotni zarracha bilan birga olib ketadi, chunki arifmetika siqilish
+artefaktini kipriқdan ajrata olmaydi.
+
+**Model aynan shu uchun kerak bo'ladi** — ekspozitsiya va o'tkirlik uchun emas.
+Hozircha shovqin dastagi deyarli bepul joyda turibdi, rostdan donador surat
+kelganda esa uni o'zingiz ko'tarib, nima evaziga ekanini ko'rasiz.
+
+### Tartib muhim
+
+Ekspozitsiya → shovqin → kattalashtirish → o'tkirlik. Bu tartib **o'lchab**
+topilgan, didga qarab emas. Qorong'i surat diapazonning tor qismini egallaydi;
+uni ochish ichidagi hamma narsani, jumladan zarrachani ham, o'sha koeffitsientga
+ko'paytiradi. Shuning uchun oldin silliqlasangiz, u hali ikki barobarga
+ko'payadigan zarracha ustida, oddiy suratga sozlangan ostona bilan ishlaydi —
+va natija kirgandan ko'ra shovqinliroq chiqadi.
+
+Shu sababdan silliqlash ostonasi ham, o'tkirlik ostonasi ham **suratning o'zidan
+o'lchanadi** (|piksel − xira nusxa| ning medianasi), qat'iy son emas. Qat'iy son
+bilan o'tkirlik endigina olingan shovqinni qaytarib qo'yardi.
+
 ## Karobka
 
 `/karobka` — qutining o'lchamidan **развёртка** (yoyilma) va tipografiyaga

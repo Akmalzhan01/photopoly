@@ -16,6 +16,7 @@ import type { AttireAssetView } from "@/lib/attire";
 import { useAttireImage } from "@/lib/use-attire-image";
 import { adjustSource, isNeutral, type Adjustments } from "@/lib/colour";
 import { cacheModel, removeBackground, type Progress } from "@/lib/cutout";
+import { enhanceSource, idle as idleEnhance, type Enhance } from "@/lib/enhance";
 import { isTypingTarget, useHistory, type Doc } from "@/lib/history";
 import {
   alphaBounds,
@@ -328,7 +329,56 @@ export function Studio({ attireAssets }: { attireAssets: AttireAssetView[] }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [undo, redo, editing]);
 
-  const source = settings.removeBg ? (retouched ?? original) : original;
+  const plain = settings.removeBg ? (retouched ?? original) : original;
+
+  const repair = useMemo<Enhance>(
+    () => ({
+      on: settings.enhance,
+      tone: settings.enhanceTone,
+      denoise: settings.enhanceDenoise,
+      sharpen: settings.enhanceSharpen,
+    }),
+    [settings.enhance, settings.enhanceTone, settings.enhanceDenoise, settings.enhanceSharpen],
+  );
+
+  // Baked on a delay for the same reason the colour work below is, only more
+  // so: enlarging to print size is seconds of arithmetic, and the preview is
+  // composed at full resolution, so doing it inside `compose` would charge that
+  // to every drag of every slider.
+  const [repaired, setRepaired] = useState<{
+    from: Source;
+    settings: Enhance;
+    want: string;
+    result: Source;
+  } | null>(null);
+  const [repairing, setRepairing] = useState(false);
+
+  const targetW = Math.min(MAX_EDGE, toPixels(settings.width, settings.unit, settings.dpi));
+  const targetH = Math.min(MAX_EDGE, toPixels(settings.height, settings.unit, settings.dpi));
+  const want = `${targetW}×${targetH}`;
+
+  const source =
+    repaired && repaired.from === plain && repaired.settings === repair && repaired.want === want
+      ? repaired.result
+      : plain;
+
+  useEffect(() => {
+    if (!plain || idleEnhance(repair)) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- shows the work is running
+    setRepairing(true);
+    let alive = true;
+    const timer = setTimeout(() => {
+      const result = enhanceSource(plain, repair, { w: targetW, h: targetH });
+      if (!alive) return;
+      setRepaired({ from: plain, settings: repair, want, result });
+      setRepairing(false);
+    }, 200);
+    return () => {
+      alive = false;
+      clearTimeout(timer);
+      setRepairing(false);
+    };
+  }, [plain, repair, targetW, targetH, want]);
 
   const adjustments = useMemo<Adjustments>(
     () => ({
@@ -362,9 +412,6 @@ export function Studio({ attireAssets }: { attireAssets: AttireAssetView[] }) {
     );
     return () => clearTimeout(timer);
   }, [source, adjustments]);
-
-  const targetW = Math.min(MAX_EDGE, toPixels(settings.width, settings.unit, settings.dpi));
-  const targetH = Math.min(MAX_EDGE, toPixels(settings.height, settings.unit, settings.dpi));
 
   // Resolved against the live list rather than trusting the saved id: a suit an
   // admin has since hidden or deleted must stop appearing, not linger in one
@@ -786,6 +833,7 @@ export function Studio({ attireAssets }: { attireAssets: AttireAssetView[] }) {
             targetH={sheeting ? sheetPxH : targetH}
             hasImage={Boolean(source)}
             busy={busy}
+            repairing={repairing}
             canExport={allowed}
             estimate={estimate}
             proofShare={proofShare}

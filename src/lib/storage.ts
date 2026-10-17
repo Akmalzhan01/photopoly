@@ -66,6 +66,10 @@ export function sanitise(raw: unknown): Settings {
     contrast: num(v.contrast, base.contrast, -1, 1),
     saturation: num(v.saturation, base.saturation, -1, 1),
     warmth: num(v.warmth, base.warmth, -1, 1),
+    enhance: bool(v.enhance, base.enhance),
+    enhanceTone: num(v.enhanceTone, base.enhanceTone, 0, 1),
+    enhanceDenoise: num(v.enhanceDenoise, base.enhanceDenoise, 0, 1),
+    enhanceSharpen: num(v.enhanceSharpen, base.enhanceSharpen, 0, 1),
     // Not validated against the live list: settings are read before the assets
     // arrive, and a stale id is harmless — it resolves to no artwork.
     attireAssetId: typeof v.attireAssetId === "string" ? v.attireAssetId : base.attireAssetId,

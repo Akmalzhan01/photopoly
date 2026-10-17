@@ -48,6 +48,8 @@ type PanelProps = {
   targetH: number;
   hasImage: boolean;
   busy: boolean;
+  /** The quality pass is running; it takes seconds at print sizes. */
+  repairing: boolean;
   /** False once the export allowance is spent — both outputs are refused. */
   canExport: boolean;
   estimate: number | null;
@@ -78,6 +80,7 @@ export function Panel({
   targetH,
   hasImage,
   busy,
+  repairing,
   canExport,
   estimate,
   proofShare,
@@ -277,6 +280,74 @@ export function Panel({
 
       <Section
         index="03"
+        title="Качество"
+        aside={
+          repairing ? (
+            <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-dust">
+              Считаем…
+            </span>
+          ) : null
+        }
+      >
+        <div className="space-y-4">
+          <Toggle
+            label="Улучшить качество"
+            checked={settings.enhance}
+            onChange={(enhance) => patch({ enhance })}
+          />
+          {settings.enhance ? (
+            <>
+              <Slider
+                label="Экспозиция"
+                value={settings.enhanceTone}
+                min={0}
+                max={1}
+                step={0.05}
+                display={`${Math.round(settings.enhanceTone * 100)}`}
+                onChange={(enhanceTone) => patch({ enhanceTone })}
+                onReset={() => patch({ enhanceTone: 0.75 })}
+              />
+              <Slider
+                label="Шум"
+                value={settings.enhanceDenoise}
+                min={0}
+                max={1}
+                step={0.05}
+                display={`${Math.round(settings.enhanceDenoise * 100)}`}
+                onChange={(enhanceDenoise) => patch({ enhanceDenoise })}
+                onReset={() => patch({ enhanceDenoise: 0.45 })}
+              />
+              {/* The trade is real and measured, so it is stated rather than
+                  left for someone to discover on a printed order. */}
+              <p className="-mt-2 text-[10px] leading-snug text-dust">
+                Сильнее — тише зерно, но мягче детали.
+              </p>
+              <Slider
+                label="Резкость"
+                value={settings.enhanceSharpen}
+                min={0}
+                max={1}
+                step={0.05}
+                display={`${Math.round(settings.enhanceSharpen * 100)}`}
+                onChange={(enhanceSharpen) => patch({ enhanceSharpen })}
+                onReset={() => patch({ enhanceSharpen: 0.45 })}
+              />
+            </>
+          ) : null}
+          {/* The claim that matters on this page, said plainly. A document
+              photograph may not have its subject's appearance altered, and the
+              shop has to be able to say so if asked. */}
+          <p className="text-[10px] leading-snug text-dust">
+            Выравнивает экспозицию, убирает шум и увеличивает фильтром для
+            фотографий, а не растягиванием.{" "}
+            <span className="text-ash">Ничего не дорисовывает</span> — только то,
+            что уже есть на снимке, поэтому годится и для документов.
+          </p>
+        </div>
+      </Section>
+
+      <Section
+        index="04"
         title="Цвет"
         aside={
           tinted ? (
@@ -340,7 +411,7 @@ export function Panel({
         </div>
       </Section>
 
-      <Section index="04" title="Одежда и рамка">
+      <Section index="05" title="Одежда и рамка">
         <div className="space-y-4">
           {attireAssets.length === 0 ? (
             <p className="text-[10px] leading-snug text-dust">
@@ -485,7 +556,7 @@ export function Panel({
         </div>
       </Section>
 
-      <Section index="05" title="Расположение">
+      <Section index="06" title="Расположение">
         <div className="space-y-4">
           <Segmented
             ariaLabel="Способ вписывания"
@@ -556,7 +627,7 @@ export function Panel({
       </Section>
 
       <Section
-        index="06"
+        index="07"
         title="Лист для печати"
         aside={
           settings.sheet && fits ? (
@@ -714,7 +785,7 @@ export function Panel({
         </div>
       </Section>
 
-      <Section index="07" title="Экспорт">
+      <Section index="08" title="Экспорт">
         <div className="space-y-4">
           <Segmented<ExportFormat>
             ariaLabel="Формат файла"
