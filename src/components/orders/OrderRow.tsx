@@ -21,7 +21,7 @@ export type RowActions = {
 };
 
 const ACTION =
-  "border border-line px-3 py-2 font-mono text-[11px] uppercase tracking-[0.12em] text-ash transition-colors hover:border-line-lit hover:text-chalk disabled:cursor-not-allowed disabled:opacity-40";
+  "border border-line px-3 py-2 text-[13px] text-ash transition-colors hover:border-line-lit hover:text-chalk disabled:cursor-not-allowed disabled:opacity-40 font-medium rounded-lg";
 
 /** Every stage a row can be sent to, cancellation included. */
 const CHOICES: Stage[] = [...BOARD, "CANCELLED"];
@@ -77,38 +77,38 @@ export function OrderRow({
         >
           <span
             aria-hidden
-            className={`w-3 shrink-0 font-mono text-[10px] text-dust transition-transform group-hover:text-ash ${
+            className={`w-3 shrink-0 text-[12px] text-dust transition-transform group-hover:text-ash ${
               open ? "rotate-90" : ""
-            }`}
+            } tabular-nums`}
           >
             ▸
           </span>
-          <span className="w-8 shrink-0 font-mono text-[12px] text-dust tabular-nums">
+          <span className="w-8 shrink-0 text-[12px] text-dust tabular-nums">
             №{order.number}
           </span>
           <span className="min-w-0">
             <span className="block text-[15px] leading-snug text-chalk">
               {order.clientName}
               {order.inLedger ? (
-                <span className="ml-2 font-mono text-[10px] uppercase tracking-[0.12em] text-safe-soft">
+                <span className="ml-2 text-[12px] text-safe-soft font-medium">
                   ✓ в кассе
                 </span>
               ) : null}
             </span>
             <span className="mt-0.5 block text-[13px] leading-snug text-ash">
               {serviceLabel(order.service)}
-              {order.qty > 1 ? ` · ${order.qty} шт` : ""}
+              {order.qty > 1 ? `· ${order.qty} шт` : ""}
             </span>
           </span>
         </button>
 
         <div className="min-w-30 text-right">
-          <p className="font-mono text-[15px] leading-snug text-chalk tabular-nums">
+          <p className="text-[15px] leading-snug text-chalk tabular-nums">
             {order.priceSom > 0 ? `${formatSom(order.priceSom)} с` : "—"}
           </p>
           {order.dueOn ? (
             <p className={`mt-0.5 text-[12px] leading-snug ${late ? "text-safe" : "text-dust"}`}>
-              {late ? "! " : ""}
+              {late ? "!" : ""}
               {/* Once it is handed over the deadline is history: saying
                   "просрочен" about work finished last week is simply untrue. */}
               {closed ? humanDate(order.dueOn) : dueLabel(order.dueOn, today)}
@@ -123,7 +123,7 @@ export function OrderRow({
           value={order.stage}
           disabled={busy}
           onChange={(event) => actions.move(order, event.target.value as Stage)}
-          className="w-36 border border-line bg-pit px-3 py-2 text-[13px] text-chalk outline-none transition-colors hover:border-line-lit focus:border-safe/50 disabled:cursor-not-allowed disabled:opacity-40"
+          className="w-36 border border-line bg-pit px-3 py-2 text-[13px] text-chalk outline-none transition-colors hover:border-line-lit focus:border-safe/50 disabled:cursor-not-allowed disabled:opacity-40 rounded-lg"
         >
           {CHOICES.map((stage) => (
             <option key={stage} value={stage} className="bg-pit">
@@ -137,7 +137,7 @@ export function OrderRow({
         <div id={panel} className="border-t border-line bg-pit/60 px-4 py-4">
           <dl className="flex flex-wrap gap-x-10 gap-y-2 text-[13px]">
             <div>
-              <dt className="font-mono text-[10px] uppercase tracking-[0.16em] text-dust">
+              <dt className="text-[12px] text-dust font-medium">
                 Телефон
               </dt>
               <dd className="mt-1 text-chalk tabular-nums">
@@ -151,7 +151,7 @@ export function OrderRow({
               </dd>
             </div>
             <div className="min-w-56 flex-1">
-              <dt className="font-mono text-[10px] uppercase tracking-[0.16em] text-dust">
+              <dt className="text-[12px] text-dust font-medium">
                 Заметка
               </dt>
               <dd className="mt-1 leading-relaxed text-ash">

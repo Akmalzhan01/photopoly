@@ -43,12 +43,12 @@ export function ActionForm({
       {typeof children === "function" ? children(pending) : children}
 
       {state?.error ? (
-        <p role="alert" className="mt-1.5 font-mono text-[10px] leading-snug text-ember">
+        <p role="alert" className="mt-1.5 text-[12px] leading-snug text-ember tabular-nums">
           {state.error}
         </p>
       ) : null}
       {state?.done ? (
-        <p role="status" className="mt-1.5 font-mono text-[10px] leading-snug text-safe-soft">
+        <p role="status" className="mt-1.5 text-[12px] leading-snug text-safe-soft tabular-nums">
           {state.done}
         </p>
       ) : null}

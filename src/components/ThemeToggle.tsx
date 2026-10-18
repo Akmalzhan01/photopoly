@@ -41,12 +41,13 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
       onClick={() => applyTheme(next)}
       title={`Тема: ${LABEL[theme].toLowerCase()}. Переключить на «${LABEL[next].toLowerCase()}»`}
       aria-label={`Тема: ${LABEL[theme].toLowerCase()}. Переключить на «${LABEL[next].toLowerCase()}»`}
-      className={`inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.16em] text-dust transition-colors hover:text-chalk ${className}`}
+      className={`inline-flex items-center gap-1.5 transition-colors ${
+        className || "text-[13px] font-medium text-dust hover:text-chalk"
+      }`}
     >
-      <span aria-hidden className="text-[12px] leading-none">
+      <span aria-hidden className="text-[15px] leading-none">
         {GLYPH[theme]}
       </span>
-      <span className="hidden sm:inline">{LABEL[theme]}</span>
     </button>
   );
 }

@@ -5,16 +5,16 @@ import { Button } from "@/components/site/ui";
 import { ActionForm } from "./ActionForm";
 
 const input =
-  "border border-line bg-pit px-3 py-2 font-mono text-sm text-chalk outline-none transition-colors focus:border-safe/50";
+  "border border-line bg-pit px-3 py-2 text-sm text-chalk outline-none transition-colors focus:border-safe/50 tabular-nums rounded-lg";
 
 export function AttireUpload() {
   return (
-    <div className="border border-line bg-slab p-5">
+    <div className="border border-line bg-slab p-5 rounded-lg">
       <ActionForm action={uploadAttire} className="flex flex-wrap items-end gap-3">
         {(pending) => (
           <>
             <label className="flex flex-col gap-1.5">
-              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-dust">
+              <span className="text-[12px] text-dust font-medium">
                 Название
               </span>
               <input
@@ -29,7 +29,7 @@ export function AttireUpload() {
             </label>
 
             <label className="flex flex-col gap-1.5">
-              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-dust">
+              <span className="text-[12px] text-dust font-medium">
                 Файл PNG
               </span>
               <input
@@ -46,7 +46,7 @@ export function AttireUpload() {
               {pending ? "Загрузка…" : "Загрузить"}
             </Button>
 
-            <p className="w-full max-w-2xl font-mono text-[10px] leading-relaxed text-dust">
+            <p className="w-full max-w-2xl text-[12px] leading-relaxed text-dust tabular-nums">
               PNG должен быть с прозрачным фоном — если фон белый, на фото
               появится прямоугольник. Линия плеч должна касаться верхнего края
               изображения; размер и положение настраиваются в редакторе.

@@ -104,7 +104,7 @@ export function Stage({
             <div className="flex items-end">
               {/* Corner cell carries the unit, like the origin mark on a loupe. */}
               <div className="flex h-5 w-8 shrink-0 items-end justify-end pr-1.5">
-                <span className="font-mono text-[9px] lowercase text-dust">{unit}</span>
+                <span className="text-[11px] lowercase text-dust tabular-nums">{unit}</span>
               </div>
               <div className="relative h-5" style={{ width: box.w || undefined }}>
                 {xTicks.map((tick) => (
@@ -113,7 +113,7 @@ export function Stage({
                     className="absolute bottom-0 flex -translate-x-1/2 flex-col items-center"
                     style={{ left: `${tick.at}%` }}
                   >
-                    <span className="font-mono text-[9px] leading-none text-dust tabular-nums">
+                    <span className="text-[11px] leading-none text-dust tabular-nums">
                       {tick.label}
                     </span>
                     <span className="mt-1 h-1.5 w-px bg-line-lit" />
@@ -130,7 +130,7 @@ export function Stage({
                     className="absolute right-0 flex -translate-y-1/2 items-center gap-1"
                     style={{ top: `${tick.at}%` }}
                   >
-                    <span className="font-mono text-[9px] leading-none text-dust tabular-nums">
+                    <span className="text-[11px] leading-none text-dust tabular-nums">
                       {tick.label}
                     </span>
                     <span className="h-px w-1.5 bg-line-lit" />
@@ -138,7 +138,7 @@ export function Stage({
                 ))}
               </div>
 
-              <div className="relative min-h-0 border border-line-lit shadow-[var(--shadow-stage)]">
+              <div className="relative min-h-0 border border-line-lit shadow-[var(--shadow-stage)] rounded-lg">
                 <canvas
                   ref={canvasRef}
                   className={`block max-h-[62vh] max-w-full object-contain ${
@@ -156,14 +156,14 @@ export function Stage({
             </div>
 
             <div className="mt-3 flex items-center gap-3 pl-8">
-              <span className="font-mono text-[10px] text-dust tabular-nums">
+              <span className="text-[12px] text-dust tabular-nums">
                 {targetW} × {targetH} px
               </span>
               <span className="h-px flex-1 bg-line" />
               <button
                 type="button"
                 onClick={onPick}
-                className="font-mono text-[10px] uppercase tracking-[0.16em] text-ash transition-colors hover:text-safe"
+                className="text-[12px] text-ash transition-colors hover:text-safe font-medium"
               >
                 Другое фото
               </button>
@@ -179,16 +179,16 @@ export function Stage({
               dragging
                 ? "border-safe bg-safe/8"
                 : "border-line-lit bg-slab/40 hover:border-safe/60 hover:bg-slab/70"
-            }`}
+            } rounded-lg`}
           >
             <div className="relative flex h-16 w-16 items-center justify-center">
-              <span className="absolute inset-0 border border-line-lit transition-transform duration-500 group-hover:rotate-45" />
+              <span className="absolute inset-0 border border-line-lit transition-transform duration-500 group-hover:rotate-45 rounded-lg" />
               <span className="absolute h-px w-6 bg-safe" />
               <span className="absolute h-6 w-px bg-safe" />
             </div>
             <div className="text-center">
-              <p className="font-display text-2xl text-chalk">Перетащите фото сюда</p>
-              <p className="mt-2 font-mono text-[11px] tracking-wide text-dust">
+              <p className="font-display text-2xl text-chalk font-semibold tracking-tight">Перетащите фото сюда</p>
+              <p className="mt-2 text-[13px] tracking-wide text-dust tabular-nums">
                 или нажмите · вставьте через Ctrl+V · JPG, PNG, WEBP
               </p>
             </div>
@@ -199,7 +199,7 @@ export function Stage({
       {busy && progress ? (
         <div className="absolute inset-x-0 bottom-0 border-t border-line bg-pit/90 px-6 py-3 backdrop-blur">
           <div className="flex items-center gap-3">
-            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-safe-soft">
+            <span className="text-[12px] text-safe-soft font-medium">
               {progress.label}
             </span>
             <div className="h-px flex-1 bg-line">
@@ -208,7 +208,7 @@ export function Stage({
                 style={{ width: `${Math.round(progress.ratio * 100)}%` }}
               />
             </div>
-            <span className="font-mono text-[10px] text-ash tabular-nums">
+            <span className="text-[12px] text-ash tabular-nums">
               {Math.round(progress.ratio * 100)}%
             </span>
           </div>

@@ -142,7 +142,7 @@ export function MaskEditor({
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === " ") {
+      if (event.key === "") {
         event.preventDefault();
         spaceRef.current = true;
         setPanReady(true);
@@ -164,7 +164,7 @@ export function MaskEditor({
       if (event.key.toLowerCase() === "r") setMode("restore");
     };
     const onKeyUp = (event: KeyboardEvent) => {
-      if (event.key === " ") {
+      if (event.key === "") {
         spaceRef.current = false;
         setPanReady(false);
       }
@@ -253,10 +253,10 @@ export function MaskEditor({
   return (
     <div className="fixed inset-0 z-40 flex flex-col bg-ink/97 backdrop-blur-sm">
       <header className="flex shrink-0 flex-wrap items-center gap-x-5 gap-y-2 border-b border-line px-5 py-3">
-        <h2 className="font-display text-xl text-chalk">
+        <h2 className="font-display text-xl text-chalk font-semibold tracking-tight">
           Поправить <em className="text-safe">края</em>
         </h2>
-        <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-dust">
+        <p className="text-[12px] text-dust font-medium">
           {local.length} действий
         </p>
 
@@ -267,7 +267,7 @@ export function MaskEditor({
             disabled={view.zoom <= MIN_ZOOM}
             aria-label="Уменьшить"
             title="Уменьшить (−)"
-            className="border border-line px-2.5 py-1.5 font-mono text-[11px] text-ash transition-colors enabled:hover:border-line-lit enabled:hover:text-safe disabled:opacity-30"
+            className="border border-line px-2.5 py-1.5 text-[13px] text-ash transition-colors enabled:hover:border-line-lit enabled:hover:text-safe disabled:opacity-30 tabular-nums rounded-lg"
           >
             −
           </button>
@@ -276,7 +276,7 @@ export function MaskEditor({
             onClick={() => setView(FIT)}
             aria-label="Вписать в кадр"
             title="Вписать в кадр (0)"
-            className="-mx-px border border-line px-2.5 py-1.5 font-mono text-[10px] text-ash tabular-nums transition-colors hover:border-line-lit hover:text-safe"
+            className="-mx-px border border-line px-2.5 py-1.5 text-[12px] text-ash tabular-nums transition-colors hover:border-line-lit hover:text-safe rounded-lg"
           >
             {zoomLabel}
           </button>
@@ -286,7 +286,7 @@ export function MaskEditor({
             disabled={view.zoom >= MAX_ZOOM}
             aria-label="Увеличить"
             title="Увеличить (+)"
-            className="border border-line px-2.5 py-1.5 font-mono text-[11px] text-ash transition-colors enabled:hover:border-line-lit enabled:hover:text-safe disabled:opacity-30"
+            className="border border-line px-2.5 py-1.5 text-[13px] text-ash transition-colors enabled:hover:border-line-lit enabled:hover:text-safe disabled:opacity-30 tabular-nums rounded-lg"
           >
             +
           </button>
@@ -297,7 +297,7 @@ export function MaskEditor({
             type="button"
             onClick={undoStroke}
             disabled={local.length === 0}
-            className="border border-line px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-ash transition-colors enabled:hover:border-line-lit enabled:hover:text-chalk disabled:opacity-40"
+            className="border border-line px-3 py-2 text-[12px] text-ash transition-colors enabled:hover:border-line-lit enabled:hover:text-chalk disabled:opacity-40 font-medium rounded-lg"
           >
             Назад
           </button>
@@ -305,21 +305,21 @@ export function MaskEditor({
             type="button"
             onClick={clearStrokes}
             disabled={local.length === 0}
-            className="border border-line px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-ash transition-colors enabled:hover:border-line-lit enabled:hover:text-chalk disabled:opacity-40"
+            className="border border-line px-3 py-2 text-[12px] text-ash transition-colors enabled:hover:border-line-lit enabled:hover:text-chalk disabled:opacity-40 font-medium rounded-lg"
           >
             Сбросить всё
           </button>
           <button
             type="button"
             onClick={onClose}
-            className="border border-line px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-dust transition-colors hover:text-chalk"
+            className="border border-line px-3 py-2 text-[12px] text-dust transition-colors hover:text-chalk font-medium rounded-lg"
           >
             Отмена
           </button>
           <button
             type="button"
             onClick={() => onCommit(local)}
-            className="border border-safe/70 bg-safe/12 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.16em] text-safe-soft transition-colors hover:bg-safe/22"
+            className="border border-transparent bg-safe px-4 py-2 text-[12px] text-white transition-colors hover:bg-safe/90 font-medium rounded-lg"
           >
             Сохранить
           </button>
@@ -339,7 +339,7 @@ export function MaskEditor({
             onPointerCancel={endStroke}
             onPointerLeave={() => setCursor(null)}
             onContextMenu={(event) => event.preventDefault()}
-            className="checkerboard max-h-full max-w-full touch-none border border-line-lit"
+            className="checkerboard max-h-full max-w-full touch-none border border-line-lit rounded-lg"
             style={{
               cursor: panReady ? "grab" : "none",
               transform: `translate(${view.x}px, ${view.y}px) scale(${view.zoom})`,
@@ -424,21 +424,21 @@ export function MaskEditor({
             />
           </label>
 
-          <div className="space-y-2 border-t border-line pt-4 text-[11px] leading-relaxed text-dust">
+          <div className="space-y-2 border-t border-line pt-4 text-[13px] leading-relaxed text-dust">
             {/* Explicit strings: JSX drops the space when it wraps a line here. */}
             <p>
               <span className="text-ash">Стирать</span>
-              {" — убирает остатки фона."}
+              {"— убирает остатки фона."}
             </p>
             <p>
               <span className="text-ash">Вернуть</span>
-              {" — восстанавливает волосы, очки или край плеча, срезанные моделью."}
+              {"— восстанавливает волосы, очки или край плеча, срезанные моделью."}
             </p>
             <p>
-              Масштаб — колёсиком мыши, перетаскивание — с зажатой{" "}
+              Масштаб — колёсиком мыши, перетаскивание — с зажатой{""}
               <span className="text-ash">Пробел</span>.
             </p>
-            <p className="pt-2 font-mono text-[10px] uppercase tracking-[0.14em]">
+            <p className="pt-2 text-[12px] font-medium">
               E / R — режим · [ ] — размер · + − 0 — масштаб · Ctrl+Z — назад ·
               Esc — выход
             </p>

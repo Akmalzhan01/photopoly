@@ -25,7 +25,7 @@ export function OrdersNav() {
       // `self-start` keeps the rail as tall as its tabs; as a grid item it would
       // otherwise stretch beside a long list. Sticky under the site header so
       // the tabs stay reachable while scrolling a long day's work.
-      className="flex gap-px self-start overflow-x-auto bg-line lg:sticky lg:top-20 lg:flex-col"
+      className="flex gap-1 self-start overflow-x-auto lg:sticky lg:top-20 lg:flex-col"
     >
       {TABS.map((tab) => {
         const active = pathname === tab.href;
@@ -39,13 +39,13 @@ export function OrdersNav() {
             }`}
           >
             <span
-              className={`block font-mono text-[11px] uppercase tracking-[0.16em] ${
+              className={`block text-[13px] ${
                 active ? "text-safe-soft" : "text-dust"
-              }`}
+              } font-medium`}
             >
               {tab.label}
             </span>
-            <span className="mt-1 hidden text-[11px] leading-snug text-dust lg:block">
+            <span className="mt-0.5 hidden text-[12px] leading-snug text-dust lg:block">
               {tab.hint}
             </span>
           </Link>

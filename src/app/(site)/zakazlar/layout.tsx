@@ -15,10 +15,9 @@ export default function OrdersLayout({ children }: { children: ReactNode }) {
   return (
     <div className="mx-auto max-w-260 px-5 py-16">
       <div className="mb-3 flex items-baseline gap-2.5">
-        <span className="font-mono text-[10px] text-ember">02</span>
         <Eyebrow>Заказы</Eyebrow>
       </div>
-      <h1 className="font-display text-[clamp(30px,4.5vw,42px)] leading-[1.05] text-chalk">
+      <h1 className="font-display text-[clamp(30px,4.5vw,42px)] leading-[1.05] text-chalk font-semibold tracking-tight">
         Заказы клиентов
       </h1>
       <p className="mt-3 max-w-xl text-[14px] leading-relaxed text-ash">

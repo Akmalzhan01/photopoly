@@ -40,11 +40,10 @@ export default async function PaymentPage({ params }: { params: Promise<{ id: st
   return (
     <div className="mx-auto max-w-xl px-5 py-16">
       <div className="mb-3 flex items-baseline gap-2.5">
-        <span className="font-mono text-[10px] text-ember">01</span>
         <Eyebrow>Платёж</Eyebrow>
       </div>
 
-      <h1 className="font-display text-[34px] leading-[1.1] text-chalk">
+      <h1 className="font-display text-[34px] leading-[1.1] text-chalk font-semibold tracking-tight">
         {paid
           ? "Платёж принят."
           : payment.status === "PENDING"
@@ -65,10 +64,10 @@ export default async function PaymentPage({ params }: { params: Promise<{ id: st
           ["Номер", payment.reference.slice(0, 8)],
         ].map(([label, value]) => (
           <div key={label} className="flex items-baseline justify-between gap-4 px-5 py-3.5">
-            <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-dust">
+            <span className="text-[12px] text-dust font-medium">
               {label}
             </span>
-            <span className="font-mono text-[12px] text-chalk tabular-nums">{value}</span>
+            <span className="text-[12px] text-chalk tabular-nums">{value}</span>
           </div>
         ))}
       </Panel>
@@ -86,18 +85,18 @@ export default async function PaymentPage({ params }: { params: Promise<{ id: st
                     all, since account numbers are usually laid out over lines. */}
                 <span className="block whitespace-pre-line">{paymentNote}</span>
                 <span className="mt-3 block">
-                  После оплаты назовите номер заказа{" "}
-                  <span className="font-mono text-chalk">
+                  После оплаты назовите номер заказа{""}
+                  <span className="text-chalk tabular-nums">
                     {payment.reference.slice(0, 8)}
-                  </span>{" "}
+                  </span>{""}
                   — администратор включит подписку.
                 </span>
               </>
             ) : (
               <>
                 Этот заказ подтверждается вручную. Свяжитесь с администратором, чтобы
-                узнать, куда перевести оплату, и назовите номер заказа:{" "}
-                <span className="font-mono text-chalk">{payment.reference.slice(0, 8)}</span>
+                узнать, куда перевести оплату, и назовите номер заказа:{""}
+                <span className="text-chalk tabular-nums">{payment.reference.slice(0, 8)}</span>
               </>
             )}
           </Notice>
@@ -119,7 +118,7 @@ export default async function PaymentPage({ params }: { params: Promise<{ id: st
         ) : payment.paymentUrl && payment.status === "PENDING" ? (
           <a
             href={payment.paymentUrl}
-            className="inline-flex items-center border border-safe bg-safe/12 px-4 py-2.5 font-mono text-[11px] uppercase tracking-[0.14em] text-safe-soft transition-colors hover:bg-safe/20"
+            className="inline-flex items-center border border-transparent bg-safe px-4 py-2.5 text-[13px] text-white transition-colors hover:bg-safe/90 font-medium rounded-lg"
           >
             Открыть страницу оплаты
           </a>

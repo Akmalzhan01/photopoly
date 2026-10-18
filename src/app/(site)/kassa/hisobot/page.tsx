@@ -58,10 +58,10 @@ export default async function ReportPage({
                   : []),
               ].map(([label, value]) => (
                 <div key={label} className="flex items-baseline justify-between gap-4 px-5 py-3.5">
-                  <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-dust">
+                  <span className="text-[12px] text-dust font-medium">
                     {label}
                   </span>
-                  <span className="font-mono text-[12px] text-chalk tabular-nums">{value}</span>
+                  <span className="text-[12px] text-chalk tabular-nums">{value}</span>
                 </div>
               ))}
             </Panel>
@@ -78,7 +78,7 @@ export default async function ReportPage({
           <section>
             <SectionHead index="04" title="По дням" />
             <DayTable days={days} />
-            <p className="mt-3 font-mono text-[10px] text-dust">
+            <p className="mt-3 text-[12px] text-dust tabular-nums">
               Дни без записей пропущены.
             </p>
           </section>

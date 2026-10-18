@@ -51,10 +51,9 @@ export default async function PricingPage() {
   return (
     <div className="mx-auto max-w-6xl px-5 py-16">
       <div className="mb-3 flex items-baseline gap-2.5">
-        <span className="font-mono text-[10px] text-ember">02</span>
         <Eyebrow>Цены</Eyebrow>
       </div>
-      <h1 className="mb-4 max-w-2xl font-display text-[clamp(32px,5vw,48px)] leading-[1.05] text-chalk">
+      <h1 className="mb-4 max-w-2xl font-display text-[clamp(32px,5vw,48px)] leading-[1.05] text-chalk font-semibold tracking-tight">
         Заплатите один раз — пользуйтесь весь срок.
       </h1>
       <p className="mb-10 max-w-xl text-[14px] leading-relaxed text-ash">
@@ -63,10 +62,10 @@ export default async function PricingPage() {
 
       <PriceList />
 
-      <div className="mt-12 grid gap-px bg-line md:grid-cols-2">
+      <div className="mt-12 grid gap-px bg-line overflow-hidden rounded-xl border border-line md:grid-cols-2">
         {items.map((item) => (
           <article key={item.q} className="bg-slab p-6">
-            <h3 className="font-display text-[19px] leading-tight text-chalk">{item.q}</h3>
+            <h3 className="font-display text-[19px] leading-tight text-chalk font-semibold tracking-tight">{item.q}</h3>
             <p className="mt-2.5 text-[13px] leading-relaxed text-ash">{item.a}</p>
           </article>
         ))}

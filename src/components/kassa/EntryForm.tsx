@@ -6,9 +6,9 @@ import { Button } from "@/components/site/ui";
 import { CATEGORIES, MAX_NOTE, type LedgerKind } from "@/lib/ledger";
 
 const INPUT =
-  "w-full border border-line bg-pit px-3 py-2.5 text-sm text-chalk outline-none transition-colors placeholder:text-dust focus:border-safe/50";
+  "w-full border border-line bg-pit px-3 py-2.5 text-sm text-chalk outline-none transition-colors placeholder:text-dust focus:border-safe/50 rounded-lg";
 
-const LABEL = "font-mono text-[10px] uppercase tracking-[0.18em] text-dust";
+const LABEL = "text-[12px] text-dust font-medium";
 
 const PLACEHOLDER: Record<LedgerKind, string> = {
   INCOME: "10 фото на паспорт",
@@ -100,11 +100,11 @@ export function EntryForm({ kind, today }: { kind: LedgerKind; today: string }) 
           {pending ? "Запись…" : kind === "INCOME" ? "Записать приход" : "Записать расход"}
         </Button>
         {state?.error ? (
-          <span role="alert" className="font-mono text-[10px] text-ember">
+          <span role="alert" className="text-[12px] text-ember tabular-nums">
             {state.error}
           </span>
         ) : state?.done ? (
-          <span role="status" className="font-mono text-[10px] text-safe-soft">
+          <span role="status" className="text-[12px] text-safe-soft tabular-nums">
             {state.done}
           </span>
         ) : null}

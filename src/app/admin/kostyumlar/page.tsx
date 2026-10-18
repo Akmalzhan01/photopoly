@@ -27,19 +27,18 @@ export default async function AttirePage() {
   return (
     <>
       <div className="mb-6 flex items-baseline gap-2.5">
-        <span className="font-mono text-[10px] text-ember">01</span>
         <Eyebrow>Костюмы</Eyebrow>
       </div>
 
       {!storage ? (
         <div className="mb-6">
           <Notice tone="warn">
-            Supabase Storage не настроен, поэтому загрузка не работает.{" "}
-            <code className="font-mono text-chalk">SUPABASE_URL</code> va{" "}
-            <code className="font-mono text-chalk">SUPABASE_SERVICE_ROLE_KEY</code> в{" "}
-            <code className="font-mono text-chalk">.env</code>, а в панели Supabase
-            создайте <strong>public</strong>-bucket с именем{" "}
-            <code className="font-mono text-chalk">{ATTIRE_BUCKET}</code>.
+            Supabase Storage не настроен, поэтому загрузка не работает.{""}
+            <code className="text-chalk tabular-nums">SUPABASE_URL</code> va{""}
+            <code className="text-chalk tabular-nums">SUPABASE_SERVICE_ROLE_KEY</code> в{""}
+            <code className="text-chalk tabular-nums">.env</code>, а в панели Supabase
+            создайте <strong>public</strong>-bucket с именем{""}
+            <code className="text-chalk tabular-nums">{ATTIRE_BUCKET}</code>.
           </Notice>
         </div>
       ) : (
@@ -56,7 +55,6 @@ export default async function AttirePage() {
 
       <section className="mt-10">
         <div className="mb-4 flex items-baseline gap-2.5">
-          <span className="font-mono text-[10px] text-ember">02</span>
           <Eyebrow>Загруженные</Eyebrow>
         </div>
 
@@ -67,7 +65,7 @@ export default async function AttirePage() {
             </p>
           </Panel>
         ) : (
-          <div className="flex flex-col gap-px bg-line">
+          <div className="flex flex-col gap-px bg-line overflow-hidden rounded-xl border border-line">
             {assets.map((asset) => (
               <AttireRow key={asset.id} asset={asset} />
             ))}

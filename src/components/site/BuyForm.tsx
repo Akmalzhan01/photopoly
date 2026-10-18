@@ -25,7 +25,7 @@ export function BuyForm({
         {pending ? "Открываем…" : label}
       </Button>
       {state?.error ? (
-        <p role="alert" className="font-mono text-[10px] leading-relaxed text-ember">
+        <p role="alert" className="text-[12px] leading-relaxed text-ember tabular-nums">
           {state.error}
         </p>
       ) : null}

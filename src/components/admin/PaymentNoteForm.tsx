@@ -13,12 +13,12 @@ import { ActionForm } from "./ActionForm";
  */
 export function PaymentNoteForm({ current }: { current: string }) {
   return (
-    <div className="border border-line bg-slab p-5">
+    <div className="border border-line bg-slab p-5 rounded-lg">
       <ActionForm action={savePaymentNote} className="flex flex-col gap-3">
         {(pending) => (
           <>
             <label className="flex flex-col gap-1.5">
-              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-dust">
+              <span className="text-[12px] text-dust font-medium">
                 Как оплатить — текст для покупателя
               </span>
               <textarea
@@ -28,7 +28,7 @@ export function PaymentNoteForm({ current }: { current: string }) {
                 maxLength={600}
                 placeholder="Например: переведите сумму на 0700 000 000 (MBank, О!Деньги) и напишите нам номер заказа."
                 aria-label="Инструкция по оплате"
-                className="w-full resize-y border border-line bg-pit px-3 py-2 text-sm leading-relaxed text-chalk outline-none transition-colors placeholder:text-dust focus:border-safe/50"
+                className="w-full resize-y border border-line bg-pit px-3 py-2 text-sm leading-relaxed text-chalk outline-none transition-colors placeholder:text-dust focus:border-safe/50 rounded-lg"
               />
             </label>
             <div className="flex items-center gap-3">
@@ -36,12 +36,12 @@ export function PaymentNoteForm({ current }: { current: string }) {
                 {pending ? "Сохранение…" : "Сохранить"}
               </Button>
               {!current ? (
-                <span className="font-mono text-[10px] text-ember">
+                <span className="text-[12px] text-ember tabular-nums">
                   Пока не заполнено — покупателю негде узнать, куда платить.
                 </span>
               ) : null}
             </div>
-            <p className="font-mono text-[10px] leading-relaxed text-dust">
+            <p className="text-[12px] leading-relaxed text-dust tabular-nums">
               Показывается на странице заказа, пока Finik не подключён. Укажите номер или
               счёт, куда переводить, — покупатель называет номер заказа, вы подтверждаете
               платёж в разделе «Платежи».

@@ -14,12 +14,11 @@ export default function OfflinePage() {
     <main className="flex min-h-dvh items-center justify-center px-5">
       <div className="max-w-md">
         <div className="mb-6 flex items-baseline gap-2.5">
-          <span className="font-mono text-[10px] text-ember">!!</span>
-          <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-ash">
+          <span className="text-[12px] text-ash font-medium">
             Нет соединения
           </span>
         </div>
-        <h1 className="font-display text-[36px] leading-[1.05] text-chalk">
+        <h1 className="font-display text-[36px] leading-[1.05] text-chalk font-semibold tracking-tight">
           Интернет недоступен.
         </h1>
         <p className="mt-4 text-[14px] leading-relaxed text-ash">
@@ -28,7 +27,7 @@ export default function OfflinePage() {
         </p>
         <Link
           href="/studio"
-          className="mt-7 inline-flex items-center border border-safe bg-safe/12 px-4 py-2.5 font-mono text-[11px] uppercase tracking-[0.14em] text-safe-soft transition-colors hover:bg-safe/20"
+          className="mt-7 inline-flex items-center border border-transparent bg-safe px-4 py-2.5 text-[13px] text-white transition-colors hover:bg-safe/90 font-medium rounded-lg"
         >
           Попробовать снова
         </Link>

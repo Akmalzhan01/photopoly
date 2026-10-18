@@ -18,7 +18,7 @@ function Tabs({ suffix, current }: { suffix: string; current: string | null }) {
       // it would otherwise stretch to match the content column and trail a long
       // empty bar down the page. Sticky below the site header, so the tabs stay
       // reachable while reading a long list of entries.
-      className="flex gap-px self-start overflow-x-auto bg-line lg:sticky lg:top-20 lg:flex-col"
+      className="flex gap-1 self-start overflow-x-auto lg:sticky lg:top-20 lg:flex-col"
     >
       {TABS.map((tab) => {
         const active = current === tab.href;
@@ -32,13 +32,13 @@ function Tabs({ suffix, current }: { suffix: string; current: string | null }) {
             }`}
           >
             <span
-              className={`block font-mono text-[11px] uppercase tracking-[0.16em] ${
+              className={`block text-[13px] ${
                 active ? "text-safe-soft" : "text-dust"
-              }`}
+              } font-medium`}
             >
               {tab.label}
             </span>
-            <span className="mt-1 hidden text-[11px] leading-snug text-dust lg:block">
+            <span className="mt-0.5 hidden text-[12px] leading-snug text-dust lg:block">
               {tab.hint}
             </span>
           </Link>

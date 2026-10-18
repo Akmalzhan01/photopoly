@@ -28,7 +28,6 @@ export default async function PlansPage() {
   return (
     <>
       <div className="mb-6 flex items-baseline gap-2.5">
-        <span className="font-mono text-[10px] text-ember">01</span>
         <Eyebrow>Тарифы</Eyebrow>
       </div>
 
@@ -45,7 +44,7 @@ export default async function PlansPage() {
         </div>
       )}
 
-      <div className="flex flex-col gap-px bg-line">
+      <div className="flex flex-col gap-px bg-line overflow-hidden rounded-xl border border-line">
         {plans.map((plan) => (
           <PlanEditor
             key={plan.id}

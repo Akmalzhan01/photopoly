@@ -27,7 +27,7 @@ export function AttireRow({ asset }: { asset: AttireRowData }) {
   return (
     <div className="flex flex-wrap items-center gap-4 bg-slab p-4">
       <div
-        className="flex h-20 w-20 shrink-0 items-center justify-center border border-line"
+        className="flex h-20 w-20 shrink-0 items-center justify-center border border-line rounded-lg"
         style={CHECKER}
       >
         {/* eslint-disable-next-line @next/next/no-img-element -- a Storage URL on an
@@ -49,7 +49,7 @@ export function AttireRow({ asset }: { asset: AttireRowData }) {
                 defaultValue={asset.name}
                 maxLength={60}
                 aria-label={`Название: ${asset.name}`}
-                className="min-w-0 flex-1 border border-line bg-pit px-2.5 py-1.5 font-mono text-[12px] text-chalk outline-none transition-colors focus:border-safe/50"
+                className="min-w-0 flex-1 border border-line bg-pit px-2.5 py-1.5 text-[12px] text-chalk outline-none transition-colors focus:border-safe/50 tabular-nums rounded-lg"
               />
               <Button type="submit" tone="ghost" disabled={pending}>
                 {pending ? "…" : "Сохранить"}
@@ -57,9 +57,9 @@ export function AttireRow({ asset }: { asset: AttireRowData }) {
             </>
           )}
         </ActionForm>
-        <p className="mt-1.5 font-mono text-[10px] text-dust tabular-nums">
+        <p className="mt-1.5 text-[12px] text-dust tabular-nums">
           {asset.width}×{asset.height} · {(asset.bytes / 1024).toFixed(0)} KB
-          {asset.active ? "" : " · скрыт"}
+          {asset.active ? "" : "· скрыт"}
         </p>
       </div>
 

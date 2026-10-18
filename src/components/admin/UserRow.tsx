@@ -27,7 +27,7 @@ const date = new Intl.DateTimeFormat("ru-RU", { dateStyle: "short" });
 const ROLE_LABEL = { USER: "Пользователь", ADMIN: "Админ", SUPERADMIN: "Суперадмин" } as const;
 
 const SMALL_BUTTON =
-  "border px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.12em] transition-colors disabled:opacity-40";
+  "border px-2.5 py-1 text-[12px] transition-colors disabled:opacity-40 font-medium rounded-lg";
 
 export function UserRow({
   user,
@@ -53,38 +53,38 @@ export function UserRow({
           aria-expanded={open}
           className="flex min-w-0 flex-1 items-baseline gap-3 text-left"
         >
-          <span aria-hidden className="font-mono text-[10px] text-dust">
+          <span aria-hidden className="text-[12px] text-dust tabular-nums">
             {open ? "−" : "+"}
           </span>
           <span className="truncate text-[13px] text-chalk">{user.name || user.email}</span>
           {user.name ? (
-            <span className="hidden truncate font-mono text-[10px] text-dust sm:inline">
+            <span className="hidden truncate text-[12px] text-dust sm:inline tabular-nums">
               {user.email}
             </span>
           ) : null}
         </button>
 
         {user.role !== "USER" ? (
-          <span className="border border-ember/50 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.14em] text-ember">
+          <span className="border border-ember/50 px-1.5 py-0.5 text-[11px] text-ember font-medium rounded-lg">
             {ROLE_LABEL[user.role]}
           </span>
         ) : null}
         {user.blocked ? (
-          <span className="border border-ember bg-ember/12 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.14em] text-safe-soft">
+          <span className="border border-ember bg-ember/12 px-1.5 py-0.5 text-[11px] text-safe-soft font-medium rounded-lg">
             Заблокирован
           </span>
         ) : null}
 
-        <span className="font-mono text-[10px] text-ash tabular-nums">
+        <span className="text-[12px] text-ash tabular-nums">
           {user.subscription
             ? `${user.subscription.planName} · ${date.format(new Date(user.subscription.endsAt))}`
             : `бесплатно ${user.freeUsed}/${freeLimit}`}
         </span>
 
-        <span className="hidden font-mono text-[10px] text-dust tabular-nums md:inline">
+        <span className="hidden text-[12px] text-dust tabular-nums md:inline">
           {user.exports} эксп.
         </span>
-        <span className="hidden font-mono text-[10px] text-dust tabular-nums lg:inline">
+        <span className="hidden text-[12px] text-dust tabular-nums lg:inline">
           {date.format(new Date(user.createdAt))}
         </span>
       </div>
@@ -93,7 +93,7 @@ export function UserRow({
         <div className="grid gap-5 border-t border-line bg-pit px-4 py-4 md:grid-cols-3">
           {/* Grant a subscription by hand — the manual-payment path ends here. */}
           <div>
-            <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.16em] text-dust">
+            <p className="mb-2 text-[12px] text-dust font-medium">
               Выдать подписку
             </p>
             <ActionForm action={grantSubscription} fields={{ userId: user.id }}>
@@ -103,7 +103,7 @@ export function UserRow({
                     name="plan"
                     aria-label="Выбор тарифа"
                     defaultValue={plans[0]?.code}
-                    className="border border-line bg-slab px-2 py-1 font-mono text-[11px] text-chalk outline-none focus:border-safe/50"
+                    className="border border-line bg-slab px-2 py-1 text-[13px] text-chalk outline-none focus:border-safe/50 tabular-nums rounded-lg"
                   >
                     {plans.map((plan) => (
                       <option key={plan.code} value={plan.code}>
@@ -144,7 +144,7 @@ export function UserRow({
 
           {/* Access */}
           <div>
-            <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.16em] text-dust">
+            <p className="mb-2 text-[12px] text-dust font-medium">
               Доступ
             </p>
             <div className="flex flex-wrap gap-2">
@@ -187,7 +187,7 @@ export function UserRow({
 
           {/* Role — superadmin only */}
           <div>
-            <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.16em] text-dust">Роль</p>
+            <p className="mb-2 text-[12px] text-dust font-medium">Роль</p>
             {canSetRole ? (
               <ActionForm
                 action={setUserRole}
@@ -201,7 +201,7 @@ export function UserRow({
                       aria-label="Выбор роли"
                       defaultValue={user.role}
                       disabled={isSelf}
-                      className="border border-line bg-slab px-2 py-1 font-mono text-[11px] text-chalk outline-none focus:border-safe/50 disabled:opacity-40"
+                      className="border border-line bg-slab px-2 py-1 text-[13px] text-chalk outline-none focus:border-safe/50 disabled:opacity-40 tabular-nums rounded-lg"
                     >
                       {(["USER", "ADMIN", "SUPERADMIN"] as const).map((role) => (
                         <option key={role} value={role}>
@@ -221,7 +221,7 @@ export function UserRow({
                 )}
               </ActionForm>
             ) : (
-              <p className="font-mono text-[10px] text-dust">
+              <p className="text-[12px] text-dust tabular-nums">
                 Изменить может только суперадмин.
               </p>
             )}

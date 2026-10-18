@@ -22,9 +22,9 @@ function Tile({
 }) {
   const body = (
     <>
-      <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-dust">{label}</span>
-      <p className="mt-2 font-mono text-[26px] leading-none text-chalk tabular-nums">{value}</p>
-      {note ? <p className="mt-1.5 font-mono text-[10px] text-dust">{note}</p> : null}
+      <span className="text-[12px] text-dust font-medium">{label}</span>
+      <p className="mt-2 text-[26px] leading-none text-chalk tabular-nums">{value}</p>
+      {note ? <p className="mt-1.5 text-[12px] text-dust tabular-nums">{note}</p> : null}
     </>
   );
   return href ? (
@@ -52,32 +52,31 @@ export default async function AdminHome() {
   return (
     <>
       <div className="mb-6 flex items-baseline gap-2.5">
-        <span className="font-mono text-[10px] text-ember">01</span>
         <Eyebrow>Общая картина</Eyebrow>
       </div>
 
       {!finik ? (
         <div className="mb-6">
           <Notice tone="warn">
-            Finik не настроен — все новые заказы создаются в режиме{" "}
+            Finik не настроен — все новые заказы создаются в режиме{""}
             <strong>ручного подтверждения</strong>. Подтверждать их нужно в разделе
-            &laquo;Платежи&raquo;. Чтобы включить, задайте{" "}
-            <code className="font-mono text-chalk">FINIK_API_KEY</code>,{" "}
-            <code className="font-mono text-chalk">FINIK_ACCOUNT_ID</code> и{" "}
-            <code className="font-mono text-chalk">FINIK_PRIVATE_KEY</code>.
+            &laquo;Платежи&raquo;. Чтобы включить, задайте{""}
+            <code className="text-chalk tabular-nums">FINIK_API_KEY</code>,{""}
+            <code className="text-chalk tabular-nums">FINIK_ACCOUNT_ID</code> и{""}
+            <code className="text-chalk tabular-nums">FINIK_PRIVATE_KEY</code>.
           </Notice>
         </div>
       ) : !finik.publicKey ? (
         <div className="mb-6">
           <Notice tone="warn">
-            <code className="font-mono text-chalk">FINIK_PUBLIC_KEY</code> не задан, поэтому
+            <code className="text-chalk tabular-nums">FINIK_PUBLIC_KEY</code> не задан, поэтому
             входящие webhook’и отклоняются, а платежи не активируются
             автоматически. Возьмите ключ из документации Finik.
           </Notice>
         </div>
       ) : null}
 
-      <div className="grid gap-px bg-line sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-px bg-line overflow-hidden rounded-xl border border-line sm:grid-cols-2 lg:grid-cols-3">
         <Tile
           label="Пользователи"
           value={formatSom(stats.users)}
@@ -103,7 +102,6 @@ export default async function AdminHome() {
       {admin.role === "SUPERADMIN" ? (
         <section className="mt-12">
           <div className="mb-4 flex items-baseline gap-2.5">
-            <span className="font-mono text-[10px] text-ember">02</span>
             <Eyebrow>Настройки</Eyebrow>
           </div>
           <FreeLimitForm current={freeLimit} />

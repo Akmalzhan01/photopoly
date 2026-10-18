@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Header } from "@/components/site/Header";
+import { Logo } from "@/components/site/ui";
 
 export default function SiteLayout({ children }: { children: ReactNode }) {
   return (
@@ -8,11 +9,14 @@ export default function SiteLayout({ children }: { children: ReactNode }) {
       <main className="flex-1">{children}</main>
       <footer className="border-t border-line px-5 py-8">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2">
-          <span className="font-display text-[15px] text-dust">photopoly</span>
-          <span className="font-mono text-[10px] text-dust">
+          <span className="flex items-center gap-2 text-[15px] font-semibold tracking-tight text-chalk">
+            <Logo className="h-6 w-6" />
+            photopoly
+          </span>
+          <span className="text-[13px] text-dust">
             Фотографии обрабатываются в вашем браузере — на сервер не уходят.
           </span>
-          <span className="ml-auto font-mono text-[10px] text-dust">Бишкек, КР</span>
+          <span className="ml-auto text-[13px] text-dust">Бишкек, КР</span>
         </div>
       </footer>
     </>

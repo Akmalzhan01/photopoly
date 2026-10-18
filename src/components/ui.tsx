@@ -15,11 +15,11 @@ export function Section({
 }) {
   return (
     <section className="border-t border-line px-5 py-5">
-      <header className="mb-4 flex items-baseline gap-2.5">
-        <span className="font-mono text-[10px] text-ember">{index}</span>
-        <h2 className="font-mono text-[10px] uppercase tracking-[0.22em] text-ash">
-          {title}
-        </h2>
+      <header className="mb-4 flex items-center gap-2.5">
+        <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-riser px-1.5 text-[11px] font-semibold text-ash tabular-nums">
+          {index.replace(/^0(?=d)/, "")}
+        </span>
+        <h2 className="text-[13px] font-semibold text-chalk">{title}</h2>
         {aside ? <div className="ml-auto">{aside}</div> : null}
       </header>
       {children}
@@ -29,7 +29,7 @@ export function Section({
 
 export function Label({ children }: { children: ReactNode }) {
   return (
-    <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-dust">
+    <span className="text-[12px] text-dust font-medium">
       {children}
     </span>
   );
@@ -50,7 +50,7 @@ export function Segmented<T extends string>({
     <div
       role="radiogroup"
       aria-label={ariaLabel}
-      className="grid grid-flow-col auto-cols-fr border border-line"
+      className="grid grid-flow-col auto-cols-fr gap-0.5 rounded-lg bg-riser p-0.5"
     >
       {options.map((option) => {
         const active = option.value === value;
@@ -62,10 +62,10 @@ export function Segmented<T extends string>({
             aria-checked={active}
             title={option.title}
             onClick={() => onChange(option.value)}
-            className={`px-2 py-2 font-mono text-[10px] uppercase tracking-[0.12em] transition-colors duration-150 not-first:border-l not-first:border-line ${
+            className={`rounded-md px-2 py-1.5 text-[12px] font-medium transition-colors duration-150 ${
               active
-                ? "bg-safe/12 text-safe-soft"
-                : "text-dust hover:bg-riser hover:text-ash"
+                ? "bg-slab text-chalk shadow-card"
+                : "text-dust hover:text-chalk"
             }`}
           >
             {option.label}
@@ -137,7 +137,7 @@ export function NumberField({
   return (
     <label className="group flex min-w-0 flex-col gap-1.5">
       <Label>{label}</Label>
-      <div className="flex items-center border border-line bg-pit transition-colors focus-within:border-safe/50">
+      <div className="flex items-center border border-line bg-pit transition-colors focus-within:border-safe/50 rounded-lg">
         <input
           type="text"
           inputMode="decimal"
@@ -157,13 +157,13 @@ export function NumberField({
             if (next !== null && clamp) onChange(Math.min(max, Math.max(min, next)));
             setDraft(null);
           }}
-          className="w-full min-w-0 bg-transparent px-2.5 py-2 font-mono text-sm text-chalk outline-none placeholder:text-dust"
+          className="w-full min-w-0 bg-transparent px-2.5 py-2 text-sm text-chalk outline-none placeholder:text-dust tabular-nums"
         />
         {suffix ? (
-          <span className="shrink-0 pr-2.5 font-mono text-[10px] text-dust">{suffix}</span>
+          <span className="shrink-0 pr-2.5 text-[12px] text-dust tabular-nums">{suffix}</span>
         ) : null}
       </div>
-      {hint ? <span className="font-mono text-[10px] text-dust">{hint}</span> : null}
+      {hint ? <span className="text-[12px] text-dust tabular-nums">{hint}</span> : null}
     </label>
   );
 }
@@ -198,7 +198,7 @@ export function Slider({
           onClick={onReset}
           disabled={!onReset || disabled}
           title={onReset ? "Вернуть исходное значение" : undefined}
-          className="font-mono text-[11px] text-ash tabular-nums transition-colors enabled:hover:text-safe disabled:cursor-default"
+          className="text-[13px] text-ash tabular-nums transition-colors enabled:hover:text-safe disabled:cursor-default"
         >
           {display}
         </button>
@@ -232,8 +232,8 @@ export function Toggle({
     <label className="flex cursor-pointer items-center justify-between gap-3">
       <span className="text-[12px] leading-snug text-chalk">{label}</span>
       <span
-        className={`relative h-5 w-9 shrink-0 border transition-colors duration-200 ${
-          checked ? "border-safe bg-safe/20" : "border-line bg-pit"
+        className={`relative h-5 w-9 shrink-0 rounded-full transition-colors duration-200 ${
+          checked ? "bg-safe" : "bg-line-lit"
         }`}
       >
         <input
@@ -243,8 +243,8 @@ export function Toggle({
           onChange={(event) => onChange(event.target.checked)}
         />
         <span
-          className={`absolute top-0.5 h-3.5 w-3.5 transition-transform duration-200 ${
-            checked ? "translate-x-4.5 bg-safe" : "translate-x-0.5 bg-dust"
+          className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform duration-200 ${
+            checked ? "translate-x-4.5" : "translate-x-0.5"
           }`}
         />
       </span>
@@ -263,7 +263,7 @@ export function ColourPicker({
 }) {
   return (
     <label
-      className="relative h-8 w-8 cursor-pointer border border-line transition-colors hover:border-line-lit"
+      className="relative h-8 w-8 cursor-pointer border border-line transition-colors hover:border-line-lit rounded-lg"
       title={title}
       style={{
         background: "conic-gradient(#ff5c26, #ffd166, #06d6a0, #118ab2, #ef476f, #ff5c26)",
@@ -302,7 +302,7 @@ export function Swatch({
         active
           ? "border-safe shadow-[0_0_0_3px] shadow-safe/15"
           : "border-line hover:border-line-lit"
-      } ${color === "transparent" ? "checkerboard" : ""}`}
+      } ${color === "transparent" ? "checkerboard" : ""} rounded-lg`}
       style={color === "transparent" ? undefined : { backgroundColor: color }}
     />
   );

@@ -59,7 +59,7 @@ export default async function KassaOverview({
             <SectionHead index="03" title="Последние записи" />
             <EntriesTable entries={recent} />
             {totals.count > recent.length ? (
-              <p className="mt-3 font-mono text-[10px] text-dust">
+              <p className="mt-3 text-[12px] text-dust tabular-nums">
                 Показаны {recent.length} из {totals.count}. Полные списки — на вкладках
                 «Приход» и «Расход».
               </p>

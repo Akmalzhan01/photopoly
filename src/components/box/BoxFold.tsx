@@ -42,7 +42,7 @@ function Panel({
 
   return (
     <div
-      className={`absolute border ${TONE[node.role]}`}
+      className={`absolute border ${TONE[node.role]} rounded-lg`}
       style={{
         left: left * scale,
         top: top * scale,
@@ -80,7 +80,7 @@ export function BoxFold({ root, note }: { root: Face; note?: string }) {
   return (
     <div className="flex flex-col gap-3">
       <div
-        className="relative h-75 cursor-grab touch-none overflow-hidden border border-line bg-pit active:cursor-grabbing"
+        className="relative h-75 cursor-grab touch-none overflow-hidden border border-line bg-pit active:cursor-grabbing rounded-lg"
         style={{ perspective: "1600px" }}
         onPointerDown={(event) => {
           dragging.current = { x: event.clientX, y: event.clientY };
@@ -122,13 +122,13 @@ export function BoxFold({ root, note }: { root: Face; note?: string }) {
           </div>
         </div>
 
-        <span className="pointer-events-none absolute bottom-2 left-3 font-mono text-[10px] text-dust">
+        <span className="pointer-events-none absolute bottom-2 left-3 text-[12px] text-dust tabular-nums">
           потяните, чтобы повернуть
         </span>
       </div>
 
       <label className="flex items-center gap-3">
-        <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-dust">Сборка</span>
+        <span className="text-[12px] text-dust font-medium">Сборка</span>
         <input
           type="range"
           className="rail flex-1"
@@ -140,12 +140,12 @@ export function BoxFold({ root, note }: { root: Face; note?: string }) {
           aria-valuetext={`${Math.round(fold * 100)}%`}
           onChange={(event) => setFold(Number(event.target.value))}
         />
-        <span className="w-10 text-right font-mono text-[11px] text-ash tabular-nums">
+        <span className="w-10 text-right text-[13px] text-ash tabular-nums">
           {Math.round(fold * 100)}%
         </span>
       </label>
 
-      {note ? <p className="font-mono text-[10px] leading-relaxed text-dust">{note}</p> : null}
+      {note ? <p className="text-[12px] leading-relaxed text-dust tabular-nums">{note}</p> : null}
     </div>
   );
 }

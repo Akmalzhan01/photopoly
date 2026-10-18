@@ -19,7 +19,7 @@ const COPY = {
     form: "Новый приход",
     list: "Все приходы",
     empty: "За этот период приходов нет. Запишите первый — например, дневную выручку.",
-    tone: "text-safe-soft",
+    tone: "text-good",
   },
   EXPENSE: {
     total: "Расход за период",
@@ -53,7 +53,7 @@ export async function DirectionPage({
     <div className="flex flex-col gap-10">
       <PeriodPicker period={period} />
 
-      <div className="grid gap-px bg-line sm:grid-cols-2">
+      <div className="grid gap-px bg-line overflow-hidden rounded-xl border border-line sm:grid-cols-2">
         <Stat
           label={copy.total}
           value={`${formatSom(sum)} сом`}
@@ -63,7 +63,7 @@ export async function DirectionPage({
         <Stat
           label="Прибыль за период"
           value={`${totals.profit > 0 ? "+" : ""}${formatSom(totals.profit)} сом`}
-          tone={totals.profit > 0 ? "text-safe-soft" : totals.profit < 0 ? "text-ember" : "text-chalk"}
+          tone={totals.profit > 0 ? "text-good" : totals.profit < 0 ? "text-ember" : "text-chalk"}
           hint="Приход минус расход"
         />
       </div>
@@ -88,7 +88,7 @@ export async function DirectionPage({
           <>
             <EntriesTable entries={entries} showKind={false} />
             {entries.length === PAGE_SIZE ? (
-              <p className="mt-3 font-mono text-[10px] text-dust">
+              <p className="mt-3 text-[12px] text-dust tabular-nums">
                 Показаны последние {PAGE_SIZE}. Возьмите промежуток покороче, чтобы
                 увидеть остальные.
               </p>

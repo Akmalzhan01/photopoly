@@ -1,30 +1,16 @@
 import type { Metadata, Viewport } from "next";
-import { Playfair_Display, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
+import { Onest } from "next/font/google";
 import { THEME_SCRIPT } from "@/lib/theme";
 import "./globals.css";
 
 /**
- * All three carry Cyrillic. This is why the display face is Playfair rather than
- * Instrument Serif, which the design started with: Instrument Serif ships Latin
- * only, so every Russian heading would have silently dropped to a system serif
- * and the page would have looked like two different designs stitched together.
+ * One face for everything. Onest was drawn for Cyrillic first, so Russian
+ * headings and body text sit on the same metrics as the Latin — and it has
+ * tabular figures, which the prices, sizes and cash tables lean on.
  */
-const display = Playfair_Display({
-  variable: "--font-display",
-  weight: "400",
-  style: ["normal", "italic"],
-  subsets: ["latin", "cyrillic"],
-});
-
-const sans = IBM_Plex_Sans({
+const sans = Onest({
   variable: "--font-sans",
-  weight: ["400", "500", "600"],
-  subsets: ["latin", "cyrillic"],
-});
-
-const mono = IBM_Plex_Mono({
-  variable: "--font-mono",
-  weight: ["400", "500"],
+  weight: ["400", "500", "600", "700"],
   subsets: ["latin", "cyrillic"],
 });
 
@@ -52,8 +38,8 @@ export const viewport: Viewport = {
   // The browser chrome around the page — the phone's status bar, the desktop
   // title bar — should match whichever theme is showing, so both are declared.
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f4efe7" },
-    { media: "(prefers-color-scheme: dark)", color: "#0a0908" },
+    { media: "(prefers-color-scheme: light)", color: "#f6f7f9" },
+    { media: "(prefers-color-scheme: dark)", color: "#0b0d12" },
   ],
 };
 
@@ -65,7 +51,7 @@ export default function RootLayout({
   return (
     <html
       lang="ru"
-      className={`${display.variable} ${sans.variable} ${mono.variable} h-full`}
+      className={`${sans.variable} h-full`}
       // The script below writes `data-theme` before React sees the document,
       // so the attribute is legitimately not what the server rendered.
       suppressHydrationWarning

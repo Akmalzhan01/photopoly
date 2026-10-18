@@ -52,7 +52,6 @@ export default async function PaymentsPage({
   return (
     <>
       <div className="mb-6 flex flex-wrap items-baseline gap-x-2.5 gap-y-3">
-        <span className="font-mono text-[10px] text-ember">01</span>
         <Eyebrow>Платежи</Eyebrow>
 
         <div className="ml-auto flex gap-px">
@@ -62,11 +61,11 @@ export default async function PaymentsPage({
               <Link
                 key={filter.value || "all"}
                 href={filter.value ? `/admin/tolovlar?holat=${filter.value}` : "/admin/tolovlar"}
-                className={`border px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.12em] transition-colors ${
+                className={`border px-3 py-1.5 text-[12px] transition-colors ${
                   active
                     ? "border-safe text-safe-soft"
                     : "border-line text-dust hover:border-line-lit hover:text-chalk"
-                }`}
+                } font-medium rounded-lg`}
               >
                 {filter.label}
               </Link>
@@ -76,11 +75,11 @@ export default async function PaymentsPage({
       </div>
 
       {payments.length === 0 ? (
-        <div className="border border-line bg-slab p-6">
+        <div className="border border-line bg-slab p-6 rounded-lg">
           <p className="text-[13px] text-ash">Под этот фильтр платежей нет.</p>
         </div>
       ) : (
-        <div className="overflow-x-auto border border-line">
+        <div className="overflow-x-auto border border-line rounded-lg">
           <table className="w-full min-w-[820px] border-collapse text-left">
             <thead className="bg-riser">
               <tr>
@@ -88,7 +87,7 @@ export default async function PaymentsPage({
                   (head) => (
                     <th
                       key={head}
-                      className="px-4 py-2.5 font-mono text-[10px] uppercase tracking-[0.14em] text-dust"
+                      className="px-4 py-2.5 text-[12px] text-dust font-medium"
                     >
                       {head}
                     </th>
@@ -99,7 +98,7 @@ export default async function PaymentsPage({
             <tbody>
               {payments.map((payment) => (
                 <tr key={payment.id} className="border-t border-line bg-slab">
-                  <td className="px-4 py-2.5 font-mono text-[11px] text-ash tabular-nums">
+                  <td className="px-4 py-2.5 text-[13px] text-ash tabular-nums">
                     {dateTime.format(payment.paidAt ?? payment.createdAt)}
                   </td>
                   <td className="max-w-[220px] truncate px-4 py-2.5 text-[12px] text-chalk">
@@ -111,10 +110,10 @@ export default async function PaymentsPage({
                     </Link>
                   </td>
                   <td className="px-4 py-2.5 text-[12px] text-ash">{payment.plan.name}</td>
-                  <td className="px-4 py-2.5 font-mono text-[12px] text-chalk tabular-nums">
+                  <td className="px-4 py-2.5 text-[12px] text-chalk tabular-nums">
                     {formatSom(payment.amountSom)}
                   </td>
-                  <td className="px-4 py-2.5 font-mono text-[10px] text-dust">
+                  <td className="px-4 py-2.5 text-[12px] text-dust tabular-nums">
                     {payment.provider === "MANUAL" ? "вручную" : "finik"}
                     {payment.externalId ? (
                       <span
@@ -125,7 +124,7 @@ export default async function PaymentsPage({
                       </span>
                     ) : null}
                   </td>
-                  <td className={`px-4 py-2.5 font-mono text-[11px] ${STATUS[payment.status].tone}`}>
+                  <td className={`px-4 py-2.5 text-[13px] ${STATUS[payment.status].tone} tabular-nums`}>
                     {STATUS[payment.status].label}
                   </td>
                   <td className="px-4 py-2.5">
@@ -135,7 +134,7 @@ export default async function PaymentsPage({
                         reference={payment.reference.slice(0, 8)}
                       />
                     ) : (
-                      <span className="font-mono text-[10px] text-dust">—</span>
+                      <span className="text-[12px] text-dust tabular-nums">—</span>
                     )}
                   </td>
                 </tr>

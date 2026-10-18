@@ -50,6 +50,7 @@ import { loadSettings, saveSettings } from "@/lib/storage";
 import { toPixels } from "@/lib/units";
 import { drawWatermark } from "@/lib/watermark";
 import { ThemeToggle } from "./ThemeToggle";
+import { Logo } from "./site/ui";
 import { MaskEditor } from "./MaskEditor";
 import { OfflineBadge } from "./OfflineBadge";
 import { OfflineReady } from "./OfflineReady";
@@ -609,11 +610,12 @@ export function Studio({ attireAssets }: { attireAssets: AttireAssetView[] }) {
   return (
     <main className="flex min-h-dvh flex-col lg:h-dvh lg:overflow-hidden">
       <header className="shrink-0 border-b border-line bg-pit">
-        <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 px-5 py-3.5">
-          <h1 className="font-display text-[26px] leading-none tracking-tight text-chalk">
-            photo<em className="text-safe">poly</em>
-          </h1>
-          <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-dust">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 px-5 py-3">
+          <Link href="/" className="flex items-center gap-2.5">
+            <Logo />
+            <h1 className="text-[17px] font-semibold tracking-tight text-chalk">photopoly</h1>
+          </Link>
+          <p className="hidden text-[13px] text-dust md:block">
             Удаление фона · точный размер
           </p>
           <div className="ml-auto flex items-center gap-3">
@@ -625,7 +627,7 @@ export function Studio({ attireAssets }: { attireAssets: AttireAssetView[] }) {
                 disabled={!canUndo}
                 title="Отменить (Ctrl+Z)"
                 aria-label="Отменить"
-                className="border border-line px-2.5 py-1.5 font-mono text-[10px] text-ash transition-colors enabled:hover:border-line-lit enabled:hover:text-safe disabled:opacity-30"
+                className="rounded-l-lg border border-line bg-slab px-2.5 py-1.5 text-[14px] text-ash transition-colors enabled:hover:bg-riser enabled:hover:text-chalk disabled:opacity-30"
               >
                 ↶
               </button>
@@ -635,7 +637,7 @@ export function Studio({ attireAssets }: { attireAssets: AttireAssetView[] }) {
                 disabled={!canRedo}
                 title="Вернуть (Ctrl+Shift+Z)"
                 aria-label="Вернуть"
-                className="-ml-px border border-line px-2.5 py-1.5 font-mono text-[10px] text-ash transition-colors enabled:hover:border-line-lit enabled:hover:text-safe disabled:opacity-30"
+                className="-ml-px rounded-r-lg border border-line bg-slab px-2.5 py-1.5 text-[14px] text-ash transition-colors enabled:hover:bg-riser enabled:hover:text-chalk disabled:opacity-30"
               >
                 ↷
               </button>
@@ -643,10 +645,10 @@ export function Studio({ attireAssets }: { attireAssets: AttireAssetView[] }) {
             <Link
               href="/hisob"
               title="Мой аккаунт"
-              className={`border px-2.5 py-1.5 font-mono text-[10px] uppercase tracking-[0.14em] transition-colors ${
+              className={`rounded-full border px-3 py-1 text-[13px] font-medium transition-colors ${
                 allowed
-                  ? "border-line text-ash hover:border-line-lit hover:text-chalk"
-                  : "border-ember bg-ember/12 text-safe-soft"
+                  ? "border-line bg-slab text-ash hover:border-line-lit hover:text-chalk"
+                  : "border-ember/40 bg-ember/10 text-ember"
               }`}
             >
               {entitlement ? describeQuota(entitlement) : "Проверяем…"}
@@ -654,8 +656,8 @@ export function Studio({ attireAssets }: { attireAssets: AttireAssetView[] }) {
             <OfflineBadge quality={settings.model} warming={warming} />
 
             <span className="hidden items-center gap-2 sm:flex">
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-safe" />
-              <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-ash">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-good" />
+              <span className="text-[12px] text-ash font-medium">
                 Работает в браузере
               </span>
             </span>
@@ -679,7 +681,7 @@ export function Studio({ attireAssets }: { attireAssets: AttireAssetView[] }) {
           belong in the same line as everything else that went wrong. */}
       {error ?? problem ? (
         <div className="flex shrink-0 items-center gap-3 border-b border-ember/50 bg-ember/12 px-5 py-2.5">
-          <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-safe">
+          <span className="text-[12px] text-safe font-medium">
             Xato
           </span>
           <p className="text-[12px] text-chalk">{error ?? problem}</p>
@@ -689,7 +691,7 @@ export function Studio({ attireAssets }: { attireAssets: AttireAssetView[] }) {
               setError(null);
               clearProblem();
             }}
-            className="ml-auto font-mono text-[10px] text-ash transition-colors hover:text-safe"
+            className="ml-auto text-[12px] text-ash transition-colors hover:text-safe tabular-nums"
           >
             yopish
           </button>

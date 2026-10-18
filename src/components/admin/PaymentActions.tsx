@@ -4,7 +4,7 @@ import { cancelPayment, confirmPayment } from "@/app/actions/admin";
 import { ActionForm } from "./ActionForm";
 
 const SMALL =
-  "border px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.12em] transition-colors disabled:opacity-40";
+  "border px-2.5 py-1 text-[12px] transition-colors disabled:opacity-40 font-medium rounded-lg";
 
 export function PaymentActions({
   paymentId,

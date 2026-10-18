@@ -29,8 +29,8 @@ const PAYMENT_TONE: Record<string, string> = {
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="bg-slab p-5">
-      <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-dust">{label}</span>
-      <p className="mt-2 font-mono text-[22px] leading-none text-chalk tabular-nums">{value}</p>
+      <span className="text-[12px] text-dust font-medium">{label}</span>
+      <p className="mt-2 text-[22px] leading-none text-chalk tabular-nums">{value}</p>
     </div>
   );
 }
@@ -62,15 +62,14 @@ export default async function AccountPage() {
   return (
     <div className="mx-auto max-w-4xl px-5 py-16">
       <div className="mb-3 flex items-baseline gap-2.5">
-        <span className="font-mono text-[10px] text-ember">01</span>
         <Eyebrow>Мой аккаунт</Eyebrow>
       </div>
-      <h1 className="font-display text-[clamp(30px,4.5vw,42px)] leading-[1.05] text-chalk">
+      <h1 className="font-display text-[clamp(30px,4.5vw,42px)] leading-[1.05] text-chalk font-semibold tracking-tight">
         {user.name || user.email}
       </h1>
-      <p className="mt-2 font-mono text-[11px] text-dust">{user.email}</p>
+      <p className="mt-2 text-[13px] text-dust tabular-nums">{user.email}</p>
 
-      <div className="mt-10 grid gap-px bg-line sm:grid-cols-3">
+      <div className="mt-10 grid gap-px bg-line overflow-hidden rounded-xl border border-line sm:grid-cols-3">
         <Stat
           label="Тариф"
           value={entitlement.plan ? entitlement.plan.name : "Пробный"}
@@ -105,7 +104,6 @@ export default async function AccountPage() {
 
       <section className="mt-14">
         <div className="mb-4 flex items-baseline gap-2.5">
-          <span className="font-mono text-[10px] text-ember">02</span>
           <Eyebrow>История платежей</Eyebrow>
         </div>
 
@@ -121,7 +119,7 @@ export default async function AccountPage() {
                   {["Дата", "Тариф", "Сумма", "Статус", ""].map((head) => (
                     <th
                       key={head}
-                      className="px-4 py-3 font-mono text-[10px] uppercase tracking-[0.16em] text-dust"
+                      className="px-4 py-3 text-[12px] text-dust font-medium"
                     >
                       {head}
                     </th>
@@ -131,24 +129,24 @@ export default async function AccountPage() {
               <tbody>
                 {payments.map((payment) => (
                   <tr key={payment.id} className="border-b border-line/60 last:border-0">
-                    <td className="px-4 py-3 font-mono text-[11px] text-ash tabular-nums">
+                    <td className="px-4 py-3 text-[13px] text-ash tabular-nums">
                       {dateTime.format(payment.paidAt ?? payment.createdAt)}
                     </td>
                     <td className="px-4 py-3 text-[13px] text-chalk">{payment.plan.name}</td>
-                    <td className="px-4 py-3 font-mono text-[12px] text-chalk tabular-nums">
+                    <td className="px-4 py-3 text-[12px] text-chalk tabular-nums">
                       {formatSom(payment.amountSom)} сом
                     </td>
                     <td
-                      className={`px-4 py-3 font-mono text-[11px] ${PAYMENT_TONE[payment.status]}`}
+                      className={`px-4 py-3 text-[13px] ${PAYMENT_TONE[payment.status]} tabular-nums`}
                     >
                       {PAYMENT_LABEL[payment.status]}
-                      {payment.provider === "MANUAL" ? " · вручную" : ""}
+                      {payment.provider === "MANUAL" ? "· вручную" : ""}
                     </td>
                     <td className="px-4 py-3 text-right">
                       {payment.status === "PENDING" ? (
                         <Link
                           href={`/hisob/tolov/${payment.id}`}
-                          className="font-mono text-[10px] text-safe underline underline-offset-4"
+                          className="text-[12px] text-safe underline underline-offset-4 tabular-nums"
                         >
                           Открыть
                         </Link>

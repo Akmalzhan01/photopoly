@@ -49,7 +49,7 @@ function BoardPicker({
           if (event.target.value === "custom") return;
           onChange(Number(event.target.value));
         }}
-        className="w-full border border-line bg-pit px-2.5 py-2 text-sm text-chalk outline-none transition-colors focus:border-safe/50"
+        className="w-full border border-line bg-pit px-2.5 py-2 text-sm text-chalk outline-none transition-colors focus:border-safe/50 rounded-lg"
       >
         {BOARDS.map((board) => (
           <option key={board.label} value={board.thickness}>
@@ -111,7 +111,7 @@ export function BoxStudio() {
    * A clock in the render output is a hydration mismatch waiting to happen —
    * the server's second and the browser's are not the same second.
    */
-  const jobLine = () => [job.trim(), run > 0 ? `${run} шт` : ""].filter(Boolean).join(", ");
+  const jobLine = () => [job.trim(), run > 0 ? `${run} шт` : ""].filter(Boolean).join(",");
   const today = () => new Date().toLocaleDateString("ru-RU");
 
   const onPrint = async () => {
@@ -157,12 +157,12 @@ export function BoxStudio() {
                     active
                       ? "border-safe bg-safe/12"
                       : "border-line hover:border-line-lit hover:bg-riser"
-                  }`}
+                  } rounded-lg`}
                 >
                   <span className={`block text-[13px] ${active ? "text-safe-soft" : "text-chalk"}`}>
                     {kind.label}
                   </span>
-                  <span className="mt-0.5 block font-mono text-[10px] leading-tight text-dust">
+                  <span className="mt-0.5 block text-[12px] leading-tight text-dust tabular-nums">
                     {kind.note}
                   </span>
                 </button>
@@ -183,7 +183,7 @@ export function BoxStudio() {
           />
           {/* The one question that ruins a batch if it is assumed rather than
               asked, so it is answered in words under the switch. */}
-          <p className="font-mono text-[10px] leading-relaxed text-dust">
+          <p className="text-[12px] leading-relaxed text-dust tabular-nums">
             {spec.measure === "inner"
               ? "Столько места остаётся внутри. Снаружи коробка будет больше на толщину материала."
               : "Габариты готовой коробки. Внутри места будет меньше на толщину материала."}
@@ -227,7 +227,7 @@ export function BoxStudio() {
               onChange={(thickness) => patch({ thickness })}
             />
           </div>
-          <p className="font-mono text-[10px] leading-relaxed text-dust">
+          <p className="text-[12px] leading-relaxed text-dust tabular-nums">
             {BOARDS.find((board) => board.thickness === spec.thickness)?.note ??
               "Своя толщина — возьмите её у поставщика картона."}
           </p>
@@ -250,16 +250,16 @@ export function BoxStudio() {
             aria-expanded={tuning}
             className="flex w-full items-baseline gap-2 text-left"
           >
-            <span className="font-mono text-[10px] text-ember">{tuning ? "▾" : "▸"}</span>
+            <span className="text-[12px] text-ember tabular-nums">{tuning ? "▾" : "▸"}</span>
             <Label>Тонкая настройка</Label>
             {overridden ? (
-              <span className="ml-auto font-mono text-[10px] text-safe-soft">изменено</span>
+              <span className="ml-auto text-[12px] text-safe-soft tabular-nums">изменено</span>
             ) : null}
           </button>
 
           {tuning ? (
             <div className="mt-4 flex flex-col gap-4">
-              <p className="font-mono text-[10px] leading-relaxed text-dust">
+              <p className="text-[12px] leading-relaxed text-dust tabular-nums">
                 Это пропорции, а не расчёт — типовые значения, с которых удобно
                 начать. Меняйте как нужно, они попадут и в чертёж, и в DXF.
               </p>
@@ -273,14 +273,14 @@ export function BoxStudio() {
                     onChange={(value) => tweak(knob.key, value)}
                   />
                   <div className="flex items-baseline gap-2">
-                    <span className="font-mono text-[10px] leading-relaxed text-dust">
+                    <span className="text-[12px] leading-relaxed text-dust tabular-nums">
                       {knob.note}
                     </span>
                     {knob.set ? (
                       <button
                         type="button"
                         onClick={() => tweak(knob.key, null)}
-                        className="ml-auto shrink-0 font-mono text-[10px] text-ash underline-offset-2 transition-colors hover:text-safe"
+                        className="ml-auto shrink-0 text-[12px] text-ash underline-offset-2 transition-colors hover:text-safe tabular-nums"
                       >
                         ↺ {mm(knob.auto)}
                       </button>
@@ -292,7 +292,7 @@ export function BoxStudio() {
                 <button
                   type="button"
                   onClick={() => patch({ tweaks: {} })}
-                  className="self-start font-mono text-[10px] uppercase tracking-[0.14em] text-ash transition-colors hover:text-safe"
+                  className="self-start text-[12px] text-ash transition-colors hover:text-safe font-medium"
                 >
                   ↺ Вернуть все
                 </button>
@@ -309,11 +309,11 @@ export function BoxStudio() {
               maxLength={60}
               placeholder="Кто заказал"
               onChange={(event) => setJob(event.target.value)}
-              className="border border-line bg-pit px-2.5 py-2 text-sm text-chalk outline-none transition-colors placeholder:text-dust focus:border-safe/50"
+              className="border border-line bg-pit px-2.5 py-2 text-sm text-chalk outline-none transition-colors placeholder:text-dust focus:border-safe/50 rounded-lg"
             />
           </label>
           <NumberField label="Тираж" suffix="шт" value={run} min={0} max={9_999_999} onChange={setRun} />
-          <p className="font-mono text-[10px] leading-relaxed text-dust">
+          <p className="text-[12px] leading-relaxed text-dust tabular-nums">
             Попадёт в штамп чертежа — чтобы типография знала, что это за работа.
           </p>
         </div>
@@ -332,12 +332,12 @@ export function BoxStudio() {
             </Panel>
             <div className="flex flex-wrap items-baseline gap-x-6 gap-y-1">
               {blank.pieces.map((piece) => (
-                <span key={piece.label} className="font-mono text-[11px] text-ash tabular-nums">
+                <span key={piece.label} className="text-[13px] text-ash tabular-nums">
                   <span className="text-dust">{piece.label}: </span>
                   {mm(piece.width)} × {mm(piece.height)} мм
                 </span>
               ))}
-              <span className="font-mono text-[11px] text-dust">развёрнутый лист</span>
+              <span className="text-[13px] text-dust tabular-nums">развёрнутый лист</span>
             </div>
           </div>
 
@@ -373,7 +373,7 @@ export function BoxStudio() {
         <dl className="grid grid-cols-2 gap-x-6 gap-y-2 border-t border-line pt-4 sm:grid-cols-4">
           {blank.facts.map((fact) => (
             <div key={fact.label}>
-              <dt className="font-mono text-[10px] uppercase tracking-[0.16em] text-dust">
+              <dt className="text-[12px] text-dust font-medium">
                 {fact.label}
               </dt>
               <dd className="mt-0.5 text-[13px] text-chalk">{fact.value}</dd>

@@ -45,26 +45,25 @@ export default async function AuditPage() {
   return (
     <>
       <div className="mb-2 flex items-baseline gap-2.5">
-        <span className="font-mono text-[10px] text-ember">01</span>
         <Eyebrow>Журнал действий</Eyebrow>
       </div>
-      <p className="mb-6 font-mono text-[10px] text-dust">
+      <p className="mb-6 text-[12px] text-dust tabular-nums">
         Последние 200 административных действий. Эти записи не удаляются.
       </p>
 
       {entries.length === 0 ? (
-        <div className="border border-line bg-slab p-6">
+        <div className="border border-line bg-slab p-6 rounded-lg">
           <p className="text-[13px] text-ash">Записей пока нет.</p>
         </div>
       ) : (
-        <div className="overflow-x-auto border border-line">
+        <div className="overflow-x-auto border border-line rounded-lg">
           <table className="w-full min-w-[720px] border-collapse text-left">
             <thead className="bg-riser">
               <tr>
                 {["Время", "Кто", "Что", "Объект"].map((head) => (
                   <th
                     key={head}
-                    className="px-4 py-2.5 font-mono text-[10px] uppercase tracking-[0.14em] text-dust"
+                    className="px-4 py-2.5 text-[12px] text-dust font-medium"
                   >
                     {head}
                   </th>
@@ -74,16 +73,16 @@ export default async function AuditPage() {
             <tbody>
               {entries.map((entry) => (
                 <tr key={entry.id} className="border-t border-line bg-slab align-top">
-                  <td className="px-4 py-2.5 font-mono text-[11px] whitespace-nowrap text-ash tabular-nums">
+                  <td className="px-4 py-2.5 text-[13px] whitespace-nowrap text-ash tabular-nums">
                     {dateTime.format(entry.createdAt)}
                   </td>
-                  <td className="px-4 py-2.5 font-mono text-[11px] text-chalk">
+                  <td className="px-4 py-2.5 text-[13px] text-chalk tabular-nums">
                     {entry.actor?.email ?? "—"}
                   </td>
                   <td className="px-4 py-2.5 text-[12px] text-chalk">
                     {ACTION_LABEL[entry.action] ?? entry.action}
                   </td>
-                  <td className="px-4 py-2.5 font-mono text-[10px] break-all text-dust">
+                  <td className="px-4 py-2.5 text-[12px] break-all text-dust tabular-nums">
                     {entry.targetType}:{entry.targetId?.slice(0, 10)}
                     {entry.meta ? (
                       <span className="ml-2 text-dust">{JSON.stringify(entry.meta).slice(0, 90)}</span>

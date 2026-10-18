@@ -60,13 +60,13 @@ function Summary({ orders, today }: { orders: Order[]; today: string }) {
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-px bg-line sm:grid-cols-4">
+    <div className="grid grid-cols-2 gap-px bg-line overflow-hidden rounded-xl border border-line sm:grid-cols-4">
       {cells.map((cell) => (
         <div key={cell.label} className="bg-slab px-4 py-3.5">
-          <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-dust">
+          <span className="text-[12px] text-dust font-medium">
             {cell.label}
           </span>
-          <p className={`mt-1.5 font-mono text-[21px] leading-none tabular-nums ${cell.tone}`}>
+          <p className={`mt-1.5 text-[21px] leading-none tabular-nums ${cell.tone}`}>
             {cell.value}
           </p>
         </div>
@@ -130,14 +130,14 @@ export function OrderList({ orders, today }: { orders: Order[]; today: string })
     return (
       <div className="flex flex-col gap-5">
         <Summary orders={view} today={today} />
-        <div className="border border-line bg-slab p-6">
+        <div className="border border-line bg-slab p-6 rounded-lg">
           <p className="text-[14px] leading-relaxed text-ash">
             Заказов пока нет. Примите первый — имени клиента и услуги достаточно,
             остальное можно дописать позже.
           </p>
           <Link
             href="/zakazlar/yangi"
-            className="mt-4 inline-flex border border-safe bg-safe/12 px-4 py-2.5 font-mono text-[11px] uppercase tracking-[0.14em] text-safe-soft transition-colors hover:bg-safe/20"
+            className="mt-4 inline-flex border border-transparent bg-safe px-4 py-2.5 text-[13px] text-white transition-colors hover:bg-safe/90 font-medium rounded-lg"
           >
             Принять заказ
           </Link>
@@ -169,13 +169,13 @@ export function OrderList({ orders, today }: { orders: Order[]; today: string })
               type="button"
               aria-pressed={active}
               onClick={() => setFilter(choice)}
-              className={`border px-3.5 py-2 font-mono text-[11px] uppercase tracking-[0.12em] transition-colors ${
+              className={`border px-3.5 py-2 text-[13px] transition-colors ${
                 active
                   ? "border-safe bg-safe/12 text-safe-soft"
                   : "border-line text-dust hover:border-line-lit hover:text-ash"
-              }`}
+              } font-medium rounded-lg`}
             >
-              {choice === "ALL" ? "Все" : STAGES[choice].label}{" "}
+              {choice === "ALL" ? "Все" : STAGES[choice].label}{""}
               {/* A real space, not just margin: without it the accessible name
                   comes out "Новый2", which is what a screen reader says. */}
               <span className="ml-1.5 tabular-nums opacity-70">{count}</span>
@@ -197,13 +197,13 @@ export function OrderList({ orders, today }: { orders: Order[]; today: string })
       </div>
 
       {rows.length === 0 ? (
-        <div className="border border-line bg-slab px-4 py-6">
+        <div className="border border-line bg-slab px-4 py-6 rounded-lg">
           <p className="text-[14px] text-ash">
             {filter === "ALL" ? "" : `${STAGES[filter].hint} — сейчас пусто.`}
           </p>
         </div>
       ) : (
-        <ul className="border border-line bg-slab">
+        <ul className="border border-line bg-slab rounded-lg">
           {rows.map((order) => (
             <OrderRow
               key={order.id}

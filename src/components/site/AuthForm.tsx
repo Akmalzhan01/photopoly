@@ -48,7 +48,7 @@ export function AuthForm({ mode, next }: { mode: "login" | "signup"; next?: stri
 
       {/* Errors that belong to no single field — wrong credentials, blocked account. */}
       {state?.error && !state.field ? (
-        <p role="alert" className="border border-ember/50 bg-ember/8 px-3 py-2 font-mono text-[11px] text-safe-soft">
+        <p role="alert" className="border border-ember/50 bg-ember/8 px-3 py-2 text-[13px] text-safe-soft tabular-nums rounded-lg">
           {state.error}
         </p>
       ) : null}
@@ -57,17 +57,17 @@ export function AuthForm({ mode, next }: { mode: "login" | "signup"; next?: stri
         {pending ? "Подождите…" : mode === "login" ? "Войти" : "Создать аккаунт"}
       </Button>
 
-      <p className="text-center font-mono text-[11px] text-dust">
+      <p className="text-center text-[13px] text-dust tabular-nums">
         {mode === "login" ? (
           <>
-            Нет аккаунта?{" "}
+            Нет аккаунта?{""}
             <Link href="/royxat" className="text-ash underline underline-offset-4 hover:text-safe">
               Зарегистрируйтесь
             </Link>
           </>
         ) : (
           <>
-            Уже есть аккаунт?{" "}
+            Уже есть аккаунт?{""}
             <Link href="/kirish" className="text-ash underline underline-offset-4 hover:text-safe">
               Войдите
             </Link>

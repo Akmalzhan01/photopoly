@@ -60,9 +60,8 @@ export default async function UsersPage({
   return (
     <>
       <div className="mb-6 flex flex-wrap items-baseline gap-x-2.5 gap-y-3">
-        <span className="font-mono text-[10px] text-ember">01</span>
         <Eyebrow>Пользователи</Eyebrow>
-        <span className="font-mono text-[10px] text-dust">{total}</span>
+        <span className="text-[12px] text-dust tabular-nums">{total}</span>
 
         <form className="ml-auto flex items-center gap-2" action="/admin/foydalanuvchilar">
           <input
@@ -71,11 +70,11 @@ export default async function UsersPage({
             defaultValue={query}
             placeholder="Почта или имя"
             aria-label="Поиск пользователя"
-            className="w-52 border border-line bg-pit px-3 py-1.5 font-mono text-[11px] text-chalk outline-none transition-colors placeholder:text-dust focus:border-safe/50"
+            className="w-52 border border-line bg-pit px-3 py-1.5 text-[13px] text-chalk outline-none transition-colors placeholder:text-dust focus:border-safe/50 tabular-nums rounded-lg"
           />
           <button
             type="submit"
-            className="border border-line px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-ash transition-colors hover:border-line-lit hover:text-chalk"
+            className="border border-line px-3 py-1.5 text-[12px] text-ash transition-colors hover:border-line-lit hover:text-chalk font-medium rounded-lg"
           >
             Найти
           </button>
@@ -83,13 +82,13 @@ export default async function UsersPage({
       </div>
 
       {users.length === 0 ? (
-        <div className="border border-line bg-slab p-6">
+        <div className="border border-line bg-slab p-6 rounded-lg">
           <p className="text-[13px] text-ash">
             {query ? `По запросу «${query}» никого не найдено.` : "Пользователей пока нет."}
           </p>
         </div>
       ) : (
-        <div className="flex flex-col gap-px bg-line">
+        <div className="flex flex-col gap-px bg-line overflow-hidden rounded-xl border border-line">
           {users.map((user) => (
             <UserRow
               key={user.id}
@@ -130,11 +129,11 @@ export default async function UsersPage({
                 p: String(number),
               })}`}
               aria-current={number === page ? "page" : undefined}
-              className={`border px-2.5 py-1 font-mono text-[11px] tabular-nums transition-colors ${
+              className={`border px-2.5 py-1 text-[13px] tabular-nums transition-colors ${
                 number === page
                   ? "border-safe text-safe-soft"
                   : "border-line text-dust hover:border-line-lit hover:text-chalk"
-              }`}
+              } rounded-lg`}
             >
               {number}
             </Link>

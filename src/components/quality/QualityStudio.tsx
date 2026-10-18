@@ -46,7 +46,7 @@ function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-baseline justify-between gap-3">
       <Label>{label}</Label>
-      <span className="font-mono text-[11px] text-chalk tabular-nums">{value}</span>
+      <span className="text-[13px] text-chalk tabular-nums">{value}</span>
     </div>
   );
 }
@@ -303,8 +303,8 @@ export function QualityStudio() {
       />
 
       {error ?? problem ? (
-        <div className="mb-5 flex items-center gap-3 border border-ember/50 bg-ember/12 px-4 py-2.5">
-          <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-safe">Xato</span>
+        <div className="mb-5 flex items-center gap-3 border border-ember/50 bg-ember/12 px-4 py-2.5 rounded-lg">
+          <span className="text-[12px] text-safe font-medium">Xato</span>
           <p className="text-[12px] text-chalk">{error ?? problem}</p>
           <button
             type="button"
@@ -312,14 +312,14 @@ export function QualityStudio() {
               setError(null);
               clearProblem();
             }}
-            className="ml-auto font-mono text-[10px] text-ash transition-colors hover:text-safe"
+            className="ml-auto text-[12px] text-ash transition-colors hover:text-safe tabular-nums"
           >
             yopish
           </button>
         </div>
       ) : null}
 
-      <div className="grid gap-px border border-line bg-line lg:grid-cols-[1fr_21rem]">
+      <div className="grid gap-px border border-line bg-line lg:grid-cols-[1fr_21rem] rounded-lg">
         <section
           className="bg-slab p-5"
           onDragOver={(event) => event.preventDefault()}
@@ -339,7 +339,7 @@ export function QualityStudio() {
               ]}
               onChange={setView}
             />
-            <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-dust">
+            <span className="text-[12px] text-dust font-medium">
               {computing
                 ? "Считаем…"
                 : view === "fit"
@@ -350,7 +350,7 @@ export function QualityStudio() {
               <button
                 type="button"
                 onClick={() => pickerRef.current?.click()}
-                className="ml-auto font-mono text-[10px] uppercase tracking-[0.14em] text-dust underline underline-offset-4 transition-colors hover:text-chalk"
+                className="ml-auto text-[12px] text-dust underline underline-offset-4 transition-colors hover:text-chalk font-medium"
               >
                 Другое фото
               </button>
@@ -361,7 +361,7 @@ export function QualityStudio() {
             {bitmap && pair ? (
               <div
                 ref={stageRef}
-                className="relative select-none overflow-hidden border border-line bg-pit"
+                className="relative select-none overflow-hidden border border-line bg-pit rounded-lg"
                 style={{ width: box.w, height: box.h }}
                 onPointerDown={(event) => {
                   if (view === "fit") pickFocus(event.clientX, event.clientY);
@@ -385,7 +385,7 @@ export function QualityStudio() {
                   <div
                     aria-hidden
                     title="Этот участок показывает «1:1»"
-                    className="pointer-events-none absolute border border-dashed border-ember/80"
+                    className="pointer-events-none absolute border border-dashed border-ember/80 rounded-lg"
                     style={{
                       left: `${(window1to1.x / source.w) * 100}%`,
                       top: `${(window1to1.y / source.h) * 100}%`,
@@ -424,15 +424,15 @@ export function QualityStudio() {
                     if (event.key === "ArrowRight") setSplit((s) => Math.min(100, s + 5));
                   }}
                   style={{ left: `${split}%` }}
-                  className="absolute top-1/2 flex h-9 w-9 -translate-x-1/2 -translate-y-1/2 cursor-ew-resize touch-none items-center justify-center border border-safe bg-ink/85 font-mono text-[12px] text-safe-soft"
+                  className="absolute top-1/2 flex h-9 w-9 -translate-x-1/2 -translate-y-1/2 cursor-ew-resize touch-none items-center justify-center border border-safe bg-ink/85 text-[12px] text-safe-soft tabular-nums rounded-lg"
                 >
                   ↔
                 </button>
 
-                <span className="pointer-events-none absolute bottom-0 left-0 bg-ink/75 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.16em] text-dust">
+                <span className="pointer-events-none absolute bottom-0 left-0 bg-ink/75 px-2 py-1 text-[12px] text-dust font-medium">
                   Как было
                 </span>
-                <span className="pointer-events-none absolute right-0 bottom-0 bg-ink/75 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.16em] text-safe-soft">
+                <span className="pointer-events-none absolute right-0 bottom-0 bg-ink/75 px-2 py-1 text-[12px] text-safe-soft font-medium">
                   Как станет
                 </span>
               </div>
@@ -440,12 +440,12 @@ export function QualityStudio() {
               <button
                 type="button"
                 onClick={() => pickerRef.current?.click()}
-                className="flex min-h-72 w-full flex-col items-center justify-center gap-3 border border-dashed border-line bg-pit px-6 text-center transition-colors hover:border-safe/50"
+                className="flex min-h-72 w-full flex-col items-center justify-center gap-3 border border-dashed border-line bg-pit px-6 text-center transition-colors hover:border-safe/50 rounded-lg"
               >
-                <span className="font-display text-[22px] text-chalk">
+                <span className="font-display text-[22px] text-chalk font-semibold tracking-tight">
                   {file ? "Открываем…" : "Перетащите фото сюда"}
                 </span>
-                <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-dust">
+                <span className="text-[12px] text-dust font-medium">
                   или нажмите, чтобы выбрать файл
                 </span>
                 <span className="max-w-sm text-[12px] leading-relaxed text-ash">
@@ -560,7 +560,7 @@ export function QualityStudio() {
               </p>
             ) : null}
             {made ? (
-              <p className="pt-1 font-mono text-[10px] text-dust">Сохранено: {made}</p>
+              <p className="pt-1 text-[12px] text-dust tabular-nums">Сохранено: {made}</p>
             ) : null}
           </div>
 
@@ -589,7 +589,7 @@ export function QualityStudio() {
             >
               Печать
             </Button>
-            <p className="font-mono text-[10px] text-dust">
+            <p className="text-[12px] text-dust tabular-nums">
               {nothingToDo
                 ? "Все ползунки на нуле — улучшать нечего."
                 : entitlement

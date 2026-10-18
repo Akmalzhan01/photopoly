@@ -110,7 +110,7 @@ export function Panel({
         index="01"
         title="Размер"
         aside={
-          <span className="font-mono text-[10px] text-dust tabular-nums">
+          <span className="text-[12px] text-dust tabular-nums">
             {targetW}×{targetH}
           </span>
         }
@@ -119,7 +119,7 @@ export function Panel({
           {PRESET_GROUPS.map((group) => (
             <div key={group}>
               <div className="mb-1.5 flex items-center gap-2">
-                <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-dust">
+                <span className="text-[11px] text-dust font-medium">
                   {group}
                 </span>
                 <span className="h-px flex-1 bg-line" />
@@ -139,9 +139,9 @@ export function Panel({
                       }`}
                     >
                       <span
-                        className={`block font-mono text-[11px] ${
+                        className={`block text-[13px] ${
                           active ? "text-safe-soft" : "text-chalk"
-                        }`}
+                        } tabular-nums`}
                       >
                         {preset.label}
                       </span>
@@ -233,16 +233,16 @@ export function Panel({
                 type="button"
                 disabled={!canEdit}
                 onClick={onEdit}
-                className="flex w-full items-center justify-between border border-line bg-riser/60 px-3 py-2.5 transition-colors enabled:hover:border-line-lit enabled:hover:bg-riser disabled:cursor-not-allowed disabled:opacity-40"
+                className="flex w-full items-center justify-between border border-line bg-riser/60 px-3 py-2.5 transition-colors enabled:hover:border-line-lit enabled:hover:bg-riser disabled:cursor-not-allowed disabled:opacity-40 rounded-lg"
               >
                 <span
-                  className={`font-mono text-[10px] uppercase tracking-[0.14em] ${
+                  className={`text-[12px] ${
                     canEdit ? "text-chalk" : "text-dust"
-                  }`}
+                  } font-medium`}
                 >
                   Поправить края
                 </span>
-                <span className="font-mono text-[10px] text-safe-soft tabular-nums">
+                <span className="text-[12px] text-safe-soft tabular-nums">
                   {strokeCount > 0 ? `${strokeCount} шт.` : ""}
                 </span>
               </button>
@@ -283,7 +283,7 @@ export function Panel({
         title="Качество"
         aside={
           repairing ? (
-            <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-dust">
+            <span className="text-[12px] text-dust font-medium">
               Считаем…
             </span>
           ) : null
@@ -340,7 +340,7 @@ export function Panel({
               shop has to be able to say so if asked. */}
           <p className="text-[10px] leading-snug text-dust">
             Выравнивает экспозицию, убирает шум и увеличивает фильтром для
-            фотографий, а не растягиванием.{" "}
+            фотографий, а не растягиванием.{""}
             <span className="text-ash">Ничего не дорисовывает</span> — только то,
             что уже есть на снимке, поэтому годится и для документов.
           </p>
@@ -357,7 +357,7 @@ export function Panel({
               onClick={() =>
                 patch({ brightness: 0, contrast: 0, saturation: 0, warmth: 0 })
               }
-              className="font-mono text-[10px] uppercase tracking-[0.14em] text-safe-soft transition-colors hover:text-safe"
+              className="text-[12px] text-safe-soft transition-colors hover:text-safe font-medium"
             >
               Сбросить
             </button>
@@ -430,9 +430,9 @@ export function Panel({
                     settings.attireAssetId === null
                       ? "border-safe bg-safe/10"
                       : "border-line bg-riser/50 hover:border-line-lit hover:bg-riser"
-                  }`}
+                  } rounded-lg`}
                 >
-                  <span className="flex h-10 items-center font-mono text-[16px] text-dust">
+                  <span className="flex h-10 items-center text-[16px] text-dust tabular-nums">
                     &times;
                   </span>
                   <span
@@ -456,7 +456,7 @@ export function Panel({
                         active
                           ? "border-safe bg-safe/10"
                           : "border-line bg-riser/50 hover:border-line-lit hover:bg-riser"
-                      }`}
+                      } rounded-lg`}
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element -- a
                           Storage CDN URL; routing it through the Image loader
@@ -632,7 +632,7 @@ export function Panel({
         title="Лист для печати"
         aside={
           settings.sheet && fits ? (
-            <span className="font-mono text-[10px] text-safe-soft tabular-nums">
+            <span className="text-[12px] text-safe-soft tabular-nums">
               {copies} шт.
             </span>
           ) : null
@@ -662,9 +662,9 @@ export function Panel({
                       }`}
                     >
                       <span
-                        className={`block font-mono text-[11px] ${
+                        className={`block text-[13px] ${
                           active ? "text-safe-soft" : "text-chalk"
-                        }`}
+                        } tabular-nums`}
                       >
                         {sheet.label}
                       </span>
@@ -699,18 +699,18 @@ export function Panel({
 
               {fits ? (
                 <>
-                  <div className="border border-line bg-pit px-3 py-2.5">
+                  <div className="border border-line bg-pit px-3 py-2.5 rounded-lg">
                     <div className="flex items-baseline justify-between">
-                      <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-dust">
+                      <span className="text-[12px] text-dust font-medium">
                         Вмещается
                       </span>
-                      <span className="font-mono text-[11px] text-chalk tabular-nums">
+                      <span className="text-[13px] text-chalk tabular-nums">
                         {layout.cols} × {layout.rows} = {layout.capacity} шт.
                       </span>
                     </div>
                     <p className="mt-1.5 text-[10px] leading-snug text-dust">
                       Каждое {photoWmm.toFixed(1)} × {photoHmm.toFixed(1)} мм
-                      {layout.rotated ? " · с поворотом на 90° влезло больше" : ""}
+                      {layout.rotated ? "· с поворотом на 90° влезло больше" : ""}
                     </p>
                   </div>
 
@@ -776,7 +776,7 @@ export function Panel({
                   ) : null}
                 </>
               ) : (
-                <p className="border border-ember/50 bg-ember/10 px-3 py-2.5 text-[11px] leading-snug text-chalk">
+                <p className="border border-ember/50 bg-ember/10 px-3 py-2.5 text-[13px] leading-snug text-chalk rounded-lg">
                   Фото не помещается на этот лист. Возьмите лист побольше или
                   уменьшите поля.
                 </p>
@@ -823,14 +823,14 @@ export function Panel({
                 зелёных и красных — нейтральные тона и кожа меняются мало.
                 {proofShare !== null ? (
                   <>
-                    {" "}
-                    Заметно изменится{" "}
+                    {""}
+                    Заметно изменится{""}
                     <span className="text-safe-soft tabular-nums">
                       {Math.round(proofShare * 100)}%
-                    </span>{" "}
+                    </span>{""}
                     снимка.
                   </>
-                ) : null}{" "}
+                ) : null}{""}
                 Это прикидка, а не профиль конкретной типографии. Файл
                 сохраняется в sRGB без изменений.
               </p>
@@ -842,11 +842,11 @@ export function Panel({
             disabled={!hasImage || busy || !canExport}
             onClick={onDownload}
             title={canExport ? undefined : "Лимит экспортов исчерпан"}
-            className="group relative w-full overflow-hidden border border-safe/70 bg-safe/12 px-4 py-3.5 transition-all duration-200 enabled:hover:bg-safe/22 enabled:hover:shadow-[0_0_28px_-6px] enabled:hover:shadow-safe/50 disabled:cursor-not-allowed disabled:border-line disabled:bg-transparent"
+            className="group relative w-full overflow-hidden rounded-lg border border-transparent bg-safe px-4 py-3 shadow-card transition-colors duration-200 enabled:hover:bg-safe/90 disabled:cursor-not-allowed disabled:border-line disabled:bg-riser disabled:shadow-none"
           >
             <span
-              className={`font-mono text-[11px] uppercase tracking-[0.2em] ${
-                hasImage && !busy && canExport ? "text-safe-soft" : "text-dust"
+              className={`text-[15px] font-semibold ${
+                hasImage && !busy && canExport ? "text-white" : "text-dust"
               }`}
             >
               {canExport ? "Скачать" : "Лимит исчерпан"}
@@ -854,21 +854,21 @@ export function Panel({
           </button>
 
           {!canExport ? (
-            <div className="border border-ember/40 bg-ember/8 px-3.5 py-3">
+            <div className="border border-ember/40 bg-ember/8 px-3.5 py-3 rounded-lg">
               <p className="text-[11px] leading-snug text-ash">
                 Лимит экспортов исчерпан, поэтому скачивание и печать недоступны.
                 Фотография и настройки останутся на месте.
               </p>
               <Link
                 href="/narxlar"
-                className="mt-2.5 inline-block font-mono text-[10px] uppercase tracking-[0.16em] text-ember transition-colors hover:text-chalk"
+                className="mt-2.5 inline-block text-[12px] text-ember transition-colors hover:text-chalk font-medium"
               >
                 Выбрать тариф →
               </Link>
             </div>
           ) : null}
 
-          <div className="flex items-center justify-between font-mono text-[10px] text-dust">
+          <div className="flex items-center justify-between text-[12px] text-dust tabular-nums">
             <span>
               {targetW}×{targetH} px · {settings.dpi} dpi
             </span>
@@ -883,26 +883,26 @@ export function Panel({
               disabled={!hasImage || busy || !canExport}
               onClick={onPrint}
               title={canExport ? undefined : "Лимит экспортов исчерпан"}
-              className="w-full border border-line bg-riser/60 px-4 py-3 transition-colors duration-200 enabled:hover:border-line-lit enabled:hover:bg-riser disabled:cursor-not-allowed disabled:opacity-50"
+              className="w-full border border-line bg-riser/60 px-4 py-3 transition-colors duration-200 enabled:hover:border-line-lit enabled:hover:bg-riser disabled:cursor-not-allowed disabled:opacity-50 rounded-lg"
             >
               <span
-                className={`font-mono text-[11px] uppercase tracking-[0.2em] ${
+                className={`text-[13px] ${
                   hasImage && !busy && canExport ? "text-chalk" : "text-dust"
-                }`}
+                } font-medium`}
               >
                 Печать
               </span>
             </button>
             <p className="mt-2 text-[10px] leading-snug text-dust">
-              На бумаге получится ровно{" "}
+              На бумаге получится ровно{""}
               <span className="text-ash tabular-nums">
                 {printWmm.toFixed(0)} × {printHmm.toFixed(0)} мм
-              </span>{" "}
-              . В окне печати масштаб должен быть{" "}
+              </span>{""}
+              . В окне печати масштаб должен быть{""}
               <span className="text-ash">100%</span> — &laquo;fit to page&raquo;
               ломает размер.
               {!settings.sheet
-                ? " Если нужно несколько копий, сначала включите Лист для печати."
+                ? "Если нужно несколько копий, сначала включите Лист для печати."
                 : ""}
             </p>
           </div>
@@ -916,9 +916,9 @@ export function Panel({
               <button
                 type="button"
                 onClick={onNewPhoto}
-                className="w-full border border-line px-4 py-3 transition-colors duration-200 hover:border-line-lit hover:bg-riser/60"
+                className="w-full border border-line px-4 py-3 transition-colors duration-200 hover:border-line-lit hover:bg-riser/60 rounded-lg"
               >
-                <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-ash">
+                <span className="text-[13px] text-ash font-medium">
                   Новое фото
                 </span>
               </button>
@@ -940,7 +940,7 @@ export function Panel({
         <button
           type="button"
           onClick={onReset}
-          className="mt-3 font-mono text-[10px] uppercase tracking-[0.16em] text-dust transition-colors hover:text-safe"
+          className="mt-3 text-[12px] text-dust transition-colors hover:text-safe font-medium"
         >
           Сбросить настройки
         </button>

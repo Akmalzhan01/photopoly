@@ -8,7 +8,7 @@ import { humanDate } from "@/lib/ledger";
 import { describe, serviceLabel, type Order, type Stage } from "@/lib/orders";
 
 const ACTION =
-  "font-mono text-[10px] uppercase tracking-[0.14em] text-dust transition-colors hover:text-chalk disabled:cursor-not-allowed disabled:opacity-40";
+  "text-[12px] text-dust transition-colors hover:text-chalk disabled:cursor-not-allowed disabled:opacity-40 font-medium";
 
 /** Restoring or deleting takes the row out of this list; banking only marks it. */
 type Change = { kind: "drop"; id: string } | { kind: "bank"; id: string };
@@ -60,11 +60,11 @@ export function ArchiveList({
   return (
     <div className="flex flex-col gap-2">
       {ack?.error ? (
-        <span role="alert" className="font-mono text-[10px] text-safe">
+        <span role="alert" className="text-[12px] text-safe tabular-nums">
           {ack.error}
         </span>
       ) : ack?.done ? (
-        <span role="status" className="font-mono text-[10px] text-safe-soft">
+        <span role="status" className="text-[12px] text-safe-soft tabular-nums">
           {ack.done}
         </span>
       ) : null}
@@ -76,7 +76,7 @@ export function ArchiveList({
               {["№", "Клиент", "Услуга", "Срок", "Сумма", ""].map((head) => (
                 <th
                   key={head}
-                  className="px-4 py-3 font-mono text-[10px] uppercase tracking-[0.16em] text-dust"
+                  className="px-4 py-3 text-[12px] text-dust font-medium"
                 >
                   {head}
                 </th>
@@ -88,23 +88,23 @@ export function ArchiveList({
               const working = busy === order.id;
               return (
                 <tr key={order.id} className="border-b border-line/60 last:border-0">
-                  <td className="px-4 py-3 font-mono text-[11px] text-dust tabular-nums">
+                  <td className="px-4 py-3 text-[13px] text-dust tabular-nums">
                     {order.number}
                   </td>
                   <td className="px-4 py-3 text-[13px] text-chalk">
                     {order.clientName}
                     {order.phone ? (
-                      <span className="ml-2 font-mono text-[10px] text-dust">{order.phone}</span>
+                      <span className="ml-2 text-[12px] text-dust tabular-nums">{order.phone}</span>
                     ) : null}
                   </td>
                   <td className="px-4 py-3 text-[12px] text-ash">
                     {serviceLabel(order.service)}
-                    {order.qty > 1 ? ` · ${order.qty} шт` : ""}
+                    {order.qty > 1 ? `· ${order.qty} шт` : ""}
                   </td>
-                  <td className="px-4 py-3 font-mono text-[11px] text-dust tabular-nums">
+                  <td className="px-4 py-3 text-[13px] text-dust tabular-nums">
                     {order.dueOn ? humanDate(order.dueOn) : "—"}
                   </td>
-                  <td className="px-4 py-3 font-mono text-[12px] text-chalk tabular-nums">
+                  <td className="px-4 py-3 text-[12px] text-chalk tabular-nums">
                     {order.priceSom > 0 ? formatSom(order.priceSom) : "—"}
                     {order.inLedger ? <span className="ml-2 text-safe-soft">✓</span> : null}
                   </td>

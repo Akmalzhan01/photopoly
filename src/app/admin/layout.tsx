@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { LogoutButton } from "@/components/site/LogoutButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { Logo } from "@/components/site/ui";
 import { requireAdmin } from "@/lib/server/dal";
 
 const TABS = [
@@ -20,23 +21,24 @@ export default async function AdminLayout({ children }: { children: ReactNode })
     <div className="flex min-h-dvh flex-col">
       <header className="border-b border-line bg-pit">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-5 gap-y-2 px-5 py-3.5">
-          <Link href="/" className="font-display text-[20px] leading-none text-chalk">
+          <Link href="/" className="flex items-center gap-2.5 text-[17px] font-semibold tracking-tight text-chalk">
+            <Logo />
             photopoly
           </Link>
-          <span className="border border-ember/60 px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.18em] text-ember">
+          <span className="rounded-full bg-ember/10 px-2.5 py-0.5 text-[12px] font-medium text-ember">
             {admin.role === "SUPERADMIN" ? "Superadmin" : "Admin"}
           </span>
 
           <div className="ml-auto flex items-center gap-4">
-            <span className="hidden font-mono text-[10px] text-dust sm:inline">{admin.email}</span>
+            <span className="hidden text-[12px] text-dust sm:inline tabular-nums">{admin.email}</span>
             <ThemeToggle />
             <Link
               href="/studio"
-              className="font-mono text-[10px] uppercase tracking-[0.16em] text-dust transition-colors hover:text-chalk"
+              className="text-[12px] text-dust transition-colors hover:text-chalk font-medium"
             >
               Редактор
             </Link>
-            <LogoutButton className="font-mono text-[10px] uppercase tracking-[0.16em] text-dust transition-colors hover:text-chalk" />
+            <LogoutButton className="text-[12px] text-dust transition-colors hover:text-chalk font-medium" />
           </div>
         </div>
 
@@ -45,7 +47,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
             <Link
               key={tab.href}
               href={tab.href}
-              className="border-b-2 border-transparent px-3 py-2.5 font-mono text-[10px] whitespace-nowrap uppercase tracking-[0.14em] text-dust transition-colors hover:border-line-lit hover:text-chalk"
+              className="border-b-2 border-transparent px-3 py-2.5 text-[14px] font-medium whitespace-nowrap text-ash transition-colors hover:border-safe hover:text-chalk"
             >
               {tab.label}
             </Link>

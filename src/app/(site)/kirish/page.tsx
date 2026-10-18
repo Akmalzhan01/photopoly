@@ -14,10 +14,9 @@ export default async function LoginPage({
   return (
     <div className="mx-auto w-full max-w-md px-5 py-16">
       <div className="mb-6 flex items-baseline gap-2.5">
-        <span className="font-mono text-[10px] text-ember">01</span>
         <Eyebrow>Вход в аккаунт</Eyebrow>
       </div>
-      <h1 className="mb-8 font-display text-[34px] leading-[1.1] text-chalk">
+      <h1 className="mb-8 font-display text-[34px] leading-[1.1] text-chalk font-semibold tracking-tight">
         Рады видеть вас снова.
       </h1>
       {sessiya ? (

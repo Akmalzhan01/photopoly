@@ -34,7 +34,7 @@ export function OfflineReady() {
 
   return (
     <div className="shrink-0 border-b border-line bg-riser px-5 py-2">
-      <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-ash">
+      <p className="text-[12px] text-ash font-medium">
         Нет интернета — редактор работает, экспорты спишутся при подключении
       </p>
     </div>

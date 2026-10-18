@@ -23,11 +23,11 @@ export function PeriodPicker({ period }: { period: Period }) {
             <Link
               key={option.id}
               href={`${pathname}?davr=${option.id}`}
-              className={`border px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.14em] transition-colors ${
+              className={`border px-3 py-1.5 text-[12px] transition-colors ${
                 active
                   ? "border-safe/60 bg-safe/12 text-safe-soft"
                   : "border-line text-dust hover:border-line-lit hover:text-chalk"
-              }`}
+              } font-medium rounded-lg`}
             >
               {option.label}
             </Link>
@@ -38,30 +38,30 @@ export function PeriodPicker({ period }: { period: Period }) {
       <form method="get" action={pathname} className="flex flex-wrap items-end gap-2">
         <input type="hidden" name="davr" value="custom" />
         <label className="flex flex-col gap-1">
-          <span className="font-mono text-[9px] uppercase tracking-[0.16em] text-dust">С</span>
+          <span className="text-[11px] text-dust font-medium">С</span>
           <input
             type="date"
             name="dan"
             defaultValue={period.from}
-            className="border border-line bg-pit px-2.5 py-1.5 font-mono text-[11px] text-chalk tabular-nums outline-none focus:border-safe/50"
+            className="border border-line bg-pit px-2.5 py-1.5 text-[13px] text-chalk tabular-nums outline-none focus:border-safe/50 rounded-lg"
           />
         </label>
         <label className="flex flex-col gap-1">
-          <span className="font-mono text-[9px] uppercase tracking-[0.16em] text-dust">По</span>
+          <span className="text-[11px] text-dust font-medium">По</span>
           <input
             type="date"
             name="gacha"
             defaultValue={period.to}
-            className="border border-line bg-pit px-2.5 py-1.5 font-mono text-[11px] text-chalk tabular-nums outline-none focus:border-safe/50"
+            className="border border-line bg-pit px-2.5 py-1.5 text-[13px] text-chalk tabular-nums outline-none focus:border-safe/50 rounded-lg"
           />
         </label>
         <button
           type="submit"
-          className="border border-line px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-ash transition-colors hover:border-line-lit hover:text-chalk"
+          className="border border-line px-3 py-1.5 text-[12px] text-ash transition-colors hover:border-line-lit hover:text-chalk font-medium rounded-lg"
         >
           Показать
         </button>
-        <span className="pb-1.5 font-mono text-[10px] text-dust">
+        <span className="pb-1.5 text-[12px] text-dust tabular-nums">
           {humanDate(period.from)} — {humanDate(period.to)}
         </span>
       </form>

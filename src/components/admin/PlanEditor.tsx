@@ -19,9 +19,9 @@ export type AdminPlan = {
 };
 
 const INPUT =
-  "w-full border border-line bg-pit px-2.5 py-1.5 font-mono text-[12px] text-chalk outline-none transition-colors focus:border-safe/50 disabled:opacity-50";
+  "w-full border border-line bg-pit px-2.5 py-1.5 text-[12px] text-chalk outline-none transition-colors focus:border-safe/50 disabled:opacity-50 tabular-nums rounded-lg";
 
-const LABEL = "font-mono text-[10px] uppercase tracking-[0.16em] text-dust";
+const LABEL = "text-[12px] text-dust font-medium";
 
 function Cell({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -45,29 +45,29 @@ export function PlanEditor({ plan, readOnly }: { plan: AdminPlan | null; readOnl
           aria-expanded={open}
           className="flex min-w-0 flex-1 items-baseline gap-3 text-left"
         >
-          <span aria-hidden className="font-mono text-[10px] text-dust">
+          <span aria-hidden className="text-[12px] text-dust tabular-nums">
             {open ? "−" : "+"}
           </span>
           <span className="text-[13px] text-chalk">{isNew ? "Добавить тариф" : plan.name}</span>
           {!isNew ? (
-            <span className="font-mono text-[10px] text-dust">{plan.code}</span>
+            <span className="text-[12px] text-dust tabular-nums">{plan.code}</span>
           ) : null}
         </button>
 
         {!isNew ? (
           <>
-            <span className="font-mono text-[11px] text-chalk tabular-nums">
+            <span className="text-[13px] text-chalk tabular-nums">
               {plan.priceSom} сом
             </span>
-            <span className="font-mono text-[10px] text-dust tabular-nums">{plan.days} дн.</span>
-            <span className="font-mono text-[10px] text-dust tabular-nums">
+            <span className="text-[12px] text-dust tabular-nums">{plan.days} дн.</span>
+            <span className="text-[12px] text-dust tabular-nums">
               {plan.exportLimit === null ? "без лимита" : `${plan.exportLimit} шт.`}
             </span>
-            <span className="hidden font-mono text-[10px] text-dust tabular-nums sm:inline">
+            <span className="hidden text-[12px] text-dust tabular-nums sm:inline">
               {plan.subscriptions} подп.
             </span>
             {!plan.active ? (
-              <span className="border border-line px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.14em] text-dust">
+              <span className="border border-line px-1.5 py-0.5 text-[11px] text-dust font-medium rounded-lg">
                 Скрыт
               </span>
             ) : null}
@@ -77,7 +77,7 @@ export function PlanEditor({ plan, readOnly }: { plan: AdminPlan | null; readOnl
                   <button
                     type="submit"
                     disabled={pending}
-                    className="border border-line px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-dust transition-colors hover:border-line-lit hover:text-chalk disabled:opacity-40"
+                    className="border border-line px-2.5 py-1 text-[12px] text-dust transition-colors hover:border-line-lit hover:text-chalk disabled:opacity-40 font-medium rounded-lg"
                   >
                     {plan.active ? "Скрыть" : "Показать"}
                   </button>
@@ -173,12 +173,12 @@ export function PlanEditor({ plan, readOnly }: { plan: AdminPlan | null; readOnl
                   <button
                     type="submit"
                     disabled={pending || readOnly}
-                    className="border border-safe bg-safe/12 px-4 py-2 font-mono text-[11px] uppercase tracking-[0.14em] text-safe-soft transition-colors hover:bg-safe/20 disabled:opacity-40"
+                    className="border border-transparent bg-safe px-4 py-2 text-[13px] text-white transition-colors hover:bg-safe/90 disabled:opacity-40 font-medium rounded-lg"
                   >
                     {pending ? "Сохранение…" : isNew ? "Добавить" : "Сохранить"}
                   </button>
                   {!isNew && plan.subscriptions > 0 ? (
-                    <span className="font-mono text-[10px] text-dust">
+                    <span className="text-[12px] text-dust tabular-nums">
                       На этом тарифе подписок: {plan.subscriptions} — изменение цены
                       их не затронет.
                     </span>

@@ -24,12 +24,12 @@ export function DeleteEntry({ id, summary }: { id: string; summary: string }) {
         disabled={pending}
         title="Удалить запись"
         aria-label={`Удалить запись ${summary}`}
-        className="font-mono text-[10px] uppercase tracking-[0.14em] text-dust transition-colors hover:text-ember disabled:opacity-40"
+        className="text-[12px] text-dust transition-colors hover:text-ember disabled:opacity-40 font-medium"
       >
         {pending ? "…" : "Удалить"}
       </button>
       {state?.error ? (
-        <span role="alert" className="ml-2 font-mono text-[10px] text-ember">
+        <span role="alert" className="ml-2 text-[12px] text-ember tabular-nums">
           {state.error}
         </span>
       ) : null}

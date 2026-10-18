@@ -15,10 +15,9 @@ export default async function SignupPage({
   return (
     <div className="mx-auto w-full max-w-md px-5 py-16">
       <div className="mb-6 flex items-baseline gap-2.5">
-        <span className="font-mono text-[10px] text-ember">01</span>
         <Eyebrow>Новый аккаунт</Eyebrow>
       </div>
-      <h1 className="mb-3 font-display text-[34px] leading-[1.1] text-chalk">
+      <h1 className="mb-3 font-display text-[34px] leading-[1.1] text-chalk font-semibold tracking-tight">
         {free > 0 ? (
           <>
             Сначала попробуйте

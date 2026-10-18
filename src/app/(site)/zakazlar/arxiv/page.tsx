@@ -33,7 +33,7 @@ export default async function OrdersArchive() {
       </section>
 
       {done.length === ARCHIVE_LIMIT || cancelled.length === ARCHIVE_LIMIT ? (
-        <p className="font-mono text-[10px] text-dust">
+        <p className="text-[12px] text-dust tabular-nums">
           Показаны последние {ARCHIVE_LIMIT} в каждом списке.
         </p>
       ) : null}

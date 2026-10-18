@@ -1,26 +1,29 @@
 @import "tailwindcss";
 
 @theme {
-  /* Darkroom palette: warm near-black surfaces under a safelight. */
-  --color-ink: #0a0908;
-  --color-pit: #0f0d0c;
-  --color-slab: #161311;
-  --color-riser: #1e1a17;
-  --color-line: #2c2521;
-  --color-line-lit: #3d332c;
-  --color-chalk: #f0e9df;
-  --color-ash: #9c9188;
-  --color-dust: #6a615a;
-  --color-safe: #ff5c26;
-  --color-safe-soft: #ff8a5c;
-  --color-ember: #a83208;
+  /* Dark palette: cool graphite surfaces, one blue accent. The token names are
+     older than the palette — `safe` is the accent, `ember` is danger — and
+     are kept so that no component has to know the palette changed. */
+  --color-ink: #0b0d12;
+  --color-pit: #0f1218;
+  --color-slab: #14171f;
+  --color-riser: #1b1f29;
+  --color-line: #262b37;
+  --color-line-lit: #374051;
+  --color-chalk: #e8eaf0;
+  --color-ash: #a3aab8;
+  --color-dust: #7c8494;
+  --color-safe: #2563eb;
+  --color-safe-soft: #7ea6ff;
+  --color-ember: #f87171;
+  --color-good: #34d399;
 
-  --shadow-stage: 0 30px 80px -20px rgb(0 0 0 / 0.9);
-  --grain-opacity: 0.035;
+  --shadow-stage: 0 24px 60px -20px rgb(0 0 0 / 0.7);
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3);
 
-  --font-display: var(--font-display), "Iowan Old Style", Georgia, serif;
+  --font-display: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
   --font-sans: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-mono), ui-monospace, "SF Mono", monospace;
+  --font-mono: ui-monospace, "SF Mono", Consolas, monospace;
 
   --animate-sweep: sweep 1.9s cubic-bezier(0.5, 0, 0.5, 1) infinite;
   --animate-rise: rise 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
@@ -53,7 +56,7 @@
 }
 
 /**
- * The light theme: the same darkroom read as a lightbox rather than a safelight.
+ * The light theme.
  *
  * Only the tokens change — every utility in the app already points at one of
  * them, so nothing in the components needs to know which theme is on. The
@@ -63,8 +66,8 @@
  *
  * The roles are kept, not the values. `pit` is the recessed surface, which on a
  * dark page is the darkest thing and on a light one the brightest — an input
- * well is white on paper. Likewise `safe-soft` is the accent that has to stay
- * readable *as text*, so it goes lighter on dark and darker on light.
+ * well is white. Likewise `safe-soft` is the accent that has to stay readable
+ * *as text*, so it goes lighter on dark and darker on light.
  */
 html {
   /* How the browser paints what we do not: date pickers, select menus,
@@ -73,24 +76,21 @@ html {
 }
 
 :root {
-  --l-ink: #f4efe7;
+  --l-ink: #f6f7f9;
   --l-pit: #ffffff;
-  --l-slab: #fbf8f3;
-  --l-riser: #efe7db;
-  --l-line: #ddd3c4;
-  --l-line-lit: #b6a795;
-  --l-chalk: #1c1815;
-  --l-ash: #554d45;
-  --l-dust: #6d635a;
-  /* Measured, not eyeballed: #c4430f came to 4.41:1 on the page background,
-     just under the 4.5 needed for small text. */
-  --l-safe: #b93d0b;
-  --l-safe-soft: #a5380c;
-  --l-ember: #8c2a06;
-  /* Paper does not sit in a black void; the same shadow would read as soot. */
-  --l-shadow-stage: 0 24px 60px -24px rgb(58 42 28 / 0.32);
-  /* Dark noise on a light page looks like dirt rather than film. */
-  --l-grain-opacity: 0.02;
+  --l-slab: #ffffff;
+  --l-riser: #f0f2f5;
+  --l-line: #e3e6eb;
+  --l-line-lit: #c9ced8;
+  --l-chalk: #0f1729;
+  --l-ash: #4a5466;
+  --l-dust: #667085;
+  --l-safe: #2563eb;
+  --l-safe-soft: #1d4ed8;
+  --l-ember: #dc2626;
+  --l-good: #059669;
+  --l-shadow-stage: 0 24px 60px -24px rgb(15 23 41 / 0.25);
+  --l-shadow-card: 0 1px 2px rgb(15 23 41 / 0.05), 0 1px 3px rgb(15 23 41 / 0.04);
 }
 
 /**
@@ -116,8 +116,9 @@ html[data-theme="light"] {
   --color-safe: var(--l-safe);
   --color-safe-soft: var(--l-safe-soft);
   --color-ember: var(--l-ember);
+  --color-good: var(--l-good);
   --shadow-stage: var(--l-shadow-stage);
-  --grain-opacity: var(--l-grain-opacity);
+  --shadow-card: var(--l-shadow-card);
 }
 
 /* No stored choice: follow the screen. This is what makes the preference work
@@ -137,8 +138,9 @@ html[data-theme="light"] {
     --color-safe: var(--l-safe);
     --color-safe-soft: var(--l-safe-soft);
     --color-ember: var(--l-ember);
+    --color-good: var(--l-good);
     --shadow-stage: var(--l-shadow-stage);
-    --grain-opacity: var(--l-grain-opacity);
+    --shadow-card: var(--l-shadow-card);
   }
 }
 
@@ -149,29 +151,18 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Film grain, laid over the whole page at very low opacity. */
-body::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: 50;
-  pointer-events: none;
-  opacity: var(--grain-opacity);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
-}
-
 @utility checkerboard {
-  background-color: #e6e0d8;
+  background-color: #eef0f3;
   background-image:
-    linear-gradient(45deg, #c2b9ae 25%, transparent 25%, transparent 75%, #c2b9ae 75%),
-    linear-gradient(45deg, #c2b9ae 25%, transparent 25%, transparent 75%, #c2b9ae 75%);
+    linear-gradient(45deg, #d5d9e0 25%, transparent 25%, transparent 75%, #d5d9e0 75%),
+    linear-gradient(45deg, #d5d9e0 25%, transparent 25%, transparent 75%, #d5d9e0 75%);
   background-size: 16px 16px;
   background-position:
     0 0,
     8px 8px;
 }
 
-/* Sliders: a thin rail with a machined amber head. */
+/* Sliders: a thin rounded rail with a round head. */
 @utility rail {
   appearance: none;
   width: 100%;
@@ -180,39 +171,45 @@ body::after {
   cursor: ew-resize;
 
   &::-webkit-slider-runnable-track {
-    height: 2px;
-    background: var(--color-line-lit);
+    height: 4px;
+    border-radius: 99px;
+    background: var(--color-line);
   }
   &::-webkit-slider-thumb {
     appearance: none;
-    width: 4px;
+    width: 16px;
     height: 16px;
-    margin-top: -7px;
-    border-radius: 1px;
-    background: var(--color-safe);
-    box-shadow: 0 0 10px 0 color-mix(in srgb, var(--color-safe) 60%, transparent);
-    transition: height 0.15s ease;
+    margin-top: -6px;
+    border-radius: 99px;
+    background: #fff;
+    border: 2px solid var(--color-safe);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.25);
+    transition: transform 0.15s ease;
   }
   &:hover::-webkit-slider-thumb {
-    height: 20px;
-    margin-top: -9px;
+    transform: scale(1.15);
   }
   &::-moz-range-track {
-    height: 2px;
-    background: var(--color-line-lit);
+    height: 4px;
+    border-radius: 99px;
+    background: var(--color-line);
   }
   &::-moz-range-thumb {
-    width: 4px;
-    height: 16px;
-    border: 0;
-    border-radius: 1px;
-    background: var(--color-safe);
+    width: 12px;
+    height: 12px;
+    border: 2px solid var(--color-safe);
+    border-radius: 99px;
+    background: #fff;
   }
 }
 
 ::selection {
-  background: var(--color-safe);
-  color: var(--color-ink);
+  background: color-mix(in srgb, var(--color-safe) 25%, transparent);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-safe);
+  outline-offset: 2px;
 }
 
 ::-webkit-scrollbar {

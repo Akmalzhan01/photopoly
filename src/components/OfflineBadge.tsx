@@ -11,7 +11,7 @@ import { checkReadiness, READINESS_COPY, type Readiness } from "@/lib/offline-re
  * whole extra visit, because the worker being replaced still serves the visit
  * that installs its successor. Until this existed, the only way to find out was
  * to pull the cable and watch the app fail, which reads as "offline does not
- * work" rather than "offline is not ready yet". That is a bad way to learn it,
+ * work"rather than"offline is not ready yet". That is a bad way to learn it,
  * and it is what actually happened.
  *
  * Small and permanent rather than a banner: a shop that never loses its
@@ -66,11 +66,11 @@ export function OfflineBadge({
   return (
     <span
       title={copy.title}
-      className={`hidden border px-2.5 py-1.5 font-mono text-[10px] uppercase tracking-[0.14em] sm:inline-block ${
+      className={`hidden border px-2.5 py-1.5 text-[12px] sm:inline-block ${
         readiness === "full"
           ? "border-line text-safe-soft"
           : "border-line text-dust"
-      }`}
+      } font-medium rounded-lg`}
     >
       {copy.label}
     </span>
