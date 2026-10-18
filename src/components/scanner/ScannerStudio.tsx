@@ -1,9 +1,25 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { decode, looksHeic } from "@/lib/convert";
 import { download } from "@/lib/imaging";
 import { makePdf } from "@/lib/pdf";
+import {
+  KNOWN_SIZES,
+  MIN_WIDTH,
+  SHEET_SIZES,
+  clampPlaced,
+  fullWidth,
+  mm,
+  placeNew,
+  renderSheet,
+  sheetDims,
+  widest,
+  widthForLongEdge,
+  type Orientation,
+  type Placed,
+  type SheetSize,
+} from "@/lib/paper";
 import {
   applyFilter,
   detectQuad,
@@ -15,9 +31,13 @@ import {
 } from "@/lib/scan";
 import { stageBox } from "@/lib/stage";
 import { Button, Notice } from "@/components/site/ui";
-import { Label, Segmented } from "@/components/ui";
+import { Label, Segmented, Slider, Toggle } from "@/components/ui";
+import { PaperStage } from "./PaperStage";
 
 const MAX_STAGE = 600;
+const MAX_PAPER_STAGE = 680;
+/** Long edge of the copy the sheet view draws from; the full scan is kept for saving. */
+const PREVIEW_EDGE = 1400;
 /** The photo is worked at this size at most; a phone's 48 MP gains nothing past it. */
 const SOURCE_EDGE = 4000;
 const MAX_PAGES = 30;
@@ -42,9 +62,33 @@ const FILTERS: { value: ScanFilter; label: string; title: string }[] = [
   { value: "original", label: "Как есть", title: "Без обработки" },
 ];
 
-type Rendered = { key: string; canvas: HTMLCanvasElement; thumb: string };
+type Rendered = { key: string; canvas: HTMLCanvasElement; preview: HTMLCanvasElement; thumb: string };
+
+/** A sheet of paper with scans laid out on it, all sheets the same size. */
+type Sheet = { id: string; items: Placed[] };
 
 const keyOf = (p: Page) => `${JSON.stringify(p.quad)}|${p.turns}|${p.filter}`;
+
+/** "2 листа", "5 листов": Russian counts by the last digit. */
+function sheetsWord(n: number): string {
+  const last = n % 10;
+  const teen = n % 100 >= 11 && n % 100 <= 14;
+  return `${n} ${!teen && last >= 2 && last <= 4 ? "листа" : "листов"}`;
+}
+
+const newId = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
+
+function shrunk(canvas: HTMLCanvasElement, edge: number): HTMLCanvasElement {
+  const s = Math.min(1, edge / Math.max(canvas.width, canvas.height));
+  if (s === 1) return canvas;
+  const small = document.createElement("canvas");
+  small.width = Math.max(1, Math.round(canvas.width * s));
+  small.height = Math.max(1, Math.round(canvas.height * s));
+  const ctx = small.getContext("2d")!;
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(canvas, 0, 0, small.width, small.height);
+  return small;
+}
 
 function blobOf(canvas: HTMLCanvasElement, type: string, quality: number): Promise<Blob> {
   return new Promise((resolve, reject) =>
@@ -55,10 +99,17 @@ function blobOf(canvas: HTMLCanvasElement, type: string, quality: number): Promi
 export function ScannerStudio() {
   const [pages, setPages] = useState<Page[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
-  const [mode, setMode] = useState<"frame" | "result">("frame");
+  const [mode, setMode] = useState<"frame" | "result" | "paper">("frame");
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [drag, setDrag] = useState<number | null>(null);
+
+  const [paperSize, setPaperSize] = useState<SheetSize>("a4");
+  const [orientation, setOrientation] = useState<Orientation>("portrait");
+  const [sheets, setSheets] = useState<Sheet[]>(() => [{ id: "sheet-1", items: [] }]);
+  const [sheetId, setSheetId] = useState("sheet-1");
+  const [itemId, setItemId] = useState<string | null>(null);
+  const [cutLines, setCutLines] = useState(false);
 
   /** Finished pages, as drawn; what the stage and the strip show. */
   const [rendered, setRendered] = useState<Record<string, Rendered>>({});
@@ -101,8 +152,7 @@ export function ScannerStudio() {
         ctx.imageSmoothingQuality = "high";
         ctx.drawImage(bitmap, 0, 0, source.width, source.height);
         bitmap.close();
-        const id = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
-        added.push({ id, name: file.name, source, quad: detectQuad(source), turns: 0, filter: "enhanced", version: 0 });
+        added.push({ id: newId(), name: file.name, source, quad: detectQuad(source), turns: 0, filter: "enhanced", version: 0 });
       } catch {
         setError(`Не удалось открыть «${file.name}».`);
       }
@@ -131,13 +181,10 @@ export function ScannerStudio() {
     for (let i = 0; i < p.turns % 4; i++) canvas = rotate(canvas);
     canvas = applyFilter(canvas, p.filter);
 
-    // A small copy for the page strip.
-    const thumb = document.createElement("canvas");
-    const s = 120 / Math.max(canvas.width, canvas.height);
-    thumb.width = Math.max(1, Math.round(canvas.width * s));
-    thumb.height = Math.max(1, Math.round(canvas.height * s));
-    thumb.getContext("2d")!.drawImage(canvas, 0, 0, thumb.width, thumb.height);
-    const done = { key, canvas, thumb: thumb.toDataURL("image/jpeg", 0.7) };
+    // A screen-sized copy for the sheet view and a small one for the page strip.
+    const preview = shrunk(canvas, PREVIEW_EDGE);
+    const thumb = shrunk(preview, 120);
+    const done = { key, canvas, preview, thumb: thumb.toDataURL("image/jpeg", 0.7) };
     results.current.set(p.id, done);
     return done;
   }, []);
@@ -202,6 +249,7 @@ export function ScannerStudio() {
   };
 
   const remove = (id: string) => {
+    setSheets((prev) => prev.map((sheet) => ({ ...sheet, items: sheet.items.filter((item) => item.pageId !== id) })));
     results.current.delete(id);
     flats.current.delete(id);
     setRendered((prev) => {
@@ -255,6 +303,119 @@ export function ScannerStudio() {
     download(blob, `skan-${index}.jpg`);
   };
 
+  // --- Sheets: scans laid out on paper ---
+
+  const paper = sheetDims(paperSize, orientation);
+  /** Height ÷ width of a scan as it is drawn now. */
+  const aspectOf = useCallback(
+    (pageId: string) => {
+      const canvas = rendered[pageId]?.canvas;
+      return canvas ? canvas.height / canvas.width : 1;
+    },
+    [rendered],
+  );
+  const pictures = useMemo(
+    () => Object.fromEntries(Object.entries(rendered).map(([id, r]) => [id, r.preview])),
+    [rendered],
+  );
+  const sheetIndex = Math.max(0, sheets.findIndex((s) => s.id === sheetId));
+  const sheet = sheets[sheetIndex];
+  // Pieces are kept inside the paper as they are shown, so a turned scan or a
+  // smaller sheet never leaves one hanging off the edge.
+  const laidOut = (items: Placed[]) => items.map((item) => clampPlaced(item, aspectOf(item.pageId), paper));
+  const laid = laidOut(sheet.items);
+  const item = laid.find((i) => i.id === itemId) ?? null;
+  const filled = sheets.filter((s) => s.items.length > 0);
+
+  const setItems = (update: (items: Placed[]) => Placed[]) =>
+    setSheets((prev) => prev.map((s) => (s.id === sheet.id ? { ...s, items: update(s.items) } : s)));
+  const changeItem = (next: Placed) => setItems((items) => items.map((i) => (i.id === next.id ? next : i)));
+  const dropItem = (id: string) => {
+    setItems((items) => items.filter((i) => i.id !== id));
+    if (itemId === id) setItemId(null);
+  };
+
+  /** Puts a scan on the open sheet, under what is there already. */
+  const putOnSheet = (pageId: string) => {
+    const target = pages.find((p) => p.id === pageId);
+    if (!target) return;
+    const done = resultOf(target);
+    setRendered((prev) => ({ ...prev, [pageId]: done }));
+    const aspect = done.canvas.height / done.canvas.width;
+    const aspects = (id: string) => (id === pageId ? aspect : aspectOf(id));
+    const placed = placeNew(newId(), pageId, aspect, laid, aspects, paper);
+    setItems((items) => [...items, placed]);
+    setItemId(placed.id);
+    setSelected(pageId);
+    setMode("paper");
+  };
+
+  const selectItem = (id: string | null) => {
+    setItemId(id);
+    const chosen = laid.find((i) => i.id === id);
+    if (chosen) setSelected(chosen.pageId);
+  };
+
+  const resize = (w: number) => {
+    if (item) changeItem(clampPlaced({ ...item, w }, aspectOf(item.pageId), paper));
+  };
+
+  const addSheet = () => {
+    const id = newId();
+    setSheets((prev) => [...prev, { id, items: [] }]);
+    setSheetId(id);
+    setItemId(null);
+  };
+
+  const dropSheet = (id: string) => {
+    const index = sheets.findIndex((s) => s.id === id);
+    const next = sheets.filter((s) => s.id !== id);
+    if (next.length === 0) return;
+    setSheets(next);
+    if (id === sheetId) setSheetId(next[Math.max(0, index - 1)].id);
+    setItemId(null);
+  };
+
+  const pictureForPrint = (pageId: string) => {
+    const target = pages.find((p) => p.id === pageId);
+    return target ? resultOf(target).canvas : undefined;
+  };
+
+  const savePaperPdf = async () => {
+    setError(null);
+    setBusy("Собираем листы…");
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    try {
+      const parts = [];
+      for (const s of filled) {
+        const canvas = renderSheet(laidOut(s.items), paper, pictureForPrint, cutLines);
+        const blob = await blobOf(canvas, "image/jpeg", JPEG_QUALITY);
+        parts.push({ jpeg: new Uint8Array(await blob.arrayBuffer()), width: canvas.width, height: canvas.height, paper });
+      }
+      download(makePdf(parts), `list-${SHEET_SIZES[paperSize].label.toLowerCase()}.pdf`);
+    } catch {
+      setError("Не удалось собрать PDF.");
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const savePaperJpg = async () => {
+    if (laid.length === 0) return;
+    setBusy("Собираем лист…");
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    try {
+      const canvas = renderSheet(laid, paper, pictureForPrint, cutLines);
+      download(await blobOf(canvas, "image/jpeg", JPEG_QUALITY), `list-${sheetIndex + 1}.jpg`);
+    } catch {
+      setError("Не удалось сохранить лист.");
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const paperBox = stageBox(room || 640, paper.w / paper.h, MAX_PAPER_STAGE);
+
   return (
     <>
       <input
@@ -292,17 +453,86 @@ export function ScannerStudio() {
                 options={[
                   { value: "frame" as const, label: "Рамка", title: "Поправить углы документа" },
                   { value: "result" as const, label: "Результат", title: "Как будет выглядеть скан" },
+                  { value: "paper" as const, label: "На листе", title: "Разложить сканы на листе A4 и других" },
                 ]}
                 onChange={setMode}
               />
               <span className="text-[13px] text-dust">
-                {mode === "frame" ? "Перетащите углы на края листа" : resultFresh ? "Готово к сохранению" : "Обрабатываем…"}
+                {mode === "paper"
+                  ? "Двигайте скан по листу, синий угол меняет размер"
+                  : mode === "frame"
+                    ? "Перетащите углы на края листа"
+                    : resultFresh
+                      ? "Готово к сохранению"
+                      : "Обрабатываем…"}
               </span>
             </header>
           ) : null}
 
+          {page && mode === "paper" ? (
+            <div className="mb-4 flex flex-wrap items-center gap-1.5" role="tablist" aria-label="Листы">
+              {sheets.map((s, index) => (
+                <span
+                  key={s.id}
+                  className={`inline-flex items-center rounded-lg border text-[13px] font-medium transition-colors ${
+                    s.id === sheet.id ? "border-safe bg-safe/10 text-safe-soft" : "border-line text-ash hover:border-line-lit"
+                  }`}
+                >
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={s.id === sheet.id}
+                    onClick={() => {
+                      setSheetId(s.id);
+                      setItemId(null);
+                    }}
+                    className="py-1 pr-1 pl-2.5 tabular-nums"
+                  >
+                    Лист {index + 1}
+                    {s.items.length > 0 ? <span className="ml-1 text-dust">· {s.items.length}</span> : null}
+                  </button>
+                  {sheets.length > 1 ? (
+                    <button
+                      type="button"
+                      aria-label={`Убрать лист ${index + 1}`}
+                      onClick={() => dropSheet(s.id)}
+                      className="px-1.5 py-1 text-dust hover:text-ember"
+                    >
+                      ×
+                    </button>
+                  ) : (
+                    <span className="w-1.5" />
+                  )}
+                </span>
+              ))}
+              <button
+                type="button"
+                onClick={addSheet}
+                className="rounded-lg border border-dashed border-line px-2.5 py-1 text-[13px] font-medium text-dust transition-colors hover:border-safe/60 hover:text-safe-soft"
+              >
+                + Лист
+              </button>
+            </div>
+          ) : null}
+
           <div ref={wrapRef} className="flex min-w-0 justify-center">
-            {page ? (
+            {page && mode === "paper" ? (
+              <div className="py-2">
+                <PaperStage
+                  sheet={paper}
+                  items={laid}
+                  pictures={pictures}
+                  aspectOf={aspectOf}
+                  cutLines={cutLines}
+                  width={paperBox.w}
+                  height={paperBox.h}
+                  selected={itemId}
+                  onSelect={selectItem}
+                  onChange={changeItem}
+                  onRemove={dropItem}
+                />
+              </div>
+            ) : page ? (
               <div
                 className="relative overflow-hidden rounded-lg border border-line bg-pit select-none"
                 style={{ width: box.w, height: box.h }}
@@ -373,17 +603,20 @@ export function ScannerStudio() {
             )}
           </div>
 
+          {pages.length > 0 && mode === "paper" ? (
+            <p className="mt-4 text-[13px] text-dust">Нажмите на скан, чтобы положить его на лист. «+ Фото» — добавить ещё документ.</p>
+          ) : null}
           {pages.length > 0 ? (
-            <div className="mt-4 flex gap-3 overflow-x-auto pb-1">
+            <div className={`${mode === "paper" ? "mt-2" : "mt-4"} flex gap-3 overflow-x-auto pb-1`}>
               {pages.map((p, index) => (
                 <div key={p.id} className="shrink-0">
                   <button
                     type="button"
-                    onClick={() => setSelected(p.id)}
-                    className={`relative flex h-28 w-22 items-center justify-center overflow-hidden rounded-lg border-2 bg-pit transition-colors ${
+                    onClick={() => (mode === "paper" ? putOnSheet(p.id) : setSelected(p.id))}
+                    className={`group relative flex h-28 w-22 items-center justify-center overflow-hidden rounded-lg border-2 bg-pit transition-colors ${
                       p.id === selected ? "border-safe" : "border-line hover:border-line-lit"
                     }`}
-                    title={p.name}
+                    title={mode === "paper" ? "Положить на лист" : p.name}
                   >
                     {rendered[p.id] ? (
                       // eslint-disable-next-line @next/next/no-img-element -- a local data URL
@@ -394,6 +627,11 @@ export function ScannerStudio() {
                     <span className="absolute top-1 left-1 rounded bg-ink/80 px-1.5 text-[11px] font-semibold text-chalk tabular-nums">
                       {index + 1}
                     </span>
+                    {mode === "paper" ? (
+                      <span className="absolute right-1 bottom-1 flex h-6 w-6 items-center justify-center rounded-full bg-safe text-[16px] leading-none text-white shadow-card transition-transform group-hover:scale-110">
+                        +
+                      </span>
+                    ) : null}
                   </button>
                   <div className="mt-1 flex justify-center gap-1 text-[13px] text-dust">
                     <button type="button" aria-label="Левее" onClick={() => move(p.id, -1)} disabled={index === 0} className="px-1 hover:text-chalk disabled:opacity-30">
@@ -414,7 +652,7 @@ export function ScannerStudio() {
                 className="flex h-28 w-22 shrink-0 flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-line text-[13px] text-dust transition-colors hover:border-safe/60 hover:text-safe-soft"
               >
                 <span className="text-[22px] leading-none">+</span>
-                Страница
+                {mode === "paper" ? "Фото" : "Страница"}
               </button>
             </div>
           ) : null}
@@ -430,7 +668,7 @@ export function ScannerStudio() {
               onChange={(filter) => {
                 if (!page) return;
                 patch(page.id, { filter });
-                setMode("result");
+                if (mode !== "paper") setMode("result");
               }}
             />
           </div>
@@ -442,7 +680,7 @@ export function ScannerStudio() {
               onClick={() => {
                 if (!page) return;
                 patch(page.id, { turns: (page.turns + 1) % 4 });
-                setMode("result");
+                if (mode !== "paper") setMode("result");
               }}
               className="rounded-lg border border-line bg-slab px-3 py-1.5 text-[13px] font-medium text-chalk transition-colors enabled:hover:bg-riser disabled:opacity-40"
             >
@@ -466,14 +704,112 @@ export function ScannerStudio() {
             </button>
           </div>
 
-          <div className="flex flex-col gap-2 border-t border-line pt-4">
-            <Button type="button" className="w-full py-3 text-[15px]" onClick={savePdf} disabled={pages.length === 0 || busy !== null}>
-              {busy === "Собираем PDF…" ? busy : `Скачать PDF${pages.length > 1 ? ` (${pages.length} стр.)` : ""}`}
-            </Button>
-            <Button type="button" tone="ghost" className="w-full" onClick={saveJpg} disabled={!page || busy !== null}>
-              Скачать эту страницу в JPG
-            </Button>
-          </div>
+          {mode === "paper" ? (
+            <>
+              <div className="flex flex-col gap-2 border-t border-line pt-4">
+                <Label>Размер листа</Label>
+                <Segmented
+                  ariaLabel="Размер листа"
+                  value={paperSize}
+                  options={(Object.keys(SHEET_SIZES) as SheetSize[]).map((value) => ({
+                    value,
+                    label: SHEET_SIZES[value].label,
+                    title: SHEET_SIZES[value].title,
+                  }))}
+                  onChange={setPaperSize}
+                />
+                <Segmented
+                  ariaLabel="Ориентация"
+                  value={orientation}
+                  options={[
+                    { value: "portrait" as const, label: "Книжная" },
+                    { value: "landscape" as const, label: "Альбомная" },
+                  ]}
+                  onChange={setOrientation}
+                />
+                <div className="pt-1">
+                  <Toggle label="Тонкий контур — удобно вырезать" checked={cutLines} onChange={setCutLines} />
+                </div>
+              </div>
+
+              {item ? (
+                <div className="flex flex-col gap-3 border-t border-line pt-4">
+                  <Slider
+                    label="Размер скана"
+                    value={item.w}
+                    min={MIN_WIDTH}
+                    max={Math.floor(widest(aspectOf(item.pageId), paper))}
+                    step={0.5}
+                    display={`${mm(item.w)} × ${mm(item.w * aspectOf(item.pageId))} мм`}
+                    onChange={resize}
+                  />
+                  <div className="flex flex-wrap gap-2">
+                    {KNOWN_SIZES.map((known) => (
+                      <button
+                        key={known.label}
+                        type="button"
+                        title={known.title}
+                        onClick={() => resize(widthForLongEdge(aspectOf(item.pageId), known.long))}
+                        className="rounded-lg border border-line bg-slab px-3 py-1.5 text-[13px] font-medium text-chalk transition-colors hover:bg-riser"
+                      >
+                        {known.label}
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      title="Во всю ширину листа, с полями"
+                      onClick={() => resize(fullWidth(aspectOf(item.pageId), paper))}
+                      className="rounded-lg border border-line bg-slab px-3 py-1.5 text-[13px] font-medium text-chalk transition-colors hover:bg-riser"
+                    >
+                      Во весь лист
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <button type="button" onClick={() => changeItem({ ...item, x: (paper.w - item.w) / 2 })} className="rounded-lg border border-line bg-slab px-3 py-1.5 text-[13px] font-medium text-chalk transition-colors hover:bg-riser">
+                      По центру
+                    </button>
+                    <button type="button" onClick={() => putOnSheet(item.pageId)} className="rounded-lg border border-line bg-slab px-3 py-1.5 text-[13px] font-medium text-chalk transition-colors hover:bg-riser">
+                      Ещё копия
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => dropItem(item.id)}
+                      className="rounded-lg border border-line bg-slab px-3 py-1.5 text-[13px] font-medium text-ember transition-colors hover:bg-riser"
+                    >
+                      Убрать с листа
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <p className="border-t border-line pt-4 text-[13px] leading-relaxed text-dust">
+                  Нажмите на скан на листе, чтобы поменять его размер, или на миниатюру внизу — чтобы добавить.
+                </p>
+              )}
+
+              <div className="flex flex-col gap-2 border-t border-line pt-4">
+                <Button type="button" className="w-full py-3 text-[15px]" onClick={savePaperPdf} disabled={filled.length === 0 || busy !== null}>
+                  {busy === "Собираем листы…" ? busy : `Скачать PDF${filled.length > 1 ? ` (${sheetsWord(filled.length)})` : ""}`}
+                </Button>
+                <Button type="button" tone="ghost" className="w-full" onClick={savePaperJpg} disabled={laid.length === 0 || busy !== null}>
+                  {busy === "Собираем лист…" ? busy : "Скачать этот лист в JPG"}
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <Button type="button" tone="ghost" className="w-full" onClick={() => page && putOnSheet(page.id)} disabled={!page}>
+                Положить на лист {SHEET_SIZES[paperSize].label}
+              </Button>
+              <div className="flex flex-col gap-2 border-t border-line pt-4">
+                <Button type="button" className="w-full py-3 text-[15px]" onClick={savePdf} disabled={pages.length === 0 || busy !== null}>
+                  {busy === "Собираем PDF…" ? busy : `Скачать PDF${pages.length > 1 ? ` (${pages.length} стр.)` : ""}`}
+                </Button>
+                <Button type="button" tone="ghost" className="w-full" onClick={saveJpg} disabled={!page || busy !== null}>
+                  Скачать эту страницу в JPG
+                </Button>
+              </div>
+            </>
+          )}
 
           <Notice>
             Снимайте документ на тёмном фоне при ровном свете — тогда лист

@@ -1,12 +1,21 @@
 /**
- * The smallest PDF writer that does the job: one JPEG per A4 page.
+ * The smallest PDF writer that does the job: one JPEG per page.
  *
  * A JPEG can go into a PDF as it is — the format's DCTDecode filter is the
  * JPEG codec — so nothing is re-encoded and no library is needed. Each image
- * is fitted inside the page, centred, in the page's orientation.
+ * is fitted inside the page, centred: on A4 in the image's orientation, or on
+ * a page of the size given.
  */
 
-export type PdfPage = { jpeg: Uint8Array; width: number; height: number };
+export type PdfPage = {
+  jpeg: Uint8Array;
+  width: number;
+  height: number;
+  /** The paper, in millimetres. A4 when left out. */
+  paper?: { w: number; h: number };
+};
+
+const POINTS_PER_MM = 72 / 25.4;
 
 /** A4 in points. */
 const A4 = { w: 595.28, h: 841.89 };
@@ -43,8 +52,8 @@ export function makePdf(pages: PdfPage[]): Blob {
     const contentId = pageId + 1;
     const imageId = pageId + 2;
     const landscape = page.width > page.height;
-    const pw = landscape ? A4.h : A4.w;
-    const ph = landscape ? A4.w : A4.h;
+    const pw = page.paper ? page.paper.w * POINTS_PER_MM : landscape ? A4.h : A4.w;
+    const ph = page.paper ? page.paper.h * POINTS_PER_MM : landscape ? A4.w : A4.h;
     const scale = Math.min(pw / page.width, ph / page.height);
     const dw = page.width * scale;
     const dh = page.height * scale;
