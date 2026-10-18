@@ -14,11 +14,13 @@ import {
   type UpscaleFactor,
 } from "@/lib/upscale";
 import { useExports } from "@/lib/use-exports";
+import { guestCopy } from "@/lib/guest";
 import { drawWatermark } from "@/lib/watermark";
 import { describeQuota } from "@/lib/entitlement-view";
 import { Button, Notice } from "@/components/site/ui";
 import { Label, Segmented } from "@/components/ui";
 import { QuotaWall } from "@/components/QuotaWall";
+import { GuestHint } from "@/components/GuestHint";
 
 const MAX_STAGE = 560;
 const JPEG_QUALITY = 0.95;
@@ -57,7 +59,7 @@ export function UpscaleStudio() {
   const [made, setMade] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
-  const { entitlement, allowed, blocked, dismiss, claim, problem, clearProblem } = useExports();
+  const { entitlement, allowed, blocked, dismiss, claim, guest, problem, clearProblem } = useExports();
 
   const pickerRef = useRef<HTMLInputElement>(null);
   const onFile = useCallback((next: File) => {
@@ -202,19 +204,20 @@ export function UpscaleStudio() {
   const onSave = useCallback(async () => {
     if (!result) return;
     setError(null);
-    if (!(await claim())) return;
+    if (!guest && !(await claim())) return;
     setSaving(true);
     try {
-      const blob = await exportCanvas(result.canvas, format, JPEG_QUALITY, PRINT_DPI);
+      const output = guest ? guestCopy(result.canvas) : result.canvas;
+      const blob = await exportCanvas(output, format, JPEG_QUALITY, PRINT_DPI);
       const stem = file ? fileStem(file.name) : "photopoly";
       download(blob, `${stem}-x${result.factor}.${extensionFor(format)}`);
-      setMade(`${result.canvas.width} × ${result.canvas.height} · ${formatBytes(blob.size)}`);
+      setMade(`${output.width} × ${output.height} · ${formatBytes(blob.size)}`);
     } catch {
       setError("Не удалось сохранить файл.");
     } finally {
       setSaving(false);
     }
-  }, [result, claim, format, file]);
+  }, [result, claim, guest, format, file]);
 
   const stale = result !== null && result.factor !== factor;
   const busy = working !== null || saving;
@@ -491,13 +494,17 @@ export function UpscaleStudio() {
               <Button type="button" className="w-full py-3 text-[15px]" onClick={onSave} disabled={busy}>
                 {saving ? "Готовим файл…" : "Скачать"}
               </Button>
-              <p className="text-[13px] text-dust">
-                {made
-                  ? `Сохранено: ${made}`
-                  : entitlement
-                    ? `${describeQuota(entitlement)} · один файл — один экспорт`
-                    : "Один файл — один экспорт"}
-              </p>
+              {guest ? (
+                <GuestHint saved={made} />
+              ) : (
+                <p className="text-[13px] text-dust">
+                  {made
+                    ? `Сохранено: ${made}`
+                    : entitlement
+                      ? `${describeQuota(entitlement)} · один файл — один экспорт`
+                      : "Один файл — один экспорт"}
+                </p>
+              )}
             </div>
           )}
 

@@ -30,6 +30,7 @@ export async function Header() {
         <Wordmark />
 
         <nav className="ml-auto flex flex-wrap items-center justify-end gap-x-0.5 gap-y-1">
+          <ToolsMenu className={NAV_LINK} />
           <Link href="/narxlar" className={NAV_LINK}>
             Цены
           </Link>
@@ -39,7 +40,6 @@ export async function Header() {
               <Link href="/studio" className={NAV_LINK}>
                 Редактор
               </Link>
-              <ToolsMenu className={NAV_LINK} />
               <Link href="/zakazlar" className={NAV_LINK}>
                 Заказы
               </Link>

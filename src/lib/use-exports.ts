@@ -30,6 +30,11 @@ export type Exports = {
   dismiss: () => void;
   /** Books one export. False means do not write the file. */
   claim: () => Promise<boolean>;
+  /**
+   * Nobody is signed in. The tools are open to visitors, who may save a
+   * reduced copy without spending anything; the full size needs an account.
+   */
+  guest: boolean;
   /** Something the caller should show in its own error line. */
   problem: string | null;
   clearProblem: () => void;
@@ -39,6 +44,7 @@ export function useExports(): Exports {
   const [entitlement, setEntitlement] = useState<EntitlementView | null>(null);
   const [blocked, setBlocked] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
+  const [guest, setGuest] = useState(false);
 
   /**
    * An allowance we have not learned yet reads as allowed: the first export
@@ -67,9 +73,16 @@ export function useExports(): Exports {
         // succeeds but whose reply is lost must not be charged twice.
         if (owed > 0) writePending(0);
         const fresh = owed > 0 ? await settleOfflineExports(owed) : await viewEntitlement();
-        if (fresh && alive) {
+        if (!alive) return;
+        if (fresh) {
           setEntitlement(fresh);
           writeQuota(fresh);
+          setGuest(false);
+        } else {
+          // The server answered and there is no account behind this browser.
+          // A stored allowance from an earlier session is not this visitor's.
+          setEntitlement(null);
+          setGuest(true);
         }
       } catch {
         // No connection. The stored allowance is what we go on.
@@ -107,8 +120,10 @@ export function useExports(): Exports {
         writeQuota(result.entitlement);
       }
       if (!result.ok) {
-        if (result.reason === "auth") setProblem("Сессия истекла. Войдите заново.");
-        else setBlocked(true);
+        if (result.reason === "auth") {
+          setGuest(true);
+          setProblem("Вы не вошли в аккаунт. Без входа сохраняется уменьшенная копия.");
+        } else setBlocked(true);
         return false;
       }
       return true;
@@ -137,5 +152,5 @@ export function useExports(): Exports {
   const dismiss = useCallback(() => setBlocked(false), []);
   const clearProblem = useCallback(() => setProblem(null), []);
 
-  return { entitlement, allowed, blocked, dismiss, claim, problem, clearProblem };
+  return { entitlement, allowed, blocked, dismiss, claim, guest, problem, clearProblem };
 }

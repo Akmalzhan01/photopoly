@@ -5,10 +5,12 @@ import { download, exportCanvas, extensionFor, fileStem, formatBytes } from "@/l
 import { erase, loadEraser, MAX_EDGE } from "@/lib/inpaint";
 import { stageBox } from "@/lib/stage";
 import { useExports } from "@/lib/use-exports";
+import { guestCopy } from "@/lib/guest";
 import { describeQuota } from "@/lib/entitlement-view";
 import { Button, Notice } from "@/components/site/ui";
 import { Label, Slider } from "@/components/ui";
 import { QuotaWall } from "@/components/QuotaWall";
+import { GuestHint } from "@/components/GuestHint";
 
 const MAX_STAGE = 620;
 const JPEG_QUALITY = 0.95;
@@ -31,7 +33,7 @@ export function EraserStudio() {
   const [error, setError] = useState<string | null>(null);
   const [made, setMade] = useState<string | null>(null);
 
-  const { entitlement, blocked, dismiss, claim, problem, clearProblem } = useExports();
+  const { entitlement, blocked, dismiss, claim, guest, problem, clearProblem } = useExports();
 
   const imageRef = useRef<HTMLCanvasElement>(null);
   const maskRef = useRef<HTMLCanvasElement>(null);
@@ -211,19 +213,20 @@ export function EraserStudio() {
     const image = imageRef.current;
     if (!image) return;
     setError(null);
-    if (!(await claim())) return;
+    if (!guest && !(await claim())) return;
     setSaving(true);
     try {
-      const blob = await exportCanvas(image, format, JPEG_QUALITY, PRINT_DPI);
+      const output = guest ? guestCopy(image) : image;
+      const blob = await exportCanvas(output, format, JPEG_QUALITY, PRINT_DPI);
       const stem = file ? fileStem(file.name) : "photopoly";
       download(blob, `${stem}-ochishcheno.${extensionFor(format)}`);
-      setMade(`${image.width} × ${image.height} · ${formatBytes(blob.size)}`);
+      setMade(`${output.width} × ${output.height} · ${formatBytes(blob.size)}`);
     } catch {
       setError("Не удалось сохранить файл.");
     } finally {
       setSaving(false);
     }
-  }, [claim, file, format]);
+  }, [claim, guest, file, format]);
 
   const reset = async () => {
     const image = imageRef.current;
@@ -448,13 +451,17 @@ export function EraserStudio() {
             >
               {saving ? "Готовим файл…" : `Скачать ${format === "image/png" ? "PNG" : "JPG"}`}
             </Button>
-            <p className="text-[13px] text-dust">
-              {made
-                ? `Сохранено: ${made}`
-                : entitlement
-                  ? `${describeQuota(entitlement)} · один файл — один экспорт`
-                  : "Один файл — один экспорт"}
-            </p>
+            {guest ? (
+              <GuestHint saved={made} />
+            ) : (
+              <p className="text-[13px] text-dust">
+                {made
+                  ? `Сохранено: ${made}`
+                  : entitlement
+                    ? `${describeQuota(entitlement)} · один файл — один экспорт`
+                    : "Один файл — один экспорт"}
+              </p>
+            )}
           </div>
 
           <Notice>

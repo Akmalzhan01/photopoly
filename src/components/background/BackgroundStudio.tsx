@@ -17,11 +17,13 @@ import { applyStrokes, type Stroke } from "@/lib/mask";
 import { backdropFormat, composeBackdrop, type Backdrop } from "@/lib/backdrop";
 import { stageBox } from "@/lib/stage";
 import { useExports } from "@/lib/use-exports";
+import { guestCopy } from "@/lib/guest";
 import { drawWatermark } from "@/lib/watermark";
 import { describeQuota } from "@/lib/entitlement-view";
 import { Button, Notice } from "@/components/site/ui";
 import { ColourPicker, Label, Segmented, Swatch } from "@/components/ui";
 import { QuotaWall } from "@/components/QuotaWall";
+import { GuestHint } from "@/components/GuestHint";
 import { MaskEditor } from "@/components/MaskEditor";
 
 const MAX_STAGE = 560;
@@ -53,7 +55,7 @@ export function BackgroundStudio() {
   const [failed, setFailed] = useState<string | null>(null);
   const [made, setMade] = useState<string | null>(null);
 
-  const { entitlement, allowed, blocked, dismiss, claim, problem, clearProblem } = useExports();
+  const { entitlement, allowed, blocked, dismiss, claim, guest, problem, clearProblem } = useExports();
 
   const pickerRef = useRef<HTMLInputElement>(null);
   const onFile = useCallback((next: File) => {
@@ -183,19 +185,20 @@ export function BackgroundStudio() {
   const onSave = useCallback(async () => {
     if (!result) return;
     setError(null);
-    if (!(await claim())) return;
+    if (!guest && !(await claim())) return;
     setSaving(true);
     try {
-      const blob = await exportCanvas(result, format, JPEG_QUALITY, PRINT_DPI);
+      const output = guest ? guestCopy(result) : result;
+      const blob = await exportCanvas(output, format, JPEG_QUALITY, PRINT_DPI);
       const stem = file ? fileStem(file.name) : "photopoly";
       download(blob, `${stem}-bez-fona.${extensionFor(format)}`);
-      setMade(`${result.width} × ${result.height} · ${formatBytes(blob.size)}`);
+      setMade(`${output.width} × ${output.height} · ${formatBytes(blob.size)}`);
     } catch {
       setError("Не удалось сохранить файл.");
     } finally {
       setSaving(false);
     }
-  }, [result, claim, format, file]);
+  }, [result, claim, guest, format, file]);
 
   const percent = progress ? Math.round(progress.ratio * 100) : 0;
   const isColour = (colour: string) => backdrop.kind === "colour" && backdrop.colour === colour;
@@ -444,13 +447,17 @@ export function BackgroundStudio() {
             >
               {saving ? "Готовим файл…" : `Скачать ${format === "image/png" ? "PNG" : "JPG"}`}
             </Button>
-            <p className="text-[13px] text-dust">
-              {made
-                ? `Сохранено: ${made}`
-                : entitlement
-                  ? `${describeQuota(entitlement)} · один файл — один экспорт`
-                  : "Один файл — один экспорт"}
-            </p>
+            {guest ? (
+              <GuestHint saved={made} />
+            ) : (
+              <p className="text-[13px] text-dust">
+                {made
+                  ? `Сохранено: ${made}`
+                  : entitlement
+                    ? `${describeQuota(entitlement)} · один файл — один экспорт`
+                    : "Один файл — один экспорт"}
+              </p>
+            )}
           </div>
 
           <Notice>
