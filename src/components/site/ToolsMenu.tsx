@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 
 const TOOLS = [
   { href: "/fon", title: "Убрать фон", hint: "Прозрачный, цветной или размытый фон" },
+  { href: "/ochirish", title: "Удалить лишнее", hint: "Прохожие, провода, надписи" },
   { href: "/kattalashtirish", title: "Увеличить фото", hint: "Нейросеть, ×2 и ×4" },
   { href: "/konvert", title: "HEIC в JPG и сжатие", hint: "Сразу много файлов, архивом" },
   { href: "/karobka", title: "Коробки", hint: "Развёртка коробки под печать" },
