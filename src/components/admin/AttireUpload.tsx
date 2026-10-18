@@ -38,7 +38,7 @@ export function AttireUpload() {
                 required
                 accept="image/png"
                 aria-label="Файл костюма"
-                className={`w-72 file:mr-3 file:border-0 file:bg-riser file:px-2.5 file:py-1 file:font-mono file:text-[10px] file:uppercase file:tracking-[0.14em] file:text-chalk ${input}`}
+                className={`w-72 file:mr-3 file:border-0 file:bg-riser file:px-2.5 file:py-1 file:font-mono file:text-[12px] file:uppercase file:tracking-[0.14em] file:text-chalk ${input}`}
               />
             </label>
 

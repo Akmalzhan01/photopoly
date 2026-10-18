@@ -397,7 +397,7 @@ export function MaskEditor({
               onChange={setHardness}
               onReset={() => setHardness(DEFAULT_HARDNESS)}
             />
-            <p className="text-[10px] leading-snug text-dust">
+            <p className="text-[12px] leading-snug text-dust">
               Yuqori qiymat — keskin chet (ko&apos;zoynak, yelka). Past qiymat —
               yumshoq o&apos;tish (soch, mo&apos;yna).
             </p>

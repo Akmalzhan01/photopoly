@@ -145,7 +145,7 @@ export function Panel({
                       >
                         {preset.label}
                       </span>
-                      <span className="mt-0.5 block text-[10px] leading-tight text-dust">
+                      <span className="mt-0.5 block text-[12px] leading-tight text-dust">
                         {preset.note}
                       </span>
                     </button>
@@ -197,7 +197,7 @@ export function Panel({
               ]}
               onChange={(dpi) => patch({ dpi: Number(dpi) })}
             />
-            <p className="text-[10px] leading-snug text-dust">
+            <p className="text-[12px] leading-snug text-dust">
               {physical
                 ? "Физический размер переводится в пиксели по этой плотности."
                 : "В пиксельном режиме записывается только в метаданные файла."}
@@ -246,7 +246,7 @@ export function Panel({
                   {strokeCount > 0 ? `${strokeCount} шт.` : ""}
                 </span>
               </button>
-              <p className="-mt-2 text-[10px] leading-snug text-dust">
+              <p className="-mt-2 text-[12px] leading-snug text-dust">
                 Если волосы или очки обрезаны неверно, поправьте кистью вручную.
               </p>
             </>
@@ -270,7 +270,7 @@ export function Panel({
               />
             </div>
             {settings.background === "transparent" && settings.format === "image/jpeg" ? (
-              <p className="text-[10px] leading-snug text-safe-soft">
+              <p className="text-[12px] leading-snug text-safe-soft">
                 JPEG не хранит прозрачность — при скачивании фон станет белым.
               </p>
             ) : null}
@@ -319,7 +319,7 @@ export function Panel({
               />
               {/* The trade is real and measured, so it is stated rather than
                   left for someone to discover on a printed order. */}
-              <p className="-mt-2 text-[10px] leading-snug text-dust">
+              <p className="-mt-2 text-[12px] leading-snug text-dust">
                 Убирает цветные пятна и квадраты от сжатия. Сильнее — чище, но
                 цвет начинает затекать за границы.
               </p>
@@ -338,7 +338,7 @@ export function Panel({
           {/* The claim that matters on this page, said plainly. A document
               photograph may not have its subject's appearance altered, and the
               shop has to be able to say so if asked. */}
-          <p className="text-[10px] leading-snug text-dust">
+          <p className="text-[12px] leading-snug text-dust">
             Выравнивает экспозицию, убирает шум и увеличивает фильтром для
             фотографий, а не растягиванием.{""}
             <span className="text-ash">Ничего не дорисовывает</span> — только то,
@@ -405,7 +405,7 @@ export function Panel({
             onChange={(warmth) => patch({ warmth })}
             onReset={() => patch({ warmth: 0 })}
           />
-          <p className="text-[10px] leading-snug text-dust">
+          <p className="text-[12px] leading-snug text-dust">
             Снимок, сделанный под жёлтой лампой, поправляется сдвигом
             Теплоты в минус.
           </p>
@@ -415,7 +415,7 @@ export function Panel({
       <Section index="05" title="Одежда и рамка">
         <div className="space-y-4">
           {attireAssets.length === 0 ? (
-            <p className="text-[10px] leading-snug text-dust">
+            <p className="text-[12px] leading-snug text-dust">
               Одежда пока не загружена. PNG с прозрачным фоном добавляется в разделе
               &laquo;Костюмы&raquo; админ-панели.
             </p>
@@ -436,7 +436,7 @@ export function Panel({
                     &times;
                   </span>
                   <span
-                    className={`w-full truncate text-center text-[9px] leading-tight ${
+                    className={`w-full truncate text-center text-[11px] leading-tight ${
                       settings.attireAssetId === null ? "text-safe-soft" : "text-dust"
                     }`}
                   >
@@ -467,7 +467,7 @@ export function Panel({
                         className="h-10 w-full object-contain"
                       />
                       <span
-                        className={`w-full truncate text-center text-[9px] leading-tight ${
+                        className={`w-full truncate text-center text-[11px] leading-tight ${
                           active ? "text-safe-soft" : "text-dust"
                         }`}
                       >
@@ -512,7 +512,7 @@ export function Panel({
                 onChange={(attireOffsetY) => patch({ attireOffsetY })}
                 onReset={() => patch({ attireOffsetY: 0 })}
               />
-              <p className="text-[10px] leading-snug text-dust">
+              <p className="text-[12px] leading-snug text-dust">
                 Одежда располагается относительно кадра — независимо от масштаба и
                 сдвига фотографии, поэтому настраиваются они по отдельности.
               </p>
@@ -548,7 +548,7 @@ export function Panel({
                 />
               </div>
             </div>
-            <p className="text-[10px] leading-snug text-dust">
+            <p className="text-[12px] leading-snug text-dust">
               {settings.borderWidth > 0
                 ? `Рамка рисуется внутри кадра — размер на выходе остаётся ${targetW}×${targetH} px. Примерно ${((settings.borderWidth / settings.dpi) * 25.4).toFixed(2)} мм.`
                 : "0 — без рамки."}
@@ -599,7 +599,7 @@ export function Panel({
             onReset={() => patch({ rotate: 0 })}
           />
           {settings.rotate !== 0 ? (
-            <p className="text-[10px] leading-snug text-dust">
+            <p className="text-[12px] leading-snug text-dust">
               Размер лица не меняется при повороте — это важно для документов.
               Если по углам появился фон, добавьте масштаб.
             </p>
@@ -668,7 +668,7 @@ export function Panel({
                       >
                         {sheet.label}
                       </span>
-                      <span className="mt-0.5 block text-[10px] leading-tight text-dust">
+                      <span className="mt-0.5 block text-[12px] leading-tight text-dust">
                         {sheet.note}
                       </span>
                     </button>
@@ -708,7 +708,7 @@ export function Panel({
                         {layout.cols} × {layout.rows} = {layout.capacity} шт.
                       </span>
                     </div>
-                    <p className="mt-1.5 text-[10px] leading-snug text-dust">
+                    <p className="mt-1.5 text-[12px] leading-snug text-dust">
                       Каждое {photoWmm.toFixed(1)} × {photoHmm.toFixed(1)} мм
                       {layout.rotated ? "· с поворотом на 90° влезло больше" : ""}
                     </p>
@@ -769,7 +769,7 @@ export function Panel({
                     onChange={(cutMarks) => patch({ cutMarks })}
                   />
                   {sheetDpi < settings.dpi ? (
-                    <p className="text-[10px] leading-snug text-safe-soft">
+                    <p className="text-[12px] leading-snug text-safe-soft">
                       Для такого большого листа плотность снижена до {sheetDpi} dpi —
                       иначе файл получился бы огромным.
                     </p>
@@ -818,7 +818,7 @@ export function Panel({
               onChange={(proof) => patch({ proof })}
             />
             {settings.proof ? (
-              <p className="mt-2 text-[10px] leading-snug text-dust">
+              <p className="mt-2 text-[12px] leading-snug text-dust">
                 Так цвета лягут на бумагу. Краска не достаёт до экранных синих,
                 зелёных и красных — нейтральные тона и кожа меняются мало.
                 {proofShare !== null ? (
@@ -893,7 +893,7 @@ export function Panel({
                 Печать
               </span>
             </button>
-            <p className="mt-2 text-[10px] leading-snug text-dust">
+            <p className="mt-2 text-[12px] leading-snug text-dust">
               На бумаге получится ровно{""}
               <span className="text-ash tabular-nums">
                 {printWmm.toFixed(0)} × {printHmm.toFixed(0)} мм
@@ -922,7 +922,7 @@ export function Panel({
                   Новое фото
                 </span>
               </button>
-              <p className="mt-2 text-[10px] leading-snug text-dust">
+              <p className="mt-2 text-[12px] leading-snug text-dust">
                 Размер, кадрирование и остальные настройки останутся — перезагружать
                 страницу не нужно. Фото можно и просто перетащить сюда или вставить
                 через Ctrl+V.
@@ -933,7 +933,7 @@ export function Panel({
       </Section>
 
       <div className="mt-auto border-t border-line px-5 py-4">
-        <p className="text-[10px] leading-relaxed text-dust">
+        <p className="text-[12px] leading-relaxed text-dust">
           Фото не покидает ваше устройство — и удаление фона, и подгонка
           размера делаются в этом браузере.
         </p>

@@ -319,9 +319,9 @@ export function QualityStudio() {
         </div>
       ) : null}
 
-      <div className="grid gap-px border border-line bg-line lg:grid-cols-[1fr_21rem] rounded-lg">
+      <div className="grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-line bg-line lg:grid-cols-[minmax(0,1fr)_21rem]">
         <section
-          className="bg-slab p-5"
+          className="min-w-0 bg-slab p-5"
           onDragOver={(event) => event.preventDefault()}
           onDrop={(event) => {
             event.preventDefault();
@@ -495,7 +495,7 @@ export function QualityStudio() {
               }
               onChange={(denoise) => patch({ denoise })}
             />
-            <p className="-mt-2 text-[10px] leading-snug text-dust">
+            <p className="-mt-2 text-[12px] leading-snug text-dust">
               Убирает цветные пятна и квадраты от сжатия. Сильнее — чище, но
               цвет начинает затекать за границы. Проверяйте на «1:1».
             </p>
@@ -519,7 +519,7 @@ export function QualityStudio() {
                 checked={quality.balance}
                 onChange={(balance) => patch({ balance })}
               />
-              <p className="mt-1.5 text-[10px] leading-snug text-dust">
+              <p className="mt-1.5 text-[12px] leading-snug text-dust">
                 Для снимков под жёлтой лампой. Выключено не случайно: это
                 догадка по среднему цвету кадра, и на снимке, который и правда
                 одного цвета, она ошибается.
@@ -539,7 +539,7 @@ export function QualityStudio() {
               }))}
               onChange={(value) => patch({ scale: Number(value) })}
             />
-            <p className="text-[10px] leading-snug text-dust">
+            <p className="text-[12px] leading-snug text-dust">
               Больше пикселей — не больше деталей. Увеличение нужно, когда мелкий
               снимок печатают крупно.
             </p>
@@ -553,7 +553,7 @@ export function QualityStudio() {
               value={result ? describeMm(result.w, result.h) : "—"}
             />
             {result?.capped ? (
-              <p className="pt-1 text-[10px] leading-snug text-safe-soft">
+              <p className="pt-1 text-[12px] leading-snug text-safe-soft">
                 До ×{quality.scale} здесь не дойти: сторона упирается в предел
                 в {EDGE_LIMIT} пикселей, поэтому увеличение урезано — пропорции
                 сохранены.
