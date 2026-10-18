@@ -40,12 +40,14 @@ import {
 import { fullBounds, MAX_EDGE, type Drawable, type ExportFormat } from "./imaging";
 
 export type Quality = {
-  /** Exposure and white balance, 0–1. */
+  /** Exposure, 0–1. */
   tone: number;
   /** Noise smoothing, 0–1. */
   denoise: number;
   /** Edge contrast, 0–1. */
   sharpen: number;
+  /** Neutralise a colour cast. Off unless asked for — see `enhance.ts`. */
+  balance: boolean;
   /** How much bigger to make it, 1–4. */
   scale: number;
   format: Extract<ExportFormat, "image/jpeg" | "image/png">;
@@ -57,7 +59,14 @@ export type Quality = {
  * a decision about the print, not a default.
  */
 export function initialQuality(): Quality {
-  return { tone: 0.75, denoise: 0.45, sharpen: 0.45, scale: 1, format: "image/jpeg" };
+  return {
+    tone: 0.75,
+    denoise: 0.55,
+    sharpen: 0.3,
+    balance: false,
+    scale: 1,
+    format: "image/jpeg",
+  };
 }
 
 export const SCALES = [1, 2, 3, 4] as const;
@@ -80,12 +89,22 @@ export type Rect = { x: number; y: number; w: number; h: number };
 export type Size = { w: number; h: number };
 
 export function toEnhance(quality: Quality): Enhance {
-  return { on: true, tone: quality.tone, denoise: quality.denoise, sharpen: quality.sharpen };
+  return {
+    on: true,
+    tone: quality.tone,
+    denoise: quality.denoise,
+    sharpen: quality.sharpen,
+    balance: quality.balance,
+  };
 }
 
 export function idleQuality(quality: Quality): boolean {
   return (
-    quality.scale <= 1 && quality.tone === 0 && quality.denoise === 0 && quality.sharpen === 0
+    quality.scale <= 1 &&
+    quality.tone === 0 &&
+    quality.denoise === 0 &&
+    quality.sharpen === 0 &&
+    !quality.balance
   );
 }
 
@@ -140,7 +159,7 @@ export function stageBox(available: number, aspect: number, maxHeight: number): 
  * and it is what stops a wide window on a 3× display from being charged for
  * nine times the work.
  */
-export const PREVIEW_BUDGET = 2_200_000;
+export const PREVIEW_BUDGET = 1_600_000;
 
 export function bufferRatio(box: Size, dpr: number, budget = PREVIEW_BUDGET): number {
   const wanted = Math.max(1, Math.min(2, dpr || 1));

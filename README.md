@@ -399,55 +399,129 @@ Sinov buni raqam bilan tekshiradi: suratga mutlaqo silliq kvadrat qo'yiladi va
 yaxshilashdan keyin uning tarqalishi hamon ~0 bo'lishi kerak. Agar biror joydan
 «faktura» paydo bo'lsa — demak biror narsa o'ylab topilgan.
 
-### O'lchangan foyda
+### Javobi ma'lum stend
 
-Kichik suratni 3× kattalashtirib, asl nusxa bilan solishtirib:
+Oldingi o'lchovlar **proksi** edi — «chekka energiyasi oshdi». Haddan tashqari
+o'tkirlashtirilgan shovqinli surat bunday o'lchovda a'lo ball oladi, odamga esa
+yoqmaydi. Shuning uchun stend boshqacha qurilgan: toza surat yasaladi, keyin u
+**ataylab buziladi** (qorong'ilashtiriladi, shovqin qo'shiladi, qattiq
+siqiladi), va natija o'zi hech qachon ko'rmagan toza nusxa bilan solishtiriladi.
 
-| Usul | Aniqlik | O'tkirlik |
-| --- | --- | --- |
-| Brauzerning o'zi | 23,69 dB | 2,38 |
-| + o'tkirlik | 23,88 dB | 2,72 |
-| Lanczos | 23,91 dB | 3,04 |
-| Lanczos + o'tkirlik | 24,02 dB | 3,53 |
-| **Asl nusxa** | — | **6,66** |
+Nima o'lchanadi:
 
-Halol o'qish: chop etishda sezilarli o'tkirroq, va deyarli bir xil aniq.
-Messenjer yo'q qilgan tafsilot **qaytmaydi**.
+| Ustun | Nimani aytadi |
+| --- | --- |
+| **zarracha** | asli tekis bo'lgan joylardagi tarqoqlik — qolgan shovqin |
+| **rang** | bitta rangli dog' ichidagi xato — rang shovqini |
+| **oqadi** | ikki rang chegarasidagi xato — rang chegaradan oshib ketishi |
+| **halo** | qattiq chekka yonidagi yorug' kayma — «sun'iy» aynan shu |
+| **tafsilot** | asli faktura bo'lgan joydagi faktura; **aslidan ko'p bo'lsa — o'ylab topilgan** |
+| **PSNR** | butun kadrning toza nusxaga yaqinligi |
 
-### Qayerda to'xtaydi
+### Eski va yangi, bitta o'lchov bilan
 
-Siqilgan, qorong'i telefon surati ustida (zarracha — suratning o'z diapazoniga
-nisbatan, tafsilot — chekka energiyasi):
+| | zarracha | rang | oqadi | halo | tafsilot | PSNR |
+| --- | --- | --- | --- | --- | --- | --- |
+| Qanday kelgan bo'lsa | 7,29 | 3,97 | 12,6 | 4,4 | 25,13 | 30,11 |
+| RGB ni bir xil ishlagan eski | 8,16 | 7,61 | 15,24 | **22,7** | **38,52** | **25,38** |
+| **Yorug'lik/rang ajratilgan yangi** | **5,09** | **2,99** | 13,1 | **3,3** | 29,19 | **31,05** |
+| Asl nusxa | 0 | 0 | 0 | 0 | 22,09 | — |
 
-| Sozlama | Zarracha | Tafsilot |
-| --- | --- | --- |
-| O'chiq | 23,1% | 5,97 |
-| Shovqin 0,45 | 22,3% | 5,71 |
-| Shovqin 1,00 | 18,7% | **3,68** |
-| Faqat ekspozitsiya | 21,0% | 10,85 |
-| **Standart (75/45/45)** | 22,5% | **11,15** |
+Eski versiya **uchala shikoyatni ham** raqamda tasdiqlaydi: shovqinni kamaytirish
+o'rniga ko'paytirgan, rang xatosini ikki barobarlagan, siqilish qoldirgan
+kaymadan besh barobar katta kayma chizgan, va aslida bo'lmagan fakturani yarmiga
+ko'paytirgan. Natija kirgan faylga qaraganda haqiqatdan **5 dB uzoqroq** edi.
 
-Ekspozitsiya va o'tkirlik hal qilingan — tafsilot deyarli ikki barobar.
-**Shovqin esa yo'q**, va o'rtadagi qatorlar sababini aytadi: silliqlash
-tafsilotni zarracha bilan birga olib ketadi, chunki arifmetika siqilish
-artefaktini kiprikdan ajrata olmaydi.
+Yangisi: shovqinning uchdan biri ketdi, rang xatosining choragi ketdi, kayma
+kirgan fayldagidan ham kichik, va **birinchi marta** natija kirgan fayldan
+haqiqatga yaqinroq. Bitta narsa yomonlashdi — ikki kuchli rang chegarasida rang
+sal oqadi (12,6 → 13,1). Bu rang dog'larini olib tashlashning haqi, va aynan
+shuning uchun bu dastak sozlanadigan.
 
-**Model aynan shu uchun kerak bo'ladi** — ekspozitsiya va o'tkirlik uchun emas.
-Hozircha shovqin dastagi deyarli bepul joyda turibdi, rostdan donador surat
-kelganda esa uni o'zingiz ko'tarib, nima evaziga ekanini ko'rasiz.
+### Nega yorug'lik va rang alohida
+
+Uchala shikoyat ham bitta narsaga borib taqaladi — eski kod qizil, yashil va
+ko'kni bir xil ishlardi:
+
+- **rang shovqini** — eng xunuk turi, lekin tafsilot deyarli olib yurmaydi.
+  Shuning uchun uni **qattiq** silliqlash mumkin: ko'z fakturani yorug'likdan
+  o'qiydi (shu sababdan birinchi rangli televizordan beri hamma format rangni
+  yorug'likdan kam uzatadi). RGB da silliqlasangiz — tafsilot ham ketadi.
+- **ekspozitsiya — bu yorug'lik.** Uni faqat yorug'likka qo'llasangiz, rang va
+  to'yinganlik joyida qoladi. Eski kod bundan tashqari o'rtacha rang bo'yicha
+  **oq balansni taxmin qilardi** — «rang o'zgarib ketdi» aynan shu edi. Endi u
+  alohida tugma va **o'chiq**.
+- **halo ham yorug'lik**: asl suratda yo'q kayma. Faqat yorug'likni
+  o'tkirlashtirib, pikselga qo'shnilari diapazonidan uzoqqa ketishni taqiqlab,
+  u yo'qoladi.
+
+### Asosiy shovqin — zerno emas, kvadratchalar
+
+Eng muhim kashfiyot. Silliqlash nega deyarli ishlamasdi: messenjerdan kelgan
+suratda **yuqori chastotalar allaqachon yo'q** — siqish birinchi bo'lib ularni
+tashlaydi. Qolgani esa 8×8 kvadratlar orasidagi zina, va u **past chastotali**.
+
+Buni raqam ko'rsatdi: tekis joyda 8 ga karrali ustunlar bo'ylab qadam **3,25**,
+qolgan ustunlarda **0,80** — to'rt barobar. Va radius bo'yicha o'lchov: r=2 da
+tarqoqlik 1,71, r=8 da **2,45** — ya'ni kattaroq radius natijani **yomonlashtiradi**.
+Hech qanday silliqlash kvadratni olib tashlay olmaydi, chunki istalgan foydali
+radiusda kvadrat — bu farq emas, bu o'zining tekis joyi.
+
+Shuning uchun chok **chok sifatida** ishlanadi: agar kvadrat chegarasidagi qadam
+kichik bo'lsa (ya'ni bu mazmun emas, kodlash), u yopiladi va tuzatish keyingi
+bir necha pikselga yoyiladi. Zina — yumshoq qiyalikka aylanadi. Va bu **o'zi
+aniqlanadi**: PNG da, skrinshotda yoki o'lchami o'zgartirilgan suratda to'r mos
+kelmaydi, nisbat 1 ga teng chiqadi va hech narsa qilinmaydi.
+
+### Kattalashtirish ham kayma chizardi
+
+Lanczos **halqa beradi** (uning o'tkirligi manfiy qanotlaridan keladi). Stend
+ko'rsatdi: mayda suratni 2× qilganda, **o'tkirlashtirish umuman o'chiq
+bo'lganda ham**, kayma 2,2 dan 20 ga chiqardi. Ya'ni «sun'iy» ning uchdan biri
+o'tkirlashtirishdan emas, kattalashtirishdan edi.
+
+Endi har bir chiqish pikseli o'zi orasida turgan ikkita kirish piksel
+diapazonida ushlab turiladi (anti-ringing). Kayma: **24,4 → 2,8**, o'tkirlik
+o'chiq bo'lganda esa **0**.
 
 ### Tartib muhim
 
-Ekspozitsiya → shovqin → kattalashtirish → o'tkirlik. Bu tartib **o'lchab**
-topilgan, didga qarab emas. Qorong'i surat diapazonning tor qismini egallaydi;
-uni ochish ichidagi hamma narsani, jumladan zarrachani ham, o'sha koeffitsientga
-ko'paytiradi. Shuning uchun oldin silliqlasangiz, u hali ikki barobarga
-ko'payadigan zarracha ustida, oddiy suratga sozlangan ostona bilan ishlaydi —
-va natija kirgandan ko'ra shovqinliroq chiqadi.
+Ekspozitsiya → kvadratchalar → shovqin → kattalashtirish → o'tkirlik. Bu tartib
+**o'lchab** topilgan. Qorong'i surat diapazonning tor qismini egallaydi; uni
+ochish ichidagi hamma narsani, jumladan shovqinni ham, o'sha koeffitsientga
+ko'paytiradi — shuning uchun oldin ekspozitsiya, keyin ostonalar.
 
-Shu sababdan silliqlash ostonasi ham, o'tkirlik ostonasi ham **suratning o'zidan
-o'lchanadi** (|piksel − xira nusxa| ning medianasi), qat'iy son emas. Qat'iy son
-bilan o'tkirlik endigina olingan shovqinni qaytarib qo'yardi.
+Ostonalar **suratning o'zidan o'lchanadi**, qat'iy son emas. Ikki xil o'lchov
+ikki xil ish uchun: nozik shovqin uchun |piksel − xira nusxa| medianasi, «bu joy
+tekismi» degan savol uchun esa **mahalliy tarqoqlikning** o'z taqsimoti (30-chi
+protsentil). Ikkinchisi kerak bo'ldi, chunki siqilgan suratda birinchisi 0,96
+chiqadi, haqiqatan tekis yuzning tarqoqligi esa 3,24 — noto'g'ri o'lchov bilan
+butun kadr «faktura» deb o'qilib, silliqlash hech narsaga tegmasdi.
+
+### Tezlik
+
+| | eski | yangi |
+| --- | --- | --- |
+| Ko'rinish (1,5 Mpiks) | 343 ms | 538 ms |
+| 12 Mpiks surat | 2,8 s | 4,3 s |
+
+Ko'proq ish qilinadi, shuning uchun sekinroq. Uch marta tezlashtirildi:
+ekspozitsiya egri chizig'i 256 ta qiymat uchun **oldindan** hisoblanadi (har
+piksel uchun `pow` va `tanh` emas), min/maks ajratiladigan ikki o'tishda
+olinadi, keng radiusli ishlar (rang va «tekis joy» xaritasi) **yarim
+o'lchamda** bajariladi — ikkalasi ham past chastotali, JPEG ham rangni shunday
+saqlaydi.
+
+### Endi qayerda to'xtaydi
+
+Tafsilot 29,19, asl nusxada 22,09. Ya'ni kadrda hamon aslida bo'lmagan faktura
+bor — bu qolgan shovqin, u tafsilotdek o'qiladi. Filtrlash buni yopa olmaydi:
+siqilish artefaktini kiprikdan ajratish — model rostdan yaxshi qiladigan
+yagona narsa.
+
+**Model aynan shu uchun kerak bo'ladi.** Lekin endi bu ancha kichik ish:
+ekspozitsiya, rang, kvadratchalar va shovqinning asosiy qismi endi model uchun
+dalil emas.
 
 ### Chegara proporsiyani buzmaydi
 

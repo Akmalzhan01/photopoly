@@ -34,7 +34,7 @@ import { useExports } from "@/lib/use-exports";
 import { drawWatermark } from "@/lib/watermark";
 import { describeQuota } from "@/lib/entitlement-view";
 import { Button, Notice } from "@/components/site/ui";
-import { Label, Segmented, Slider } from "@/components/ui";
+import { Label, Segmented, Slider, Toggle } from "@/components/ui";
 import { QuotaWall } from "@/components/QuotaWall";
 
 /** Tall enough to judge a face, short enough to leave the controls on screen. */
@@ -496,7 +496,8 @@ export function QualityStudio() {
               onChange={(denoise) => patch({ denoise })}
             />
             <p className="-mt-2 text-[10px] leading-snug text-dust">
-              Сильнее — тише зерно, но мягче детали. Проверяйте на «1:1».
+              Убирает цветные пятна и квадраты от сжатия. Сильнее — чище, но
+              цвет начинает затекать за границы. Проверяйте на «1:1».
             </p>
             <Slider
               label="Резкость"
@@ -512,6 +513,18 @@ export function QualityStudio() {
               }
               onChange={(sharpen) => patch({ sharpen })}
             />
+            <div className="border-t border-line pt-3">
+              <Toggle
+                label="Убрать цветной оттенок"
+                checked={quality.balance}
+                onChange={(balance) => patch({ balance })}
+              />
+              <p className="mt-1.5 text-[10px] leading-snug text-dust">
+                Для снимков под жёлтой лампой. Выключено не случайно: это
+                догадка по среднему цвету кадра, и на снимке, который и правда
+                одного цвета, она ошибается.
+              </p>
+            </div>
           </div>
 
           <div className="flex flex-col gap-2">

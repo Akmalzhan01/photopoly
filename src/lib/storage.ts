@@ -151,6 +151,7 @@ export function sanitiseQuality(raw: unknown): Quality {
     tone: num(v.tone, base.tone, 0, 1),
     denoise: num(v.denoise, base.denoise, 0, 1),
     sharpen: num(v.sharpen, base.sharpen, 0, 1),
+    balance: bool(v.balance, base.balance),
     scale: num(v.scale, base.scale, 1, 4),
     format: pick(v.format, ["image/jpeg", "image/png"] as const, base.format),
   };

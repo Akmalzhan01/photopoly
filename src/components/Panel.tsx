@@ -320,7 +320,8 @@ export function Panel({
               {/* The trade is real and measured, so it is stated rather than
                   left for someone to discover on a printed order. */}
               <p className="-mt-2 text-[10px] leading-snug text-dust">
-                Сильнее — тише зерно, но мягче детали.
+                Убирает цветные пятна и квадраты от сжатия. Сильнее — чище, но
+                цвет начинает затекать за границы.
               </p>
               <Slider
                 label="Резкость"
