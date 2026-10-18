@@ -152,7 +152,31 @@ integratsiyasi; `src/proxy.ts` — marshrutlarni yo'naltirish (Next.js 16 da
 ## To'lov
 
 Finik orqali, `@mancho.devs/authorizer` bilan bir xil RSA-SHA256 imzo sxemasi
-ishlatiladi (`src/lib/finik/signer.ts`).
+ishlatiladi (`src/lib/finik/signer.ts`). Paketning o'zi o'rnatilmagan — u
+`node-jose` ni tortib keladi, imzo esa `node:crypto` da qirq qator. Buning
+o'rniga **bir xilligi o'lchab tekshirilgan**: bir xil kalit bilan bir xil
+so'rovlarni ikki tomondan imzolab, base64 natijalari solishtiriladi (to'lov
+so'rovi, kirill va o'zbek harflari, tartiblanmagan kalitlar, bir nechta
+`x-api-*`, query bilan GET, tanasiz so'rov). Baytda bir xil. Buni bilmaslik
+qimmat: noto'g'ri kanonik satrga Finik `401 An invalid signature is provided`
+deb javob beradi va boshqa hech narsa aytmaydi.
+
+### Finikni ulash
+
+1. `openssl genrsa -out finik_private.pem 2048`
+2. `openssl rsa -in finik_private.pem -pubout -out finik_public.pem`
+3. `finik_public.pem` ni Finikka berasiz (shaxsiy kabinet → «Ключи»), u API
+   kalit qaytaradi. Hisob raqami — `FINIK_ACCOUNT_ID`.
+4. `.env` ga: `FINIK_API_KEY`, `FINIK_ACCOUNT_ID`, `FINIK_PRIVATE_KEY`
+   (base64), `FINIK_ENV`, va internetdan ochiq `APP_URL`.
+
+`FINIK_PUBLIC_KEY` — ixtiyoriy. Finikning ochiq kalitlari uning hujjatlarida
+e'lon qilingan, shuning uchun ikkisi ham `src/lib/finik/public-keys.ts` da
+turadi va `FINIK_ENV` qaysi muhit ekanini aytadi. Sozlashda eng ko'p
+adashiladigan joy shu edi: PEM ni base64 qilish, keyin beta va production
+kalitlarini aralashtirib yuborish — natijada har bir webhook 401 bo'ladi,
+to'lovlar `PENDING` da qoladi va hech kim sababini aytmaydi. Kalit o'zgarsa
+`FINIK_PUBLIC_KEY` baribir ustun turadi: bitta o'zgaruvchi, deploy shart emas.
 
 **`FINIK_API_KEY` bo'sh bo'lsa** ilova buzilmaydi — buyurtmalar `MANUAL`
 rejimida yoziladi va administrator ularni panelda qo'lda tasdiqlaydi.
@@ -168,12 +192,46 @@ ko'rsatishdan ko'ra shunisi to'g'ri.
 Narx sahifasidagi «Как оплатить» va pastdagi eslatma ham shu holatga qarab
 o'zgaradi: Finik ulanmagan bo'lsa, QR kod va Visa haqidagi va'da ko'rsatilmaydi.
 
-`FINIK_PUBLIC_KEY` kiritilmagan bo'lsa webhook endpoint **hamma so'rovni rad
-etadi** (503). Bu ataylab: imzosi tekshirilmagan so'rovni qabul qilish har
-kimga bepul obuna berish bilan teng.
+Finik **umuman** sozlanmagan bo'lsa webhook endpoint hamma so'rovni rad etadi
+(503). Bu ataylab: imzosi tekshirilmagan so'rovni qabul qilish har kimga bepul
+obuna berish bilan teng.
 
 Webhook uchun `APP_URL` internetdan ochiq bo'lishi shart. Ishlab chiqish
 paytida ngrok yoki cloudflared tunnelidan foydalaning.
+
+### Webhook nimani kechiradi, nimani kechirmaydi
+
+Imzo — yagona chegara, qolgan hammasi undan keyin keladi:
+
+| Holat | Javob | Natija |
+| --- | --- | --- |
+| Imzo yo'q yoki boshqa kalit bilan | 401 | hech narsa o'zgarmaydi |
+| `host` boshqa (proxy almashtirgan) | 401 | logda `host`, `path`, `x-api-*` — sababi ko'rinadi |
+| To'g'ri imzo, `status: success` | 200 | to'lov `PAID`, obuna `ACTIVE` |
+| **Xuddi o'sha xabar yana** | 200 | obuna bitta qoladi |
+| **Vaqti bir necha soat orqada** | 200 | **faollashtiriladi** |
+| `status` boshqa | 200 | to'lov `PENDING` da qoladi |
+| Summa mos kelmaydi | 200 | to'lov `FAILED`, obuna berilmaydi |
+| To'langan zakaz haqida g'alati xabar | 200 | `PAID` **o'zgarmaydi** |
+
+Oxirgi uchtasi o'ylab emas, hisoblab tanlangan:
+
+- **Eski `x-api-timestamp` ni rad etmaydi.** Finikning hujjati ±5 daqiqa
+  deyapti, lekin u muvaffaqiyatsiz yetkazishni **bir kun** qayta uriadi va
+  qayta urinishda yangi vaqt qo'yishini hech qayerda yozmagan. Rad etish —
+  pulini to'lagan mijoz hech narsa olmasligi, jim-jitlikda. Takroriy xabar esa
+  hech narsa bermaydi: imzo tanani Finikdan kelganini isbotlaydi, summa zakaz
+  bilan solishtiriladi, `activatePayment` faqat `PENDING` satrni o'zgartiradi.
+  Ya'ni takror — bo'sh ish. Baland log yo'qolgan to'lovdan yaxshiroq.
+- **To'langan zakazni `FAILED` qilmaydi.** Avval summa mos kelmasa satr shartsiz
+  `FAILED` bo'lardi — ya'ni allaqachon to'langan zakaz haqidagi ikkinchi g'alati
+  xabar obunani ishlab turganda uni «muvaffaqiyatsiz» deb belgilardi.
+
+Butun zanjir **yolg'on Finik** bilan sinaladi: o'z kalit juftligi yasaladi,
+`FINIK_PUBLIC_KEY` unga qaratiladi va webhook o'z imzomiz bilan yuboriladi —
+imzo sxemasi baytda bir xil bo'lgani uchun endpoint uchun farqi yo'q. 34 ta
+tekshiruv, hammasi haqiqiy bazada: obuna muddati, uzaytirish eski muddat
+tugagan joydan boshlanishi, takroriy xabar, summa, kalit yo'q holati.
 
 ## Mavzu (yorug'/qorong'i)
 
