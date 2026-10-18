@@ -162,7 +162,11 @@ model Payment {
   /// The UUID we generate and send to Finik as `PaymentId`; it comes back in the
   /// webhook under `fields.paymentId`, which is how we match the two up.
   reference String  @unique
-  /// Finik's own transaction id. Unique so a replayed webhook cannot pay twice.
+  /// Finik's own identifier for the transaction, taken from the webhook's `id`
+  /// ("<clientId>_<qrTransactionId>_DEBIT") — which is what the Finik cabinet
+  /// can be searched with. Its `transactionId` field is not that: on a real
+  /// payment it comes back as a copy of the PaymentId we sent.
+  /// Unique so a replayed webhook cannot pay twice.
   externalId String? @unique
   /// Where Finik told us to send the customer.
   paymentUrl String?

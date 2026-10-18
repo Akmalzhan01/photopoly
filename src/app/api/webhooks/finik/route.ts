@@ -145,7 +145,11 @@ export async function POST(request: Request) {
 
   try {
     await activatePayment(payment.id, {
-      externalId: body.transactionId ?? body.id ?? null,
+      // Measured on a real payment: Finik's `transactionId` is a copy of the
+      // PaymentId we sent it, so storing that would file our own reference
+      // twice and leave nothing to search the Finik cabinet with. Its own
+      // identifier is `id` — "<clientId>_<qrTransactionId>_DEBIT".
+      externalId: body.id ?? body.transactionId ?? null,
       raw: body,
       paidAt,
     });

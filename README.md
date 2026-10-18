@@ -227,11 +227,31 @@ Oxirgi uchtasi o'ylab emas, hisoblab tanlangan:
   `FAILED` bo'lardi — ya'ni allaqachon to'langan zakaz haqidagi ikkinchi g'alati
   xabar obunani ishlab turganda uni «muvaffaqiyatsiz» deb belgilardi.
 
+### Finik aslida nima yuboradi
+
+Bir so'mlik haqiqiy to'lov bilan o'lchangan, hujjatdan emas:
+
+- `status` — `"succeeded"` (hujjatda `"success"` ham uchraydi, shuning uchun
+  tekshiruv registrga qaramaydi va `succe` bilan boshlanishiga qaraydi);
+- `transactionId` — **bizning** `PaymentId` imizning nusxasi, Finikning id'si
+  emas. Uni `externalId` ga yozish o'z havolamizni ikki marta saqlash bo'lardi
+  va Finik kabinetida qidirish uchun hech narsa qolmasdi;
+- Finikning o'z id'si — `id`, ya'ni `<clientId>_<qrTransactionId>_DEBIT`.
+  `externalId` ga shu yoziladi;
+- `fields.paymentId` — zakazni topish uchun ishlatiladigan yagona maydon;
+- `amount` tanada ham, `fields.amount` da ham keladi; tekshiruv yuqoridagisini
+  oladi.
+
 Butun zanjir **yolg'on Finik** bilan sinaladi: o'z kalit juftligi yasaladi,
 `FINIK_PUBLIC_KEY` unga qaratiladi va webhook o'z imzomiz bilan yuboriladi —
-imzo sxemasi baytda bir xil bo'lgani uchun endpoint uchun farqi yo'q. 34 ta
+imzo sxemasi baytda bir xil bo'lgani uchun endpoint uchun farqi yo'q. 35 ta
 tekshiruv, hammasi haqiqiy bazada: obuna muddati, uzaytirish eski muddat
 tugagan joydan boshlanishi, takroriy xabar, summa, kalit yo'q holati.
+
+Undan keyin bir marta **haqiqiy 1 so'm** bilan ham o'tkazilgan: production
+kalitlari, deploy qilingan sayt, Finikning o'z webhooki. To'lov `PAID` bo'ldi,
+obuna yoqildi. Yolg'on Finik nimani sinay olmasa — imzoning haqiqiy kalit bilan
+mosligi va Finik tanasining chin shakli — o'sha bir to'lovda ko'rindi.
 
 ## Mavzu (yorug'/qorong'i)
 
