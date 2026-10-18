@@ -13,6 +13,7 @@ export const PUBLIC_TOOLS = [
   { path: "/ochirish", name: "Удалить лишнее с фото" },
   { path: "/kattalashtirish", name: "Увеличить фото" },
   { path: "/konvert", name: "HEIC в JPG и сжатие фото" },
+  { path: "/skaner", name: "Сканер документов" },
 ] as const;
 
 /**

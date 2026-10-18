@@ -79,6 +79,16 @@ const TOOLS: { href: string; title: string; body: string; icon: ReactNode }[] = 
     ),
   },
   {
+    href: "/skaner",
+    title: "Сканер документов",
+    body: "Фото паспорта или справки — в ровный скан и PDF.",
+    icon: (
+      <svg viewBox="0 0 20 20" className={ICON} fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M6 2.5H4.5a2 2 0 0 0-2 2V6M14 2.5h1.5a2 2 0 0 1 2 2V6M6 17.5H4.5a2 2 0 0 1-2-2V14M14 17.5h1.5a2 2 0 0 0 2-2V14M6.5 7.5h7M6.5 10.5h7M6.5 13.5h4" />
+      </svg>
+    ),
+  },
+  {
     href: "/konvert",
     title: "HEIC в JPG",
     body: "Фото с iPhone в JPG, PNG или WebP и сжатие — сразу много файлов.",
@@ -177,7 +187,7 @@ export default async function LandingPage() {
         <h2 className="mt-2 max-w-2xl text-[32px] leading-tight font-bold tracking-tight text-chalk">
           Бесплатные инструменты для фото — без регистрации
         </h2>
-        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {TOOLS.map((tool) => (
             <Link
               key={tool.href}
