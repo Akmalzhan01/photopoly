@@ -137,7 +137,7 @@ Next qabul qilgan narsani platforma ham qabul qiladi.
 | `/narxlar` | Tariflar va savol-javob |
 | `/kirish`, `/royxat` | Kirish va ro'yxatdan o'tish |
 | `/studio` | Ish stoli — kirish talab qilinadi |
-| `/sifat` | Surat sifatini yaxshilash — kirish talab qilinadi |
+| `/kattalashtirish` | Suratni neyron tarmoq bilan ×2/×4 kattalashtirish — kirish talab qilinadi |
 | `/hisob` | Obuna holati va to'lovlar tarixi |
 | `/kassa` | Do'konning kirim-chiqim daftari — kirish talab qilinadi |
 | `/zakazlar` | Mijoz zakazlari doskasi — kirish talab qilinadi |
@@ -431,41 +431,13 @@ panelida mijozlar ro'yxati ko'rsatilmaydi.
 
 ## Sifatni yaxshilash
 
-Ikki joyda, ikki xil ish uchun:
+Redaktorning «03 Качество» bo'limida: hujjat surati aniq o'lchamga ketayotganda
+yo'l-yo'lakay tuzatiladi. Standart holatda **o'chiq**. Arifmetika — `enhance.ts`,
+quyidagi jadvallar bilan birga.
 
-| Qayerda | Nima uchun |
-| --- | --- |
-| `/sifat` — **alohida xizmat** | Mijoz yomon suratni olib keladi: qorong'i telefon kadri, messenjerdagi mayda rasm, skanerdagi eski chop. Natijaning o'zi — mahsulot. |
-| `/studio` — «03 Качество» bo'limi | Hujjat surati aniq o'lchamga ketayotganda yo'l-yo'lakay tuzatiladi. Standart holatda **o'chiq**. |
-
-Arifmetika bitta — `enhance.ts`, quyidagi jadvallar bilan birga. Farqi: xizmatda
-kattalashtirishni **siz** tanlaysiz, redaktorda esa uni hujjat o'lchami
-belgilaydi.
-
-### Xizmat sahifasi
-
-Kadr kesilmaydi, fon tegilmaydi, hech narsa kompozitsiya qilinmaydi: kirgan
-kadr — chiqqan kadr. Ikkita ko'rinish bor, chunki ular **har xil haqiqatni**
-aytadi:
-
-| Ko'rinish | Nimaga ishonish mumkin |
-| --- | --- |
-| «Целиком» | Ekspozitsiya va rang. Zarracha haqida **optimist**: kichraytirish uni o'rtachalab yuboradi. |
-| «1:1» | Zarracha, o'tkirlik, kattalashtirish. Hech narsa kichraytirilmagan — qog'ozda shunday chiqadi. |
-
-«1:1» da chap tomon — brauzer o'zi qanday kattalashtirsa, o'ng tomon — biz
-qanday qilamiz. Ya'ni taqqoslanayotgani aynan shu ishning foydasi.
-
-**Ekspozitsiya butun suratdan o'lchanadi**, ko'rinayotgan bo'lakdan emas. Tekis
-yuz bo'lagining o'z gistogrammasi deyarli yo'q, shuning uchun faqat o'sha
-oynadan hisoblangan tuzatish fayldagisidan bir necha barobar kuchli chiqardi —
-3× dagi yonoq apelsin rangiga kirardi. Endi o'lchov bir marta olinadi va ikkala
-ko'rinishga ham, **faylga ham** o'sha beriladi: ekranda ko'rgan narsangiz
-fayldagi narsa.
-
-Sinov buni tekshiradi: tekis uchastok «Целиком» da ham, «1:1» 3× da ham bir xil
-(101,0 ga 101,0). Fayl esa va'da qilingan o'lchamda chiqishi sarlavha
-baytlaridan o'qib tasdiqlanadi — 2800 × 2100 deyilgan bo'lsa, 2800 × 2100.
+Alohida `/sifat` xizmati olib tashlandi. Mayda va eski suratlar uchun endi
+`/kattalashtirish` bor (neyron tarmoq, `src/lib/upscale.ts`); eski `/sifat`
+havolalari unga yo'naltiriladi.
 
 ### Hech narsa o'ylab topilmaydi
 

@@ -1,6 +1,13 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  /**
+   * The quality page was retired in favour of the neural upscaler. Old links
+   * and bookmarks land on its replacement rather than on a 404.
+   */
+  async redirects() {
+    return [{ source: "/sifat", destination: "/kattalashtirish", permanent: false }];
+  },
   experimental: {
     serverActions: {
       /**

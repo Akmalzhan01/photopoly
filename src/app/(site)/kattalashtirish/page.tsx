@@ -32,14 +32,10 @@ export default async function UpscalePage() {
 
       <p className="mt-10 max-w-2xl text-[13px] leading-relaxed text-dust">
         Нужно фото на документы? Лицо там менять нельзя, поэтому для него есть{" "}
-        <Link href="/sifat" className="text-safe-soft underline-offset-2 hover:underline">
-          улучшение без нейросети
-        </Link>{" "}
-        и{" "}
         <Link href="/studio" className="text-safe-soft underline-offset-2 hover:underline">
           редактор
-        </Link>
-        .
+        </Link>{" "}
+        — он улучшает снимок без нейросети.
       </p>
     </div>
   );

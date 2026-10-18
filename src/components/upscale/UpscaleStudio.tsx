@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { download, exportCanvas, extensionFor, fileStem, formatBytes, type ExportFormat } from "@/lib/imaging";
-import { describeMm, stageBox } from "@/lib/quality";
+import { describeMm, stageBox } from "@/lib/stage";
 import {
   loadUpscaler,
   refusal,

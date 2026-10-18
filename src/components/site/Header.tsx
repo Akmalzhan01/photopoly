@@ -41,9 +41,6 @@ export async function Header() {
               <Link href="/kattalashtirish" className={NAV_LINK}>
                 Увеличить
               </Link>
-              <Link href="/sifat" className={NAV_LINK}>
-                Качество
-              </Link>
               <Link href="/karobka" className={NAV_LINK}>
                 Коробки
               </Link>
