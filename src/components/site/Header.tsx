@@ -3,6 +3,7 @@ import { getCurrentUser, isAdmin } from "@/lib/server/dal";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LogoutButton } from "./LogoutButton";
 import { Logo } from "./ui";
+import { ToolsMenu } from "./ToolsMenu";
 
 function Wordmark() {
   return (
@@ -38,15 +39,7 @@ export async function Header() {
               <Link href="/studio" className={NAV_LINK}>
                 Редактор
               </Link>
-              <Link href="/fon" className={NAV_LINK}>
-                Убрать фон
-              </Link>
-              <Link href="/kattalashtirish" className={NAV_LINK}>
-                Увеличить
-              </Link>
-              <Link href="/karobka" className={NAV_LINK}>
-                Коробки
-              </Link>
+              <ToolsMenu className={NAV_LINK} />
               <Link href="/zakazlar" className={NAV_LINK}>
                 Заказы
               </Link>
