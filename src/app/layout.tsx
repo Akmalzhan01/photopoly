@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Onest } from "next/font/google";
 import { THEME_SCRIPT } from "@/lib/theme";
+import { SITE_NAME, SITE_URL } from "@/lib/site";
 import "./globals.css";
 
 /**
@@ -14,10 +15,24 @@ const sans = Onest({
   subsets: ["latin", "cyrillic"],
 });
 
+const DESCRIPTION =
+  "Фото на документы 3×4 и 3,5×4,5 онлайн, удаление фона, удаление лишних предметов, увеличение фото и HEIC в JPG — бесплатно, прямо в браузере. Снимок никуда не отправляется.";
+
 export const metadata: Metadata = {
-  title: "Photopoly — удаление фона и точный размер фото",
-  description:
-    "Уберите фон с фотографии прямо в браузере и подгоните её под размер для паспорта, визы или соцсетей. Снимок никуда не отправляется.",
+  // Relative URLs below — canonical links, the social preview — resolve
+  // against this. A canonical is deliberately *not* set here: it would be
+  // inherited by every page that forgot its own and point them all at "/".
+  metadataBase: new URL(SITE_URL),
+  title: "Фото на документы онлайн, убрать фон, увеличить фото — photopoly",
+  description: DESCRIPTION,
+  openGraph: {
+    type: "website",
+    locale: "ru_RU",
+    siteName: SITE_NAME,
+    title: "photopoly — фото на документы и инструменты для фото онлайн",
+    description: DESCRIPTION,
+  },
+  twitter: { card: "summary_large_image" },
   manifest: "/manifest.webmanifest",
   applicationName: "Photopoly",
   appleWebApp: {

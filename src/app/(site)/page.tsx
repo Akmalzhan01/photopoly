@@ -46,6 +46,50 @@ const STEPS: { title: string; body: string; icon: ReactNode }[] = [
   },
 ];
 
+const TOOLS: { href: string; title: string; body: string; icon: ReactNode }[] = [
+  {
+    href: "/fon",
+    title: "Убрать фон",
+    body: "Прозрачный, белый, цветной или размытый фон за пару секунд.",
+    icon: (
+      <svg viewBox="0 0 20 20" className={ICON} fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="10" cy="7.5" r="3" />
+        <path d="M4.5 17c.8-3 2.9-4.6 5.5-4.6s4.7 1.6 5.5 4.6M2.5 2.5h3M14.5 2.5h3M2.5 2.5v3M17.5 2.5v3" />
+      </svg>
+    ),
+  },
+  {
+    href: "/ochirish",
+    title: "Удалить лишнее",
+    body: "Закрасьте прохожего, провод или надпись — нейросеть дорисует фон.",
+    icon: (
+      <svg viewBox="0 0 20 20" className={ICON} fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <path d="m11.5 3.5 5 5-7 7H5l-2-2a1.4 1.4 0 0 1 0-2zM8 7l5 5M9.5 15.5h8" />
+      </svg>
+    ),
+  },
+  {
+    href: "/kattalashtirish",
+    title: "Увеличить фото",
+    body: "В 2 или 4 раза без потери качества — резко, без размытия.",
+    icon: (
+      <svg viewBox="0 0 20 20" className={ICON} fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M11.5 3h5.5v5.5M17 3l-6 6M8.5 17H3v-5.5M3 17l6-6" />
+      </svg>
+    ),
+  },
+  {
+    href: "/konvert",
+    title: "HEIC в JPG",
+    body: "Фото с iPhone в JPG, PNG или WebP и сжатие — сразу много файлов.",
+    icon: (
+      <svg viewBox="0 0 20 20" className={ICON} fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M4 7h11l-3-3M16 13H5l3 3" />
+      </svg>
+    ),
+  },
+];
+
 /** A sheet of four ID photos, drawn rather than photographed: no stock face to license. */
 function SheetPreview() {
   return (
@@ -126,6 +170,30 @@ export default async function LandingPage() {
         </div>
 
         <SheetPreview />
+      </section>
+
+      <section className="mx-auto max-w-6xl px-5 pb-20">
+        <Eyebrow>Инструменты</Eyebrow>
+        <h2 className="mt-2 max-w-2xl text-[32px] leading-tight font-bold tracking-tight text-chalk">
+          Бесплатные инструменты для фото — без регистрации
+        </h2>
+        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {TOOLS.map((tool) => (
+            <Link
+              key={tool.href}
+              href={tool.href}
+              className="group rounded-2xl border border-line bg-slab p-6 shadow-card transition-colors hover:border-safe/50"
+            >
+              <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-safe/10 text-safe-soft">
+                {tool.icon}
+              </span>
+              <h3 className="mt-5 text-[17px] font-semibold text-chalk group-hover:text-safe-soft">
+                {tool.title}
+              </h3>
+              <p className="mt-2 text-[14px] leading-relaxed text-ash">{tool.body}</p>
+            </Link>
+          ))}
+        </div>
       </section>
 
       <section className="border-y border-line bg-slab">

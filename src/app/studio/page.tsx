@@ -5,7 +5,7 @@ import { requireUser } from "@/lib/server/dal";
 import { expireStaleSubscriptions } from "@/lib/server/billing";
 
 export const metadata: Metadata = {
-  title: "Ish stoli — photopoly",
+  title: "Редактор — photopoly",
 };
 
 /**

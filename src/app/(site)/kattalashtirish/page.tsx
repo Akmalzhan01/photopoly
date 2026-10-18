@@ -1,19 +1,21 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { requireUser } from "@/lib/server/dal";
 import { Eyebrow } from "@/components/site/ui";
+import { pageMetadata } from "@/lib/site";
+import { ToolInfo } from "@/components/site/ToolInfo";
 import { UpscaleStudio } from "@/components/upscale/UpscaleStudio";
 
-export const metadata: Metadata = { title: "Увеличить фото — photopoly" };
+const TITLE = "Увеличить фото без потери качества онлайн ×2 ×4 — photopoly";
+const DESCRIPTION =
+  "Увеличьте фото в 2 или 4 раза нейросетью Real-ESRGAN: резкие края, без размытия и квадратов от сжатия. Бесплатно, прямо в браузере, без загрузки на сервер.";
+
+export const metadata: Metadata = pageMetadata("/kattalashtirish", TITLE, DESCRIPTION);
 
 /**
- * The neural upscaler. Gated like the quality page and for the same reason:
- * the download is an export. The work itself costs the server nothing — it
- * runs on the visitor's own GPU or CPU.
+ * The neural upscaler. Open to visitors; the work runs on their own GPU or
+ * CPU, and a download is a reduced copy until they sign up.
  */
-export default async function UpscalePage() {
-  await requireUser();
-
+export default function UpscalePage() {
   return (
     <div className="mx-auto max-w-300 px-5 py-16">
       <Eyebrow>Увеличение</Eyebrow>
@@ -37,6 +39,24 @@ export default async function UpscalePage() {
         </Link>{" "}
         — он улучшает снимок без нейросети.
       </p>
+
+      <ToolInfo
+        path="/kattalashtirish"
+        name="Увеличить фото — photopoly"
+        description={DESCRIPTION}
+        steps={[
+          { title: "Загрузите фото", body: "Маленькое фото из мессенджера, старый снимок или картинку до 2 мегапикселей." },
+          { title: "Выберите ×2 или ×4", body: "Нейросеть дорисует детали: края станут резкими, квадраты от сжатия исчезнут." },
+          { title: "Сравните и скачайте", body: "Ползунок «до и после» показывает разницу один к одному. Скачайте JPG или PNG." },
+        ]}
+        faq={[
+          { q: "Чем это лучше обычного увеличения?", a: "Обычное увеличение просто растягивает пиксели, и фото становится мыльным. Нейросеть Real-ESRGAN обучена восстанавливать резкие края и текстуру, поэтому результат выглядит чётким." },
+          { q: "Это бесплатно?", a: "Да. Без регистрации можно скачать результат до 1000 пикселей по длинной стороне, после бесплатной регистрации — в полном размере в рамках бесплатного лимита." },
+          { q: "Моё фото загружается на сервер?", a: "Нет. Нейросеть работает в браузере на вашей видеокарте или процессоре, фото не покидает устройство." },
+          { q: "Какой максимальный размер?", a: "Исходное фото — до 2 мегапикселей, результат — до 6000 пикселей по длинной стороне. Если ×4 выходит за предел, выберите ×2." },
+          { q: "Можно ли увеличивать фото на паспорт?", a: "Не рекомендуем: нейросеть дорисовывает детали, и лицо может немного измениться. Для документов используйте редактор — он улучшает фото без нейросети." },
+        ]}
+      />
     </div>
   );
 }
