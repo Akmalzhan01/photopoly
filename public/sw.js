@@ -27,7 +27,7 @@
  * copies indefinitely. v3 is the switch to Russian — v2 held the Uzbek offline
  * page and an Uzbek app name on the home screen.
  */
-const VERSION = "v5";
+const VERSION = "v6";
 const SHELL = `photopoly-shell-${VERSION}`;
 const ASSETS = `photopoly-assets-${VERSION}`;
 const PAGES = `photopoly-pages-${VERSION}`;
@@ -44,6 +44,15 @@ const MODEL = "photopoly-model";
 
 /** The segmentation weights, which is the download worth never repeating. */
 const MODEL_HOST = "staticimgly.com";
+
+/**
+ * The upscaler's runtime and weights: the same kind of download, kept in the
+ * same unversioned cache. The runtime URL carries its exact version and the
+ * weights' path names the model, so a cached copy can never be the wrong one.
+ * Kept in step with `src/lib/upscale.ts`.
+ */
+const RUNTIME_PREFIX = "https://cdn.jsdelivr.net/npm/onnxruntime-web@";
+const MODEL_PATH = "/models/";
 
 /** Attire cut-outs, served from the project's storage bucket. */
 const ASSET_HOST_SUFFIX = ".supabase.co";
@@ -197,7 +206,7 @@ self.addEventListener("fetch", (event) => {
 
   const url = new URL(request.url);
 
-  if (url.hostname === MODEL_HOST) {
+  if (url.hostname === MODEL_HOST || request.url.startsWith(RUNTIME_PREFIX)) {
     event.respondWith(cacheFirst(request, MODEL));
     return;
   }
@@ -208,6 +217,11 @@ self.addEventListener("fetch", (event) => {
   }
 
   if (url.origin !== self.location.origin) return;
+
+  if (url.pathname.startsWith(MODEL_PATH)) {
+    event.respondWith(cacheFirst(request, MODEL));
+    return;
+  }
 
   // Next.js fingerprints these, so a cached copy is always the right copy.
   if (

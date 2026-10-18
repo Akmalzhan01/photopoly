@@ -38,6 +38,9 @@ export async function Header() {
               <Link href="/studio" className={NAV_LINK}>
                 Редактор
               </Link>
+              <Link href="/kattalashtirish" className={NAV_LINK}>
+                Увеличить
+              </Link>
               <Link href="/sifat" className={NAV_LINK}>
                 Качество
               </Link>
