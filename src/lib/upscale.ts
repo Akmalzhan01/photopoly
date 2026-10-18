@@ -41,13 +41,11 @@
  * which is sharper than the truth rather than blurrier than it.
  */
 
-import type { InferenceSession, Tensor } from "onnxruntime-web";
+import type { Tensor } from "onnxruntime-web";
 import { MAX_EDGE } from "./imaging";
+import { loadModel, type Backend } from "./onnx";
 
-const ORT_VERSION = "1.21.0";
-/** Kept in step with `public/sw.js`, which caches this prefix with the model. */
-const RUNTIME_BASE = `https://cdn.jsdelivr.net/npm/onnxruntime-web@${ORT_VERSION}/dist/`;
-/** Kept in step with `public/sw.js`, which caches `/models/` the same way. */
+/** Kept in step with `public/sw.js`, which caches `/models/` with the runtime. */
 const MODEL_URL = "/models/real-esrgan/realesr-general-x4v3-webgpu.onnx";
 
 /** The network's input window, and how much it enlarges. Fixed by the export. */
@@ -69,69 +67,9 @@ export const MAX_INPUT_PIXELS = 2_000_000;
 export const UPSCALE_FACTORS = [2, 4] as const;
 export type UpscaleFactor = (typeof UPSCALE_FACTORS)[number];
 
-export type Backend = "webgpu" | "wasm";
-
-type Engine = {
-  ort: typeof import("onnxruntime-web");
-  session: InferenceSession;
-  backend: Backend;
-};
-
-let engine: Promise<Engine> | null = null;
-
-async function bytes(url: string): Promise<Uint8Array> {
-  const response = await fetch(url);
-  if (!response.ok) throw new Error(`${url}: ${response.status}`);
-  return new Uint8Array(await response.arrayBuffer());
-}
-
-type GpuNavigator = Navigator & { gpu?: { requestAdapter(): Promise<unknown | null> } };
-
-async function open(): Promise<Engine> {
-  const ort = await import("onnxruntime-web/webgpu");
-  ort.env.wasm.wasmPaths = RUNTIME_BASE;
-  // Its warnings are about the shape operators it keeps on the CPU — normal,
-  // and printed as console errors that look like failures.
-  ort.env.logLevel = "error";
-  // Threads need a cross-origin-isolated page, which this one is not; asking
-  // for them anyway only produces a warning and a fallback.
-  ort.env.wasm.numThreads = globalThis.crossOriginIsolated
-    ? Math.min(4, navigator.hardwareConcurrency || 1)
-    : 1;
-
-  const graph = await bytes(MODEL_URL);
-  const options = (backend: Backend): InferenceSession.SessionOptions => ({
-    executionProviders: [backend],
-    graphOptimizationLevel: "all",
-  });
-
-  // WebGPU is tried only where an adapter really exists: the provider itself
-  // happily loads on a machine with no usable GPU and then fails mid-run.
-  const gpu = (navigator as GpuNavigator).gpu;
-  if (gpu) {
-    try {
-      if (await gpu.requestAdapter()) {
-        const session = await ort.InferenceSession.create(graph, options("webgpu"));
-        return { ort, session, backend: "webgpu" };
-      }
-    } catch {
-      // Fall through to the CPU, which always works.
-    }
-  }
-  const session = await ort.InferenceSession.create(graph, options("wasm"));
-  return { ort, session, backend: "wasm" };
-}
-
 /** Loads the runtime and the weights once per page; later calls share it. */
-export function loadUpscaler(): Promise<Engine> {
-  if (!engine) {
-    engine = open().catch((error) => {
-      // A failed download must not be remembered as the answer forever.
-      engine = null;
-      throw error;
-    });
-  }
-  return engine;
+export function loadUpscaler() {
+  return loadModel(MODEL_URL);
 }
 
 export type Size = { w: number; h: number };
