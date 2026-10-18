@@ -10,7 +10,7 @@ import { SESSION_COOKIE, STALE_SESSION_PARAM, decodeSession } from "@/lib/server
  * where a revoked session or a blocked user is actually noticed.
  */
 
-const NEEDS_LOGIN = ["/studio", "/kattalashtirish", "/karobka", "/hisob", "/kassa", "/zakazlar", "/admin"];
+const NEEDS_LOGIN = ["/studio", "/fon", "/kattalashtirish", "/karobka", "/hisob", "/kassa", "/zakazlar", "/admin"];
 const AUTH_PAGES = ["/kirish", "/royxat"];
 
 export default async function proxy(request: NextRequest) {
