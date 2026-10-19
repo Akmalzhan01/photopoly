@@ -589,6 +589,46 @@ marta** to'lanadi. Limit tugaganda redaktorda tugma o'chadi, xizmat sahifasida
 esa sabab va tarif havolasi ko'rsatiladi — ikkalasida ham ko'rinayotgan
 natijaga suv belgisi tushadi, chunki ekrandan olish ham eksport.
 
+## Studiya reklamasi
+
+Varaqqa studiyaning o'z nomi va raqamini bosish mumkin. Bitta qattiq qoida
+bor va butun `src/lib/imprint.ts` moduli shuning uchun bor: **suratga hech
+qachon yozilmaydi.** Hujjat surati ustida yozuv bo'lsa uni pasport stolida
+qaytaradi, va aybdor bosib bergan studiya bo'ladi.
+
+Shuning uchun yozuv faqat surat **bo'lmagan** joyga tushadi:
+
+- **Bo'sh katakdagi vizitka.** 10×15 ga sakkizta 3×4 sig'adi, mijoz esa odatda
+  to'rtta yoki oltita oladi — qolgan kataklar oq qog'oz bo'lib qirqiladi va
+  tashlanadi. Ularning birinchisi 40×30 mm vizitkaga aylanadi. Buyurtma
+  to'liq qolgani uchun mijoz hech narsa yo'qotmaydi va qo'shimcha qog'oz ham
+  ketmaydi.
+- **Varaq chetidagi bitta qator.** Bepul va xavfsiz, lekin qirqilgandan keyin
+  axlatga ketadi — varaq butun berilsagina ishlaydi. Shuning uchun sukut
+  bo'yicha **o'chiq**, vizitka esa yoqilgan.
+
+Ikkalasi ham `composeSheet` ichida. Oddiy, bitta suratlik eksport yo'liga
+ataylab ulanmagan: telefon raqami bosilgan fayl onlayn viza arizasiga
+yuklansa — ariza rad etiladi.
+
+Mayda, lekin ahamiyatli narsalar:
+
+- **Printer qog'oz chetining ~3 mm ini bosmaydi**, shuning uchun chetdagi qator
+  undan ichkarida turadi; joy yetmasa qator **umuman chizilmaydi** va panel
+  necha mm yetmayotganini aytadi.
+- **Vizitka ham qirqiladi**, shuning uchun uning qatori qirqish belgilarini
+  oladi. Belgilar o'chiq bo'lsa, vizitka o'zining ingichka chegarasini oladi —
+  aks holda qog'ozda uni qayerdan kesishni ko'rsatadigan hech narsa qolmaydi.
+- **Uzun nom kichrayadi, kesilmaydi.** Nom — nom, yarmi butunidan yomonroq.
+  Raqam hech qachon nomdan katta bo'lmaydi: kichraygan nom ustidan turgan
+  telefon kartani teskari o'qitadi.
+- Varaq to'la bo'lsa vizitka chiqmaydi va panel **nega** chiqmaganini aytadi —
+  jim turgan tugmadan yomoni yo'q.
+
+Va'daning o'zi o'lchab tekshiriladi: xuddi shu varaq reklamasiz ham chiziladi
+va **har bir surat katagi piksel-piksel solishtiriladi**. Bitta piksel farq
+qilsa — sinov yiqiladi.
+
 ## Karobka
 
 `/karobka` — qutining o'lchamidan **развёртка** (yoyilma) va tipografiyaga

@@ -65,6 +65,15 @@ export type Settings = {
   /** When set, ignore `copies` and lay out as many as the sheet will take. */
   fillSheet: boolean;
   /**
+   * The studio's own name and number. Printed on the sheet only — in a cell the
+   * order left empty, and in the paper's margin. Never on a photograph: a
+   * document photo with text on it is refused at the counter. See `imprint.ts`.
+   */
+  studioName: string;
+  studioPhone: string;
+  studioCard: boolean;
+  studioMark: boolean;
+  /**
    * Show the preview as ink would print it. A viewing aid only — it never
    * reaches the exported file, which stays in full sRGB.
    */
@@ -124,6 +133,12 @@ export const DEFAULT_SETTINGS: Settings = {
   // One copy to start with: multiplying is an explicit choice, not a surprise.
   copies: 1,
   fillSheet: false,
+  // Empty until a studio types its own name, so the switch below can default to
+  // on without anything appearing on anyone's paper uninvited.
+  studioName: "",
+  studioPhone: "",
+  studioCard: true,
+  studioMark: false,
   // Off by default: the studio should open showing the photograph, not a
   // simulation of one.
   proof: false,

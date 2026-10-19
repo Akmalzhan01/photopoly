@@ -3,6 +3,8 @@
  * print yields several copies to cut apart.
  */
 
+import { drawCard, drawMark, EDGE_MM, hasImprint, markRoom, type Imprint } from "./imprint";
+
 export type SheetPreset = {
   id: string;
   label: string;
@@ -51,9 +53,53 @@ export type SheetSpec = {
   dpi: number;
   copies: number;
   cutMarks: boolean;
+  /**
+   * The studio's name and number. Printed in a cell the order left empty and in
+   * the paper's margin — never over a photograph, and never on the single-photo
+   * export, which has no sheet at all.
+   */
+  imprint?: Imprint;
 };
 
 export const mmToPx = (mm: number, dpi: number) => (mm * dpi) / 25.4;
+
+/** How far the crop ticks reach into the margin, in millimetres. */
+const tickLength = (margin: number) => Math.max(2.5, Math.min(margin * 0.7, 5));
+
+/**
+ * Whether a card would be printed, and why not when it would not be. The panel
+ * says this out loud rather than leaving a switch that quietly does nothing.
+ */
+export function cardFits(
+  spec: Pick<SheetSpec, "copies" | "imprint">,
+  layout: SheetLayout,
+): { card: boolean; reason: "no-text" | "off" | "full" | null } {
+  if (!hasImprint(spec.imprint)) return { card: false, reason: "no-text" };
+  if (!spec.imprint.card) return { card: false, reason: "off" };
+  const used = Math.max(0, Math.min(spec.copies, layout.capacity));
+  if (used >= layout.capacity) return { card: false, reason: "full" };
+  return { card: true, reason: null };
+}
+
+/** What the two "does it fit" answers need to know — the panel has no dpi. */
+type SheetShape = Pick<SheetSpec, "sheetH" | "gap" | "margin" | "cutMarks" | "copies" | "imprint">;
+
+/** Bottom edge of the last printed row, in millimetres from the sheet's top. */
+function bottomOf(spec: SheetShape, layout: SheetLayout, cells: number): number {
+  const rows = Math.max(1, Math.ceil(cells / Math.max(1, layout.cols)));
+  return layout.originY + rows * layout.cellH + (rows - 1) * spec.gap;
+}
+
+/**
+ * Clear millimetres between the last printed row and the printer's dead band.
+ * Counts the card, which may start a row of its own and leave no margin at all.
+ */
+export function markFits(spec: SheetShape, layout: SheetLayout): number {
+  const used = Math.max(0, Math.min(spec.copies, layout.capacity));
+  const cells = used + (cardFits(spec, layout).card ? 1 : 0);
+  const tick = spec.cutMarks ? tickLength(spec.margin) : 0;
+  return markRoom(spec.sheetH, bottomOf(spec, layout, cells), tick);
+}
 
 function grid(
   availW: number,
@@ -155,8 +201,38 @@ export function composeSheet(
     }
   }
 
-  if (spec.cutMarks && count > 0) {
-    drawCutMarks(ctx, canvas, spec, layout, count, px);
+  // The card takes the first cell the order left empty, so every copy that was
+  // paid for still gets printed and the card costs no paper at all.
+  const { card } = cardFits(spec, layout);
+  if (card && spec.imprint) {
+    const col = count % layout.cols;
+    const row = Math.floor(count / layout.cols);
+    drawCard(
+      { ctx, px },
+      {
+        x: layout.originX + col * (layout.cellW + spec.gap),
+        y: layout.originY + row * (layout.cellH + spec.gap),
+        w: layout.cellW,
+        h: layout.cellH,
+      },
+      spec.imprint,
+      !spec.cutMarks,
+    );
+  }
+
+  const printed = count + (card ? 1 : 0);
+  if (spec.cutMarks && printed > 0) {
+    // The card is cut out like everything else, so it gets its own marks.
+    drawCutMarks(ctx, canvas, spec, layout, printed, px);
+  }
+
+  if (spec.imprint?.mark && hasImprint(spec.imprint)) {
+    const tick = spec.cutMarks ? tickLength(spec.margin) : 0;
+    const room = markRoom(spec.sheetH, bottomOf(spec, layout, printed), tick);
+    // Sat on the far side of the clear band, one text height up from the dead
+    // band at the paper's edge.
+    const baseline = spec.sheetH - EDGE_MM - Math.min(1, room * 0.2);
+    drawMark({ ctx, px }, spec.sheetW, baseline, room, spec.imprint);
   }
 
   return canvas;
@@ -173,7 +249,7 @@ function drawCutMarks(
   const usedRows = Math.ceil(count / layout.cols);
   const usedCols = Math.min(count, layout.cols);
   const lineWidth = Math.max(1, Math.round(px(0.12)));
-  const tick = px(Math.max(2.5, Math.min(spec.margin * 0.7, 5)));
+  const tick = px(tickLength(spec.margin));
 
   const xEdges: number[] = [];
   for (let col = 0; col < usedCols; col++) {

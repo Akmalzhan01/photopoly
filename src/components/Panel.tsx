@@ -5,7 +5,8 @@ import { isNeutral } from "@/lib/colour";
 import { formatBytes, type ExportFormat } from "@/lib/imaging";
 import { PRESET_GROUPS, PRESETS } from "@/lib/presets";
 import type { Settings } from "@/lib/settings";
-import { SHEET_PRESETS, type SheetLayout } from "@/lib/sheet";
+import { hasImprint, MARK_MIN_MM } from "@/lib/imprint";
+import { cardFits, markFits, SHEET_PRESETS, type SheetLayout } from "@/lib/sheet";
 import { UNITS, type Unit } from "@/lib/units";
 import Link from "next/link";
 import {
@@ -16,6 +17,7 @@ import {
   Segmented,
   Slider,
   Swatch,
+  TextField,
   Toggle,
 } from "./ui";
 
@@ -103,6 +105,25 @@ export function Panel({
   const physical = settings.unit !== "px";
   const fits = layout.capacity > 0;
   const tinted = !isNeutral(settings);
+
+  // What the studio's imprint would actually do on the current sheet, so the
+  // panel can say why a switch is on but nothing is printed.
+  const imprintSpec = {
+    sheetH: settings.sheetH,
+    gap: settings.gap,
+    margin: settings.margin,
+    cutMarks: settings.cutMarks,
+    copies,
+    imprint: {
+      name: settings.studioName,
+      phone: settings.studioPhone,
+      card: settings.studioCard,
+      mark: settings.studioMark,
+    },
+  };
+  const hasStudioText = hasImprint(imprintSpec.imprint);
+  const imprint = cardFits(imprintSpec, layout);
+  const markRoomMm = markFits(imprintSpec, layout);
 
   return (
     <div className="flex h-full flex-col overflow-y-auto bg-slab">
@@ -768,6 +789,54 @@ export function Panel({
                     checked={settings.cutMarks}
                     onChange={(cutMarks) => patch({ cutMarks })}
                   />
+
+                  <div className="space-y-3 border-t border-line pt-4">
+                    <div>
+                      <Label>Реклама студии</Label>
+                      <p className="mt-1.5 text-[12px] leading-snug text-dust">
+                        Печатается только на листе — в пустой ячейке и на полях.
+                        На самом фото её не будет никогда: снимок с надписью не
+                        примут в паспортном столе.
+                      </p>
+                    </div>
+                    <TextField
+                      label="Название"
+                      value={settings.studioName}
+                      placeholder="PhotoZoom фотостудия"
+                      onChange={(studioName) => patch({ studioName })}
+                    />
+                    <TextField
+                      label="Телефон"
+                      value={settings.studioPhone}
+                      placeholder="0552 03 09 26"
+                      onChange={(studioPhone) => patch({ studioPhone })}
+                    />
+                    <Toggle
+                      label="Визитка в пустой ячейке"
+                      checked={settings.studioCard}
+                      onChange={(studioCard) => patch({ studioCard })}
+                    />
+                    {imprint.reason === "full" ? (
+                      <p className="text-[12px] leading-snug text-safe-soft">
+                        Лист занят целиком — визитке некуда встать.{" "}
+                        {settings.fillSheet
+                          ? "Выключите «Заполнить лист», чтобы одна ячейка освободилась."
+                          : "Уберите одну копию, и она займёт освободившуюся ячейку."}
+                      </p>
+                    ) : null}
+                    <Toggle
+                      label="Подпись на полях листа"
+                      checked={settings.studioMark}
+                      onChange={(studioMark) => patch({ studioMark })}
+                    />
+                    {settings.studioMark && hasStudioText && markRoomMm < MARK_MIN_MM ? (
+                      <p className="text-[12px] leading-snug text-safe-soft">
+                        На полях осталось {Math.max(0, markRoomMm).toFixed(1)} мм —
+                        для надписи нужно от {MARK_MIN_MM} мм. Увеличьте поля листа
+                        или уберите копию.
+                      </p>
+                    ) : null}
+                  </div>
                   {sheetDpi < settings.dpi ? (
                     <p className="text-[12px] leading-snug text-safe-soft">
                       Для такого большого листа плотность снижена до {sheetDpi} dpi —

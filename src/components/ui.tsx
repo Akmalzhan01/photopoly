@@ -168,6 +168,44 @@ export function NumberField({
   );
 }
 
+/**
+ * A plain line of text. Unlike `NumberField` there is nothing to parse, so the
+ * value is reported as typed and trimmed only where it is used — trimming here
+ * would eat the space between two words as it is being typed.
+ */
+export function TextField({
+  label,
+  value,
+  onChange,
+  placeholder,
+  maxLength = 48,
+  hint,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  maxLength?: number;
+  hint?: string;
+}) {
+  return (
+    <label className="group flex min-w-0 flex-col gap-1.5">
+      <Label>{label}</Label>
+      <div className="flex items-center border border-line bg-pit transition-colors focus-within:border-safe/50 rounded-lg">
+        <input
+          type="text"
+          value={value}
+          maxLength={maxLength}
+          placeholder={placeholder}
+          onChange={(event) => onChange(event.target.value.replace(/[\r\n]+/g, " "))}
+          className="w-full min-w-0 bg-transparent px-2.5 py-2 text-sm text-chalk outline-none placeholder:text-dust"
+        />
+      </div>
+      {hint ? <span className="text-[12px] leading-snug text-dust">{hint}</span> : null}
+    </label>
+  );
+}
+
 export function Slider({
   label,
   value,

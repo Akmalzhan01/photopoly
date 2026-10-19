@@ -469,6 +469,12 @@ export function Studio({ attireAssets }: { attireAssets: AttireAssetView[] }) {
       dpi: sheetDpi,
       copies,
       cutMarks: settings.cutMarks,
+      imprint: {
+        name: settings.studioName,
+        phone: settings.studioPhone,
+        card: settings.studioCard,
+        mark: settings.studioMark,
+      },
     }),
     [
       settings.sheetW,
@@ -480,6 +486,10 @@ export function Studio({ attireAssets }: { attireAssets: AttireAssetView[] }) {
       sheetDpi,
       copies,
       settings.cutMarks,
+      settings.studioName,
+      settings.studioPhone,
+      settings.studioCard,
+      settings.studioMark,
     ],
   );
 

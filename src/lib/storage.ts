@@ -29,6 +29,16 @@ function bool(value: unknown, fallback: boolean): boolean {
   return typeof value === "boolean" ? value : fallback;
 }
 
+/**
+ * One line of text the studio typed. Capped and stripped of line breaks because
+ * it is drawn as a single line on paper: a pasted paragraph would otherwise be
+ * measured, shrunk to nothing and printed as a grey smear.
+ */
+function line(value: unknown, fallback: string, max = 48): string {
+  if (typeof value !== "string") return fallback;
+  return value.replace(/\s+/g, " ").trim().slice(0, max);
+}
+
 function colour(value: unknown, fallback: string): string {
   if (value === "transparent") return value;
   return typeof value === "string" && /^#[0-9a-f]{3,8}$/i.test(value) ? value : fallback;
@@ -88,6 +98,10 @@ export function sanitise(raw: unknown): Settings {
     sheetRotate: pick(v.sheetRotate, ROTATIONS, base.sheetRotate),
     copies: num(v.copies, base.copies, 1, 9999),
     fillSheet: bool(v.fillSheet, base.fillSheet),
+    studioName: line(v.studioName, base.studioName),
+    studioPhone: line(v.studioPhone, base.studioPhone),
+    studioCard: bool(v.studioCard, base.studioCard),
+    studioMark: bool(v.studioMark, base.studioMark),
     proof: bool(v.proof, base.proof),
   };
 }
