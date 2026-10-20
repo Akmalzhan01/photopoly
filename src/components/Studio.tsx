@@ -472,6 +472,8 @@ export function Studio({ attireAssets }: { attireAssets: AttireAssetView[] }) {
       imprint: {
         name: settings.studioName,
         phone: settings.studioPhone,
+        note: settings.studioNote,
+        colour: settings.studioColour,
         card: settings.studioCard,
         mark: settings.studioMark,
       },
@@ -488,6 +490,8 @@ export function Studio({ attireAssets }: { attireAssets: AttireAssetView[] }) {
       settings.cutMarks,
       settings.studioName,
       settings.studioPhone,
+      settings.studioNote,
+      settings.studioColour,
       settings.studioCard,
       settings.studioMark,
     ],

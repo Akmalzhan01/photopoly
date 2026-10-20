@@ -44,6 +44,12 @@ function colour(value: unknown, fallback: string): string {
   return typeof value === "string" && /^#[0-9a-f]{3,8}$/i.test(value) ? value : fallback;
 }
 
+/** A colour that prints: anything `colour` accepts except transparent. */
+function solid(value: unknown, fallback: string): string {
+  const read = colour(value, fallback);
+  return read === "transparent" ? fallback : read;
+}
+
 const UNITS: readonly Unit[] = ["px", "mm", "cm", "in"];
 const FITS: readonly FitMode[] = ["contain", "cover"];
 const FORMATS: readonly ExportFormat[] = ["image/png", "image/jpeg", "image/webp"];
@@ -100,6 +106,8 @@ export function sanitise(raw: unknown): Settings {
     fillSheet: bool(v.fillSheet, base.fillSheet),
     studioName: line(v.studioName, base.studioName),
     studioPhone: line(v.studioPhone, base.studioPhone),
+    studioNote: line(v.studioNote, base.studioNote, 64),
+    studioColour: solid(v.studioColour, base.studioColour),
     studioCard: bool(v.studioCard, base.studioCard),
     studioMark: bool(v.studioMark, base.studioMark),
     proof: bool(v.proof, base.proof),

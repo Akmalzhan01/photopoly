@@ -71,6 +71,10 @@ export type Settings = {
    */
   studioName: string;
   studioPhone: string;
+  /** Address or slogan, small under the number on the card. */
+  studioNote: string;
+  /** The card's accent colour. */
+  studioColour: string;
   studioCard: boolean;
   studioMark: boolean;
   /**
@@ -137,6 +141,8 @@ export const DEFAULT_SETTINGS: Settings = {
   // on without anything appearing on anyone's paper uninvited.
   studioName: "",
   studioPhone: "",
+  studioNote: "",
+  studioColour: "#1d4ed8",
   studioCard: true,
   studioMark: false,
   // Off by default: the studio should open showing the photograph, not a

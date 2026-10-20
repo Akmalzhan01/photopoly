@@ -41,6 +41,16 @@ const BACKGROUNDS = [
   { color: "#0f0d0c", title: "Чёрный" },
 ];
 
+/** Accents that print well on photo paper: deep enough to read, never neon. */
+const CARD_COLOURS = [
+  { color: "#1d4ed8", title: "Синий" },
+  { color: "#0f766e", title: "Бирюзовый" },
+  { color: "#b91c1c", title: "Красный" },
+  { color: "#7c3aed", title: "Фиолетовый" },
+  { color: "#c2410c", title: "Оранжевый" },
+  { color: "#111827", title: "Чёрный" },
+];
+
 type PanelProps = {
   settings: Settings;
   patch: (next: Partial<Settings>) => void;
@@ -794,7 +804,8 @@ export function Panel({
                     <div>
                       <Label>Реклама студии</Label>
                       <p className="mt-1.5 text-[12px] leading-snug text-dust">
-                        Печатается только на листе — в пустой ячейке и на полях.
+                        Печатается только на листе — в свободном месте справа от
+                        фото и на полях.
                         На самом фото её не будет никогда: снимок с надписью не
                         примут в паспортном столе.
                       </p>
@@ -811,8 +822,35 @@ export function Panel({
                       placeholder="0552 03 09 26"
                       onChange={(studioPhone) => patch({ studioPhone })}
                     />
+                    <TextField
+                      label="Адрес или слоган"
+                      value={settings.studioNote}
+                      placeholder="ул. Ленина 12 · фото за 5 минут"
+                      maxLength={64}
+                      hint="Мелко под номером, на визитке."
+                      onChange={(studioNote) => patch({ studioNote })}
+                    />
+                    <div className="flex flex-col gap-2">
+                      <Label>Цвет визитки</Label>
+                      <div className="flex flex-wrap items-center gap-2">
+                        {CARD_COLOURS.map((option) => (
+                          <Swatch
+                            key={option.color}
+                            color={option.color}
+                            title={`Цвет визитки: ${option.title}`}
+                            active={settings.studioColour === option.color}
+                            onClick={() => patch({ studioColour: option.color })}
+                          />
+                        ))}
+                        <ColourPicker
+                          value={settings.studioColour}
+                          title="Свой цвет визитки"
+                          onChange={(studioColour) => patch({ studioColour })}
+                        />
+                      </div>
+                    </div>
                     <Toggle
-                      label="Визитка в пустой ячейке"
+                      label="Визитка рядом с фото"
                       checked={settings.studioCard}
                       onChange={(studioCard) => patch({ studioCard })}
                     />

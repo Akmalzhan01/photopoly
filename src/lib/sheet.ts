@@ -3,7 +3,7 @@
  * print yields several copies to cut apart.
  */
 
-import { drawCard, drawMark, EDGE_MM, hasImprint, markRoom, type Imprint } from "./imprint";
+import { drawCard, drawMark, EDGE_MM, hasImprint, markRoom, type Box, type Imprint } from "./imprint";
 
 export type SheetPreset = {
   id: string;
@@ -84,21 +84,70 @@ export function cardFits(
 /** What the two "does it fit" answers need to know — the panel has no dpi. */
 type SheetShape = Pick<SheetSpec, "sheetH" | "gap" | "margin" | "cutMarks" | "copies" | "imprint">;
 
-/** Bottom edge of the last printed row, in millimetres from the sheet's top. */
-function bottomOf(spec: SheetShape, layout: SheetLayout, cells: number): number {
-  const rows = Math.max(1, Math.ceil(cells / Math.max(1, layout.cols)));
-  return layout.originY + rows * layout.cellH + (rows - 1) * spec.gap;
+/** Where everything on a sheet goes, in millimetres. */
+export type Arrangement = { photos: Box[]; card: Box | null };
+
+/**
+ * Places the photographs and the studio's card.
+ *
+ * Without a card the photos fill the sheet row by row, as they always have.
+ * With one they go down the left-hand column instead, and the card takes the
+ * column beside them from the top, as tall as the photos are: four 3×4 on a
+ * 10×15 leave the whole right-hand column to the card, two leave it half. Past
+ * one column, the photos that spill over fill the next column from the bottom,
+ * so the space left for the card is always at the top right, and it shrinks as
+ * the order grows until a full sheet leaves none.
+ */
+export function arrange(spec: Pick<SheetSpec, "gap" | "copies" | "imprint">, layout: SheetLayout): Arrangement {
+  const count = Math.max(0, Math.min(spec.copies, layout.capacity));
+  const at = (col: number, row: number, span = 1): Box => ({
+    x: layout.originX + col * (layout.cellW + spec.gap),
+    y: layout.originY + row * (layout.cellH + spec.gap),
+    w: layout.cellW,
+    h: span * layout.cellH + (span - 1) * spec.gap,
+  });
+
+  if (!cardFits(spec, layout).card) {
+    const photos = Array.from({ length: count }, (_, i) => at(i % layout.cols, Math.floor(i / layout.cols)));
+    return { photos, card: null };
+  }
+
+  const rows = layout.rows;
+  const cols = layout.cols;
+  // A single column has nowhere beside the photos: the card goes under them.
+  if (cols < 2) {
+    const photos = Array.from({ length: count }, (_, i) => at(0, i));
+    return { photos, card: at(0, count) };
+  }
+
+  if (count <= rows) {
+    const photos = Array.from({ length: count }, (_, i) => at(0, i));
+    return { photos, card: at(1, 0, Math.max(1, count)) };
+  }
+
+  const full = Math.floor(count / rows);
+  const spill = count % rows;
+  const photos: Box[] = [];
+  for (let col = 0; col < full; col++) for (let row = 0; row < rows; row++) photos.push(at(col, row));
+  // The last column fills from the bottom up, keeping its free cells on top.
+  for (let i = 0; i < spill; i++) photos.push(at(full, rows - spill + i));
+  return { photos, card: at(full, 0, spill > 0 ? rows - spill : rows) };
+}
+
+/** Bottom edge of whatever is printed lowest, in millimetres from the sheet's top. */
+function bottomOf(placed: Arrangement, layout: SheetLayout): number {
+  const boxes = placed.card ? [...placed.photos, placed.card] : placed.photos;
+  if (boxes.length === 0) return layout.originY + layout.cellH;
+  return Math.max(...boxes.map((box) => box.y + box.h));
 }
 
 /**
- * Clear millimetres between the last printed row and the printer's dead band.
- * Counts the card, which may start a row of its own and leave no margin at all.
+ * Clear millimetres between the lowest printed cell and the printer's dead
+ * band. Counts the card, which may take a row of its own and leave no margin.
  */
 export function markFits(spec: SheetShape, layout: SheetLayout): number {
-  const used = Math.max(0, Math.min(spec.copies, layout.capacity));
-  const cells = used + (cardFits(spec, layout).card ? 1 : 0);
   const tick = spec.cutMarks ? tickLength(spec.margin) : 0;
-  return markRoom(spec.sheetH, bottomOf(spec, layout, cells), tick);
+  return markRoom(spec.sheetH, bottomOf(arrange(spec, layout), layout), tick);
 }
 
 function grid(
@@ -174,21 +223,13 @@ export function composeSheet(
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = "high";
 
-  const count = Math.max(0, Math.min(spec.copies, layout.capacity));
+  const placed = arrange(spec, layout);
   const cellW = px(layout.cellW);
   const cellH = px(layout.cellH);
 
-  const cellAt = (index: number) => {
-    const col = index % layout.cols;
-    const row = Math.floor(index / layout.cols);
-    return {
-      x: px(layout.originX + col * (layout.cellW + spec.gap)),
-      y: px(layout.originY + row * (layout.cellH + spec.gap)),
-    };
-  };
-
-  for (let index = 0; index < count; index++) {
-    const { x, y } = cellAt(index);
+  for (const cell of placed.photos) {
+    const x = px(cell.x);
+    const y = px(cell.y);
     if (layout.rotated) {
       ctx.save();
       ctx.translate(x + cellW / 2, y + cellH / 2);
@@ -201,34 +242,21 @@ export function composeSheet(
     }
   }
 
-  // The card takes the first cell the order left empty, so every copy that was
-  // paid for still gets printed and the card costs no paper at all.
-  const { card } = cardFits(spec, layout);
-  if (card && spec.imprint) {
-    const col = count % layout.cols;
-    const row = Math.floor(count / layout.cols);
-    drawCard(
-      { ctx, px },
-      {
-        x: layout.originX + col * (layout.cellW + spec.gap),
-        y: layout.originY + row * (layout.cellH + spec.gap),
-        w: layout.cellW,
-        h: layout.cellH,
-      },
-      spec.imprint,
-      !spec.cutMarks,
-    );
+  // The card takes cells the order left empty, so every copy that was paid
+  // for still gets printed and the card costs no paper at all.
+  if (placed.card && spec.imprint) {
+    drawCard({ ctx, px }, placed.card, spec.imprint, !spec.cutMarks);
   }
 
-  const printed = count + (card ? 1 : 0);
-  if (spec.cutMarks && printed > 0) {
+  const boxes = placed.card ? [...placed.photos, placed.card] : placed.photos;
+  if (spec.cutMarks && boxes.length > 0) {
     // The card is cut out like everything else, so it gets its own marks.
-    drawCutMarks(ctx, canvas, spec, layout, printed, px);
+    drawCutMarks(ctx, canvas, spec, boxes, px);
   }
 
   if (spec.imprint?.mark && hasImprint(spec.imprint)) {
     const tick = spec.cutMarks ? tickLength(spec.margin) : 0;
-    const room = markRoom(spec.sheetH, bottomOf(spec, layout, printed), tick);
+    const room = markRoom(spec.sheetH, bottomOf(placed, layout), tick);
     // Sat on the far side of the clear band, one text height up from the dead
     // band at the paper's edge.
     const baseline = spec.sheetH - EDGE_MM - Math.min(1, room * 0.2);
@@ -238,34 +266,39 @@ export function composeSheet(
   return canvas;
 }
 
+/** Parts of the line from `from` to `to` that are left once `blocked` is taken out. */
+function openSpans(from: number, to: number, blocked: [number, number][]): [number, number][] {
+  const spans: [number, number][] = [];
+  let start = from;
+  for (const [a, b] of [...blocked].sort((p, q) => p[0] - q[0])) {
+    if (a > start) spans.push([start, Math.min(a, to)]);
+    start = Math.max(start, b);
+  }
+  if (start < to) spans.push([start, to]);
+  return spans.filter(([a, b]) => b > a);
+}
+
 function drawCutMarks(
   ctx: CanvasRenderingContext2D,
   canvas: HTMLCanvasElement,
   spec: SheetSpec,
-  layout: SheetLayout,
-  count: number,
+  boxes: Box[],
   px: (mm: number) => number,
 ) {
-  const usedRows = Math.ceil(count / layout.cols);
-  const usedCols = Math.min(count, layout.cols);
   const lineWidth = Math.max(1, Math.round(px(0.12)));
   const tick = px(tickLength(spec.margin));
+  const unique = (values: number[]) => [...new Set(values.map((v) => Math.round(v * 1000) / 1000))].map(px);
 
-  const xEdges: number[] = [];
-  for (let col = 0; col < usedCols; col++) {
-    const left = layout.originX + col * (layout.cellW + spec.gap);
-    xEdges.push(px(left), px(left + layout.cellW));
-  }
-  const yEdges: number[] = [];
-  for (let row = 0; row < usedRows; row++) {
-    const top = layout.originY + row * (layout.cellH + spec.gap);
-    yEdges.push(px(top), px(top + layout.cellH));
-  }
+  const xEdges = unique(boxes.flatMap((box) => [box.x, box.x + box.w]));
+  const yEdges = unique(boxes.flatMap((box) => [box.y, box.y + box.h]));
+  const scaled = boxes.map((box) => ({ x: px(box.x), y: px(box.y), w: px(box.w), h: px(box.h) }));
+  const inside = (value: number, start: number, size: number) => value > start + 0.5 && value < start + size - 0.5;
 
   ctx.save();
   ctx.lineWidth = lineWidth;
 
-  // Faint guides across the sheet, so scissors have something to follow.
+  // Faint guides across the sheet, so scissors have something to follow —
+  // except across the card, which spans rows the photos beside it divide.
   ctx.strokeStyle = "rgba(0,0,0,0.28)";
   ctx.setLineDash([px(1.4), px(1.4)]);
   const top = Math.min(...yEdges);
@@ -273,16 +306,22 @@ function drawCutMarks(
   const left = Math.min(...xEdges);
   const right = Math.max(...xEdges);
   for (const x of xEdges) {
-    ctx.beginPath();
-    ctx.moveTo(x, top);
-    ctx.lineTo(x, bottom);
-    ctx.stroke();
+    const blocked = scaled.filter((b) => inside(x, b.x, b.w)).map((b): [number, number] => [b.y, b.y + b.h]);
+    for (const [a, b] of openSpans(top, bottom, blocked)) {
+      ctx.beginPath();
+      ctx.moveTo(x, a);
+      ctx.lineTo(x, b);
+      ctx.stroke();
+    }
   }
   for (const y of yEdges) {
-    ctx.beginPath();
-    ctx.moveTo(left, y);
-    ctx.lineTo(right, y);
-    ctx.stroke();
+    const blocked = scaled.filter((b) => inside(y, b.y, b.h)).map((b): [number, number] => [b.x, b.x + b.w]);
+    for (const [a, b] of openSpans(left, right, blocked)) {
+      ctx.beginPath();
+      ctx.moveTo(a, y);
+      ctx.lineTo(b, y);
+      ctx.stroke();
+    }
   }
 
   // Solid crop ticks reaching into the paper margin.

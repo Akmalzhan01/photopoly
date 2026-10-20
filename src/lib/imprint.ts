@@ -6,11 +6,12 @@
  * carries text, and the customer blames the studio that printed it, so the
  * imprint only goes where a photograph is not:
  *
- * - **A card in a spare cell.** A 10×15 sheet holds eight 3×4 shots and most
- *   orders are four or six, so two to four cells print as blank paper and are
- *   thrown away after cutting. One of them becomes a 40×30 mm card the customer
- *   keeps — which is the only placement with any advertising value at all, since
- *   it is the only one that survives the scissors.
+ * - **A card beside the photographs.** A 10×15 sheet holds eight 3×4 shots and
+ *   most orders are four or six, so the cells left over print as blank paper
+ *   and are thrown away after cutting. With a card on, the photos go down the
+ *   left-hand column and the card takes the free cells at the top right, as
+ *   tall as the photos: the customer keeps it, which makes it the only
+ *   placement with any advertising value, since it survives the scissors.
  * - **A line in the sheet's own margin.** Free and harmless, but cut off and
  *   binned unless the sheet is handed over whole.
  *
@@ -22,13 +23,19 @@
 export type Imprint = {
   name: string;
   phone: string;
-  /** Print a card in the first cell the order left empty. */
+  /** An address or a slogan, printed small under the number. Card only. */
+  note?: string;
+  /** The card's accent: its band, badge and phone mark. */
+  colour?: string;
+  /** Print a card in the cells the order left empty. See `arrange` in sheet.ts. */
   card: boolean;
   /** Print one line in the sheet's margin. */
   mark: boolean;
 };
 
-export const EMPTY_IMPRINT: Imprint = { name: "", phone: "", card: true, mark: false };
+export const DEFAULT_COLOUR = "#1d4ed8";
+
+export const EMPTY_IMPRINT: Imprint = { name: "", phone: "", note: "", colour: DEFAULT_COLOUR, card: true, mark: false };
 
 /** Nothing to say means nothing is printed, whatever the switches are set to. */
 export function hasImprint(imprint: Imprint | undefined): imprint is Imprint {
@@ -74,61 +81,277 @@ function fitted(
   return null;
 }
 
+/** The family the site itself is set in (Onest), so the card matches the brand; the stack behind it if not loaded. */
+function family(): string {
+  if (typeof document === "undefined") return FAMILY;
+  const own = getComputedStyle(document.body).fontFamily;
+  return own ? `${own}, ${FAMILY}` : FAMILY;
+}
+
+/** Lucide icons (ISC licence), drawn on a 24-unit grid. */
+const CAMERA = "M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z";
+const PHONE =
+  "M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z";
+
+function icon(pen: Pen, path: string, x: number, y: number, size: number, colour: string, circle = false) {
+  const { ctx, px } = pen;
+  ctx.save();
+  ctx.translate(px(x), px(y));
+  ctx.scale(px(size) / 24, px(size) / 24);
+  ctx.strokeStyle = colour;
+  ctx.lineWidth = 2;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.stroke(new Path2D(path));
+  if (circle) {
+    ctx.beginPath();
+    ctx.arc(12, 13, 3, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+/** "#2563eb" at a given opacity, for the card's tint. */
+function tint(hex: string, alpha: number): string {
+  let h = hex.replace("#", "");
+  if (h.length === 3) h = h.replace(/./g, (c) => c + c);
+  const n = Number.parseInt(h.slice(0, 6), 16);
+  if (!Number.isFinite(n)) return `rgba(37,99,235,${alpha})`;
+  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${alpha})`;
+}
+
 /**
- * A card in `box`, which is one cell of the sheet in millimetres.
+ * Word wrap at the current font, with the lines evened out: an address that
+ * leaves one lone word on its last line reads as a mistake. `null` when a
+ * single word is wider than the line or it takes more than `maxLines`, so the
+ * caller tries a smaller size.
+ */
+function wrap(ctx: CanvasRenderingContext2D, text: string, width: number, maxLines: number): string[] | null {
+  const words = text.split(" ").filter(Boolean);
+  const greedy = (limit: number): string[] | null => {
+    const lines: string[] = [];
+    let current = "";
+    for (const word of words) {
+      if (ctx.measureText(word).width > limit) return null;
+      const next = current ? `${current} ${word}` : word;
+      if (ctx.measureText(next).width <= limit) current = next;
+      else {
+        lines.push(current);
+        current = word;
+      }
+    }
+    if (current) lines.push(current);
+    return lines;
+  };
+  const lines = greedy(width);
+  if (!lines || lines.length > maxLines) return null;
+  if (lines.length < 2) return lines;
+  // The narrowest measure that still takes no more lines.
+  let low = 0;
+  let high = width;
+  while (high - low > 1) {
+    const mid = (low + high) / 2;
+    const tried = greedy(mid);
+    if (tried && tried.length <= lines.length) high = mid;
+    else low = mid;
+  }
+  return greedy(high) ?? lines;
+}
+
+type CardPlan = {
+  badge: number;
+  name: { size: number; lines: string[] } | null;
+  phone: { size: number } | null;
+  note: { size: number; lines: string[] } | null;
+  height: number;
+  /** The name's size, and the unit every gap is measured in. */
+  unit: number;
+};
+
+/** The phone pill's height and side padding, per millimetre of its text size. */
+const PILL_H = 2;
+const PILL_PAD = 0.75;
+
+/**
+ * A card in `box`, in millimetres: the cells the order left empty beside the
+ * photographs, one cell or a whole column of them.
  *
- * `border` draws the card's own edge, and is for sheets printed without cut
+ * Laid out like a small business card — a tinted panel with a coloured band,
+ * a camera badge when there is height for one, the name large, the number in a
+ * pill of the studio's colour, and the address or slogan underneath. On a tall
+ * column the name and the number move apart to fill it, so it reads as a poster
+ * rather than a label stuck in the middle. Everything is sized off the box, so
+ * the same card reads on a 40 × 30 cell and on a 40 × 126 column.
+ *
+ * `border` draws the cut line round the box, for sheets printed without cut
  * marks: there would otherwise be nothing on the paper to say where the
- * scissors go, and a card cut by eye looks like a mistake rather than a card.
- * With cut marks on it is left off, because two lines in the same place is one
- * line too many.
+ * scissors go. With cut marks on it is left off, because two lines in the same
+ * place is one line too many.
  */
 export function drawCard(pen: Pen, box: Box, imprint: Imprint, border = true): void {
   const { ctx, px } = pen;
   const name = imprint.name.trim();
   const phone = imprint.phone.trim();
+  const note = (imprint.note ?? "").trim();
   if (!name && !phone) return;
+  const accent = imprint.colour || DEFAULT_COLOUR;
+  const font = family();
 
-  const pad = Math.min(2.4, box.w * 0.08, box.h * 0.08);
-  const innerW = box.w - pad * 2;
-  if (innerW <= 2) return;
+  // The panel sits inside the cut line, so a slightly crooked cut never
+  // clips it.
+  const inset = Math.min(1.6, box.w * 0.05, box.h * 0.05);
+  const panel = { x: box.x + inset, y: box.y + inset, w: box.w - inset * 2, h: box.h - inset * 2 };
+  if (panel.w <= 6 || panel.h <= 6) return;
+  const radius = Math.min(2.4, panel.w * 0.08, panel.h * 0.08);
+  const band = Math.min(1.6, panel.h * 0.06);
+  const pad = Math.min(3, panel.w * 0.09, panel.h * 0.09);
+  const inner = { x: panel.x + pad, y: panel.y + band + pad, w: panel.w - pad * 2, h: panel.h - band - pad * 2 };
+  const tall = box.h > box.w * 1.15;
+
+  const plan = (withNote: boolean, withBadge: boolean, withName = true): CardPlan | null => {
+    const ceiling = Math.min(tall ? 6.5 : 5, inner.h * 0.3, inner.w * 0.2);
+    for (let u = ceiling; u >= 1.5; u -= 0.1) {
+      let height = 0;
+      const badge = withBadge ? u * 2.8 : 0;
+      if (badge) height += badge + u * 0.9;
+
+      let nameLines: string[] | null = null;
+      if (withName && name) {
+        ctx.font = `700 ${px(u)}px ${font}`;
+        nameLines = wrap(ctx, name, px(inner.w), tall ? 3 : 2);
+        if (!nameLines) continue;
+        height += nameLines.length * u * 1.18;
+      }
+
+      const phoneSize = Math.max(1.5, u * 0.78);
+      if (phone) {
+        ctx.font = `700 ${px(phoneSize)}px ${font}`;
+        const width = phoneSize * (PILL_PAD * 2 + 1.45) + ctx.measureText(phone).width / px(1);
+        if (width > inner.w) continue;
+        if (nameLines) height += u * 0.9;
+        height += phoneSize * PILL_H;
+      }
+
+      const noteSize = Math.max(1.5, u * 0.56);
+      let noteLines: string[] | null = null;
+      if (withNote && note) {
+        ctx.font = `500 ${px(noteSize)}px ${font}`;
+        noteLines = wrap(ctx, note, px(inner.w), tall ? 4 : 2);
+        if (!noteLines) continue;
+        height += u * 0.6 + noteLines.length * noteSize * 1.35;
+      }
+
+      if (height > inner.h) continue;
+      return {
+        badge,
+        name: nameLines ? { size: u, lines: nameLines } : null,
+        phone: phone ? { size: phoneSize } : null,
+        note: noteLines ? { size: noteSize, lines: noteLines } : null,
+        height,
+        unit: u,
+      };
+    }
+    return null;
+  };
+
+  // What gives way first when the box is small: the badge, then the note, and
+  // last a name too long to fit at all, so the number still gets printed.
+  const chosen = plan(true, tall) ?? plan(true, false) ?? plan(false, false) ?? (phone ? plan(false, false, false) : null);
+  if (!chosen) return;
 
   ctx.save();
 
   if (border) {
     ctx.strokeStyle = "rgba(0,0,0,0.22)";
-    ctx.lineWidth = Math.max(1, px(0.15));
-    ctx.strokeRect(px(box.x), px(box.y), px(box.w), px(box.h));
+    const width = Math.max(1, px(0.15));
+    ctx.lineWidth = width;
+    // Inside the box, never over the photo next door.
+    ctx.strokeRect(px(box.x) + width / 2, px(box.y) + width / 2, px(box.w) - width, px(box.h) - width);
   }
 
+  // The panel: a light tint of the studio's colour, a band across the top.
+  const outline = new Path2D();
+  outline.roundRect(px(panel.x), px(panel.y), px(panel.w), px(panel.h), px(radius));
+  ctx.fillStyle = tint(accent, 0.07);
+  ctx.fill(outline);
+  ctx.save();
+  ctx.clip(outline);
+  ctx.fillStyle = accent;
+  ctx.fillRect(px(panel.x), px(panel.y), px(panel.w), px(band));
+  ctx.restore();
+  ctx.strokeStyle = tint(accent, 0.45);
+  ctx.lineWidth = Math.max(1, px(0.25));
+  ctx.stroke(outline);
+
+  // Spare height: centred on a small card; on a tall one, split so the name
+  // sits in the upper part and the number in the lower.
+  const spare = inner.h - chosen.height;
+  const split = tall && chosen.name !== null && chosen.phone !== null;
+  const middle = inner.x + inner.w / 2;
+  let cursor = inner.y + (split ? spare * 0.28 : spare / 2);
   ctx.textAlign = "center";
-  // Centred on the line rather than sat on its baseline: the block is placed by
-  // arithmetic, and ascent-as-height puts an evenly spaced card visibly high.
   ctx.textBaseline = "middle";
 
-  // Sized off the card, not off the paper: the same card has to read on a cell
-  // turned on its side (40 × 30) and one standing up (30 × 40).
-  const nameSize = name ? fitted(pen, name, innerW, Math.min(4.8, box.h * 0.2), "600") : null;
-  // A long name shrinks to fit, and the number must not then tower over it —
-  // the name is what someone reads first on a card.
-  const phoneCap = Math.min(4.2, box.h * 0.17, nameSize ?? Infinity);
-  const phoneSize = phone ? fitted(pen, phone, innerW, phoneCap, "500") : null;
-
-  const gap = Math.min(1.8, box.h * 0.07);
-  const blockH = (nameSize ?? 0) + (phoneSize ?? 0) + (nameSize && phoneSize ? gap : 0);
-  let cursor = box.y + (box.h - blockH) / 2;
-  const middle = px(box.x + box.w / 2);
-
-  if (nameSize) {
-    ctx.font = `600 ${px(nameSize)}px ${FAMILY}`;
-    ctx.fillStyle = "#111111";
-    ctx.fillText(name, middle, px(cursor + nameSize / 2));
-    cursor += nameSize + gap;
+  if (chosen.badge) {
+    const r = chosen.badge / 2;
+    ctx.beginPath();
+    ctx.arc(px(middle), px(cursor + r), px(r), 0, Math.PI * 2);
+    ctx.fillStyle = accent;
+    ctx.fill();
+    // A faint ring round the badge, like a lens.
+    ctx.beginPath();
+    ctx.arc(px(middle), px(cursor + r), px(r + chosen.unit * 0.3), 0, Math.PI * 2);
+    ctx.strokeStyle = tint(accent, 0.25);
+    ctx.lineWidth = Math.max(1, px(0.3));
+    ctx.stroke();
+    const glyph = chosen.badge * 0.5;
+    icon(pen, CAMERA, middle - glyph / 2, cursor + r - glyph / 2, glyph, "#ffffff", true);
+    cursor += chosen.badge + chosen.unit * 0.9;
   }
-  if (phoneSize) {
-    ctx.font = `500 ${px(phoneSize)}px ${FAMILY}`;
-    ctx.fillStyle = "#1a1a1a";
-    ctx.fillText(phone, middle, px(cursor + phoneSize / 2));
+
+  if (chosen.name) {
+    const { size, lines } = chosen.name;
+    ctx.font = `700 ${px(size)}px ${font}`;
+    ctx.fillStyle = "#0f172a";
+    for (const text of lines) {
+      ctx.fillText(text, px(middle), px(cursor + (size * 1.18) / 2));
+      cursor += size * 1.18;
+    }
+  }
+
+  if (chosen.phone) {
+    if (chosen.name) cursor += chosen.unit * 0.9 + (split ? spare * 0.44 : 0);
+    const size = chosen.phone.size;
+    ctx.font = `700 ${px(size)}px ${font}`;
+    const textW = ctx.measureText(phone).width / px(1);
+    const glyph = size * 1.05;
+    const gap = size * 0.4;
+    const pillW = size * PILL_PAD * 2 + glyph + gap + textW;
+    const pillH = size * PILL_H;
+    const left = middle - pillW / 2;
+    const pill = new Path2D();
+    pill.roundRect(px(left), px(cursor), px(pillW), px(pillH), px(pillH / 2));
+    ctx.fillStyle = accent;
+    ctx.fill(pill);
+    const line = cursor + pillH / 2;
+    const start = left + size * PILL_PAD;
+    icon(pen, PHONE, start, line - glyph / 2, glyph, "#ffffff");
+    ctx.textAlign = "left";
+    ctx.fillStyle = "#ffffff";
+    ctx.fillText(phone, px(start + glyph + gap), px(line));
+    ctx.textAlign = "center";
+    cursor += pillH;
+  }
+
+  if (chosen.note) {
+    const { size, lines } = chosen.note;
+    cursor += chosen.unit * 0.6;
+    ctx.font = `500 ${px(size)}px ${font}`;
+    ctx.fillStyle = "#475569";
+    for (const text of lines) {
+      ctx.fillText(text, px(middle), px(cursor + (size * 1.35) / 2));
+      cursor += size * 1.35;
+    }
   }
 
   ctx.restore();
