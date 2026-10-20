@@ -6,12 +6,12 @@
  * carries text, and the customer blames the studio that printed it, so the
  * imprint only goes where a photograph is not:
  *
- * - **A card beside the photographs.** A 10×15 sheet holds eight 3×4 shots and
- *   most orders are four or six, so the cells left over print as blank paper
- *   and are thrown away after cutting. With a card on, the photos go down the
- *   left-hand column and the card takes the free cells at the top right, as
- *   tall as the photos: the customer keeps it, which makes it the only
- *   placement with any advertising value, since it survives the scissors.
+ * - **A card beside the photographs.** With a card on, the photos move against
+ *   the left margin and the card runs down the narrow strip that frees on the
+ *   right, as tall as the rows of photos — the customer keeps it, which makes
+ *   it the only placement with any advertising value, since it survives the
+ *   scissors. It takes no cell, so a full sheet gets one too. Where the
+ *   photos already fill the width, it takes the cells the order left empty.
  * - **A line in the sheet's own margin.** Free and harmless, but cut off and
  *   binned unless the sheet is handed over whole.
  *
@@ -173,6 +173,156 @@ const PILL_H = 2;
 const PILL_PAD = 0.75;
 
 /**
+ * The card as a narrow strip beside the photos: everything on one line along
+ * it, turned to read from the bottom up, the way a book's spine does.
+ *
+ * What goes is decided by what fits: the badge, the name, the number and the
+ * address if the strip is long enough. The number is the last to give way.
+ */
+function drawStrip(pen: Pen, box: Box, imprint: Imprint, border: boolean, accent: string, font: string): void {
+  const { ctx, px } = pen;
+  const name = imprint.name.trim();
+  const phone = imprint.phone.trim();
+  const note = (imprint.note ?? "").trim();
+  const length = box.h;
+  const thick = box.w;
+
+  const inset = Math.min(0.6, thick * 0.08);
+  const panel = { x: -length / 2 + inset, y: -thick / 2 + inset, w: length - inset * 2, h: thick - inset * 2 };
+  if (panel.w <= 6 || panel.h <= 2) return;
+  const band = Math.min(1.2, panel.w * 0.04);
+  const pad = Math.min(2.4, panel.h * 0.4);
+  const room = panel.w - band - pad * 2;
+  const pillH = panel.h * 0.64;
+  const badgeD = panel.h * 0.66;
+
+  type Part = "badge" | "name" | "phone" | "note";
+  const widths = (parts: Part[], size: number) => {
+    const phoneSize = Math.min(size * 0.92, pillH * 0.56);
+    const noteSize = size * 0.72;
+    const out: number[] = [];
+    for (const part of parts) {
+      if (part === "badge") out.push(badgeD);
+      if (part === "name") {
+        ctx.font = `700 ${px(size)}px ${font}`;
+        out.push(ctx.measureText(name).width / px(1));
+      }
+      if (part === "phone") {
+        ctx.font = `700 ${px(phoneSize)}px ${font}`;
+        out.push(phoneSize * (PILL_PAD * 2 + 1.45) + ctx.measureText(phone).width / px(1));
+      }
+      if (part === "note") {
+        ctx.font = `500 ${px(noteSize)}px ${font}`;
+        out.push(ctx.measureText(note).width / px(1));
+      }
+    }
+    return { out, phoneSize, noteSize, gap: size * 0.8 };
+  };
+
+  // In order of preference: the address goes first, then the badge, then the
+  // name; the number is what the strip is for, so it stays to the last.
+  const choices: Part[][] = [
+    ["badge", "name", "phone", "note"],
+    ["badge", "name", "phone"],
+    ["name", "phone"],
+    ["badge", "phone"],
+    ["phone"],
+    ["badge", "name"],
+    ["name"],
+  ].map((parts) =>
+    (parts as Part[]).filter((part) => (part === "name" ? name : part === "phone" ? phone : part === "note" ? note : true)),
+  );
+
+  const ceiling = Math.min(4.2, panel.h * 0.44);
+  let chosen: { parts: Part[]; size: number } | null = null;
+  // A readable size with fewer parts beats a tiny one with all of them.
+  for (const floor of [2.2, 1.5]) {
+    for (const parts of choices) {
+      if (!parts.includes("name") && !parts.includes("phone")) continue;
+      for (let size = ceiling; size >= floor; size -= 0.1) {
+        const { out, gap } = widths(parts, size);
+        if (out.reduce((a, b) => a + b, 0) + gap * (out.length - 1) <= room) {
+          chosen = { parts, size };
+          break;
+        }
+      }
+      if (chosen) break;
+    }
+    if (chosen) break;
+  }
+  if (!chosen) return;
+
+  ctx.save();
+
+  if (border) {
+    const width = Math.max(1, px(0.15));
+    ctx.strokeStyle = "rgba(0,0,0,0.22)";
+    ctx.lineWidth = width;
+    ctx.strokeRect(px(box.x) + width / 2, px(box.y) + width / 2, px(box.w) - width, px(box.h) - width);
+  }
+
+  ctx.translate(px(box.x + box.w / 2), px(box.y + box.h / 2));
+  ctx.rotate(-Math.PI / 2);
+
+  const outline = new Path2D();
+  outline.roundRect(px(panel.x), px(panel.y), px(panel.w), px(panel.h), px(Math.min(1.6, panel.h * 0.3)));
+  ctx.fillStyle = tint(accent, 0.07);
+  ctx.fill(outline);
+  ctx.save();
+  ctx.clip(outline);
+  ctx.fillStyle = accent;
+  ctx.fillRect(px(panel.x), px(panel.y), px(band), px(panel.h));
+  ctx.restore();
+  ctx.strokeStyle = tint(accent, 0.45);
+  ctx.lineWidth = Math.max(1, px(0.25));
+  ctx.stroke(outline);
+
+  const { out, phoneSize, noteSize, gap } = widths(chosen.parts, chosen.size);
+  const total = out.reduce((a, b) => a + b, 0) + gap * (out.length - 1);
+  let cursor = panel.x + band + pad + (room - total) / 2;
+  ctx.textBaseline = "middle";
+  ctx.textAlign = "left";
+
+  chosen.parts.forEach((part, i) => {
+    const w = out[i];
+    if (part === "badge") {
+      const r = badgeD / 2;
+      ctx.beginPath();
+      ctx.arc(px(cursor + r), 0, px(r), 0, Math.PI * 2);
+      ctx.fillStyle = accent;
+      ctx.fill();
+      const glyph = badgeD * 0.56;
+      icon(pen, CAMERA, cursor + r - glyph / 2, -glyph / 2, glyph, "#ffffff", true);
+    }
+    if (part === "name") {
+      ctx.font = `700 ${px(chosen.size)}px ${font}`;
+      ctx.fillStyle = "#0f172a";
+      ctx.fillText(name, px(cursor), 0);
+    }
+    if (part === "phone") {
+      const pill = new Path2D();
+      pill.roundRect(px(cursor), px(-pillH / 2), px(w), px(pillH), px(pillH / 2));
+      ctx.fillStyle = accent;
+      ctx.fill(pill);
+      const glyph = phoneSize * 1.05;
+      const start = cursor + phoneSize * PILL_PAD;
+      icon(pen, PHONE, start, -glyph / 2, glyph, "#ffffff");
+      ctx.font = `700 ${px(phoneSize)}px ${font}`;
+      ctx.fillStyle = "#ffffff";
+      ctx.fillText(phone, px(start + glyph + phoneSize * 0.4), 0);
+    }
+    if (part === "note") {
+      ctx.font = `500 ${px(noteSize)}px ${font}`;
+      ctx.fillStyle = "#475569";
+      ctx.fillText(note, px(cursor), 0);
+    }
+    cursor += w + gap;
+  });
+
+  ctx.restore();
+}
+
+/**
  * A card in `box`, in millimetres: the cells the order left empty beside the
  * photographs, one cell or a whole column of them.
  *
@@ -196,6 +346,12 @@ export function drawCard(pen: Pen, box: Box, imprint: Imprint, border = true): v
   if (!name && !phone) return;
   const accent = imprint.colour || DEFAULT_COLOUR;
   const font = family();
+
+  // A strip beside the photos rather than a cell among them.
+  if (box.w < 16 && box.h > box.w * 2.5) {
+    drawStrip(pen, box, imprint, border, accent, font);
+    return;
+  }
 
   // The panel sits inside the cut line, so a slightly crooked cut never
   // clips it.

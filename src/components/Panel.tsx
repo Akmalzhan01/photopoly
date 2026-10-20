@@ -119,6 +119,7 @@ export function Panel({
   // What the studio's imprint would actually do on the current sheet, so the
   // panel can say why a switch is on but nothing is printed.
   const imprintSpec = {
+    sheetW: settings.sheetW,
     sheetH: settings.sheetH,
     gap: settings.gap,
     margin: settings.margin,

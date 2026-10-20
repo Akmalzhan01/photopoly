@@ -66,23 +66,44 @@ export const mmToPx = (mm: number, dpi: number) => (mm * dpi) / 25.4;
 /** How far the crop ticks reach into the margin, in millimetres. */
 const tickLength = (margin: number) => Math.max(2.5, Math.min(margin * 0.7, 5));
 
+/** Narrowest and widest the studio's strip beside the photos is drawn, in millimetres. */
+export const STRIP_MIN = 6;
+const STRIP_MAX = 12;
+
+type StripShape = Pick<SheetSpec, "sheetW" | "gap" | "margin">;
+
+/** Width of the photo block, in millimetres. */
+const blockWidth = (spec: Pick<SheetSpec, "gap">, layout: SheetLayout) =>
+  layout.cols > 0 ? layout.cols * layout.cellW + (layout.cols - 1) * spec.gap : 0;
+
+/**
+ * Room for a strip once the photos are moved against the left margin: what is
+ * left on the right after the block and one gap, short of the right margin and
+ * the printer's dead band.
+ */
+function stripRoom(spec: StripShape, layout: SheetLayout): number {
+  const right = spec.sheetW - Math.max(spec.margin, EDGE_MM);
+  return right - (spec.margin + blockWidth(spec, layout) + spec.gap);
+}
+
 /**
  * Whether a card would be printed, and why not when it would not be. The panel
  * says this out loud rather than leaving a switch that quietly does nothing.
  */
 export function cardFits(
-  spec: Pick<SheetSpec, "copies" | "imprint">,
+  spec: Pick<SheetSpec, "copies" | "imprint"> & StripShape,
   layout: SheetLayout,
 ): { card: boolean; reason: "no-text" | "off" | "full" | null } {
   if (!hasImprint(spec.imprint)) return { card: false, reason: "no-text" };
   if (!spec.imprint.card) return { card: false, reason: "off" };
+  if (stripRoom(spec, layout) >= STRIP_MIN) return { card: true, reason: null };
   const used = Math.max(0, Math.min(spec.copies, layout.capacity));
   if (used >= layout.capacity) return { card: false, reason: "full" };
   return { card: true, reason: null };
 }
 
 /** What the two "does it fit" answers need to know — the panel has no dpi. */
-type SheetShape = Pick<SheetSpec, "sheetH" | "gap" | "margin" | "cutMarks" | "copies" | "imprint">;
+type SheetShape = Pick<SheetSpec, "sheetW" | "sheetH" | "gap" | "margin" | "cutMarks" | "copies" | "imprint">;
 
 /** Where everything on a sheet goes, in millimetres. */
 export type Arrangement = { photos: Box[]; card: Box | null };
@@ -90,18 +111,20 @@ export type Arrangement = { photos: Box[]; card: Box | null };
 /**
  * Places the photographs and the studio's card.
  *
- * Without a card the photos fill the sheet row by row, as they always have.
- * With one they go down the left-hand column instead, and the card takes the
- * column beside them from the top, as tall as the photos are: four 3×4 on a
- * 10×15 leave the whole right-hand column to the card, two leave it half. Past
- * one column, the photos that spill over fill the next column from the bottom,
- * so the space left for the card is always at the top right, and it shrinks as
- * the order grows until a full sheet leaves none.
+ * Without a card the photos fill the sheet row by row, centred, as they always
+ * have. With one, the photos keep that order but move against the left margin,
+ * and the card becomes a narrow strip down the right-hand side, as tall as the
+ * rows the photos take: four 3×4 on a 10×15 give it the top half, eight the
+ * whole height. It costs no photo a cell, so even a full sheet gets one.
+ *
+ * Where the photos already fill the width, there is no strip to be had, and
+ * the card takes cells the order left empty instead: the photos go down the
+ * left-hand column and the card takes the column beside them from the top.
  */
-export function arrange(spec: Pick<SheetSpec, "gap" | "copies" | "imprint">, layout: SheetLayout): Arrangement {
+export function arrange(spec: Pick<SheetSpec, "copies" | "imprint"> & StripShape, layout: SheetLayout): Arrangement {
   const count = Math.max(0, Math.min(spec.copies, layout.capacity));
-  const at = (col: number, row: number, span = 1): Box => ({
-    x: layout.originX + col * (layout.cellW + spec.gap),
+  const at = (col: number, row: number, span = 1, left = layout.originX): Box => ({
+    x: left + col * (layout.cellW + spec.gap),
     y: layout.originY + row * (layout.cellH + spec.gap),
     w: layout.cellW,
     h: span * layout.cellH + (span - 1) * spec.gap,
@@ -110,6 +133,21 @@ export function arrange(spec: Pick<SheetSpec, "gap" | "copies" | "imprint">, lay
   if (!cardFits(spec, layout).card) {
     const photos = Array.from({ length: count }, (_, i) => at(i % layout.cols, Math.floor(i / layout.cols)));
     return { photos, card: null };
+  }
+
+  const room = stripRoom(spec, layout);
+  if (room >= STRIP_MIN) {
+    const width = Math.min(room, STRIP_MAX);
+    // Photos and strip together, centred in what the margins leave, so a wide
+    // sheet does not push the photos hard left and the strip far away.
+    const left = spec.margin + (room - width) / 2;
+    const photos = Array.from({ length: count }, (_, i) => at(i % layout.cols, Math.floor(i / layout.cols), 1, left));
+    const rows = Math.max(1, Math.ceil(count / Math.max(1, layout.cols)));
+    const band = at(0, 0, rows, left);
+    return {
+      photos,
+      card: { x: left + blockWidth(spec, layout) + spec.gap, y: band.y, w: width, h: band.h },
+    };
   }
 
   const rows = layout.rows;

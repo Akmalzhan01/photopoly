@@ -598,14 +598,15 @@ qaytaradi, va aybdor bosib bergan studiya bo'ladi.
 
 Shuning uchun yozuv faqat surat **bo'lmagan** joyga tushadi:
 
-- **Suratlar yonidagi vizitka.** 10×15 ga sakkizta 3×4 sig'adi, mijoz esa odatda
-  to'rtta yoki oltita oladi — qolgan kataklar oq qog'oz bo'lib qirqiladi va
-  tashlanadi. Vizitka yoqilganda suratlar chap ustunga tushadi, vizitka esa
-  o'ng tomonning tepasidagi bo'sh joyni suratlar balandligida egallaydi: 4 ta
-  bo'lsa butun o'ng ustun, 2 ta bo'lsa yarmi, 6 ta bo'lsa tepadagi ikki katak.
-  Unda studiya rangidagi chiziq, fotoapparat belgisi, nom, telefon va ixtiyoriy
-  manzil/shior bor. Buyurtma to'liq qolgani uchun mijoz hech narsa
-  yo'qotmaydi va qo'shimcha qog'oz ham ketmaydi.
+- **Suratlar yonidagi vizitka.** Vizitka yoqilganda suratlar chap chetga
+  suriladi, o'ng tomonda esa ingichka (≈8 mm) tasma qoladi. Vizitka shu
+  tasmada, suratlar qatorlari balandligida turadi: 10×15 da 4 ta 3×4 bo'lsa
+  yuqori yarmida, 8 ta bo'lsa butun bo'yi bo'ylab. Matn tasma bo'ylab pastdan
+  yuqoriga o'qiladi: fotoapparat belgisi, nom, rangli «tugma» ichida telefon
+  va joy yetsa manzil/shior. Joy kam bo'lsa avval manzil, keyin belgi, keyin
+  nom tushib qoladi — telefon hech qachon. Tasma hech qaysi katakni olmaydi,
+  shuning uchun to'la varaqda ham chiqadi. Suratlar varaq kengligini to'liq
+  egallagan joyda (masalan A4) vizitka bo'sh kataklarga tushadi.
 - **Varaq chetidagi bitta qator.** Bepul va xavfsiz, lekin qirqilgandan keyin
   axlatga ketadi — varaq butun berilsagina ishlaydi. Shuning uchun sukut
   bo'yicha **o'chiq**, vizitka esa yoqilgan.
