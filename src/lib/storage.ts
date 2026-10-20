@@ -29,6 +29,14 @@ function bool(value: unknown, fallback: boolean): boolean {
   return typeof value === "boolean" ? value : fallback;
 }
 
+/** A spot on the sheet in millimetres, or `null` for "wherever it goes". */
+function point(value: unknown): { x: number; y: number } | null {
+  if (!value || typeof value !== "object") return null;
+  const { x, y } = value as Record<string, unknown>;
+  const ok = (n: unknown): n is number => typeof n === "number" && Number.isFinite(n) && Math.abs(n) <= 2000;
+  return ok(x) && ok(y) ? { x, y } : null;
+}
+
 /**
  * One line of text the studio typed. Capped and stripped of line breaks because
  * it is drawn as a single line on paper: a pasted paragraph would otherwise be
@@ -104,6 +112,7 @@ export function sanitise(raw: unknown): Settings {
     sheetRotate: pick(v.sheetRotate, ROTATIONS, base.sheetRotate),
     copies: num(v.copies, base.copies, 1, 9999),
     fillSheet: bool(v.fillSheet, base.fillSheet),
+    blockAt: point(v.blockAt),
     studioName: line(v.studioName, base.studioName),
     studioPhone: line(v.studioPhone, base.studioPhone),
     studioNote: line(v.studioNote, base.studioNote, 64),

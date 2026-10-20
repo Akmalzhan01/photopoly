@@ -59,6 +59,12 @@ export type SheetSpec = {
    * export, which has no sheet at all.
    */
   imprint?: Imprint;
+  /**
+   * Where the studio dragged the photos to: the top-left corner of the group
+   * (photos and card together), in millimetres. `null` or absent lays them out
+   * by themselves.
+   */
+  blockAt?: { x: number; y: number } | null;
 };
 
 export const mmToPx = (mm: number, dpi: number) => (mm * dpi) / 25.4;
@@ -103,7 +109,7 @@ export function cardFits(
 }
 
 /** What the two "does it fit" answers need to know — the panel has no dpi. */
-type SheetShape = Pick<SheetSpec, "sheetW" | "sheetH" | "gap" | "margin" | "cutMarks" | "copies" | "imprint">;
+type SheetShape = Pick<SheetSpec, "sheetW" | "sheetH" | "gap" | "margin" | "cutMarks" | "copies" | "imprint" | "blockAt">;
 
 /** Where everything on a sheet goes, in millimetres. */
 export type Arrangement = { photos: Box[]; card: Box | null };
@@ -121,7 +127,43 @@ export type Arrangement = { photos: Box[]; card: Box | null };
  * the card takes cells the order left empty instead: the photos go down the
  * left-hand column and the card takes the column beside them from the top.
  */
-export function arrange(spec: Pick<SheetSpec, "copies" | "imprint"> & StripShape, layout: SheetLayout): Arrangement {
+export function arrange(
+  spec: Pick<SheetSpec, "copies" | "imprint" | "sheetH" | "blockAt"> & StripShape,
+  layout: SheetLayout,
+): Arrangement {
+  const placed = arrangeInPlace(spec, layout);
+  return spec.blockAt ? moved(placed, spec, spec.blockAt) : placed;
+}
+
+/** The box round everything printed, or `null` for an empty sheet. */
+export function groupBounds(placed: Arrangement): Box | null {
+  const boxes = placed.card ? [...placed.photos, placed.card] : placed.photos;
+  if (boxes.length === 0) return null;
+  const x = Math.min(...boxes.map((b) => b.x));
+  const y = Math.min(...boxes.map((b) => b.y));
+  const right = Math.max(...boxes.map((b) => b.x + b.w));
+  const bottom = Math.max(...boxes.map((b) => b.y + b.h));
+  return { x, y, w: right - x, h: bottom - y };
+}
+
+/**
+ * The same arrangement with its top-left corner at `to`, kept out of the
+ * printer's dead band at the paper's edge. A group already closer to the edge
+ * than that (margins set to nothing) may stay where it was laid out, but is
+ * never dragged further out.
+ */
+function moved(placed: Arrangement, sheet: Pick<SheetSpec, "sheetW" | "sheetH">, to: { x: number; y: number }): Arrangement {
+  const group = groupBounds(placed);
+  if (!group) return placed;
+  const fit = (value: number, at: number, size: number, extent: number) =>
+    Math.min(Math.max(extent - EDGE_MM - size, at), Math.max(Math.min(EDGE_MM, at), value));
+  const dx = fit(to.x, group.x, group.w, sheet.sheetW) - group.x;
+  const dy = fit(to.y, group.y, group.h, sheet.sheetH) - group.y;
+  const shift = (box: Box): Box => ({ ...box, x: box.x + dx, y: box.y + dy });
+  return { photos: placed.photos.map(shift), card: placed.card ? shift(placed.card) : null };
+}
+
+function arrangeInPlace(spec: Pick<SheetSpec, "copies" | "imprint"> & StripShape, layout: SheetLayout): Arrangement {
   const count = Math.max(0, Math.min(spec.copies, layout.capacity));
   const at = (col: number, row: number, span = 1, left = layout.originX): Box => ({
     x: left + col * (layout.cellW + spec.gap),

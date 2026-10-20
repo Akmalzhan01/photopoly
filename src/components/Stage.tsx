@@ -1,6 +1,6 @@
 "use client";
 
-import { type RefObject, useEffect, useState } from "react";
+import { type RefObject, useEffect, useRef, useState } from "react";
 import type { Progress } from "@/lib/cutout";
 import { fromPixels, tickStep, type Unit } from "@/lib/units";
 
@@ -17,7 +17,106 @@ type StageProps = {
   onFile: (file: File) => void;
   /** Opens the file picker, which Studio owns so the panel can open it too. */
   onPick: () => void;
+  /** On a print sheet: the photos as one piece the studio can drag about. */
+  mover?: Mover;
 };
+
+type Mover = {
+  /** The group of photos (and the studio's card), in the sheet's millimetres. */
+  box: { x: number; y: number; w: number; h: number };
+  sheetW: number;
+  sheetH: number;
+  /**
+   * The group's new top-left corner, in millimetres. `exact` is for the arrow
+   * keys, which move by a set step and must not be snapped back to where they
+   * started.
+   */
+  onMove: (x: number, y: number, exact?: boolean) => void;
+};
+
+/**
+ * A handle laid exactly over the photos on the sheet. Dragging it moves them
+ * all at once; the sheet is redrawn underneath, so what is seen is what will
+ * print, not an outline of it.
+ */
+function MoveHandle({ mover }: { mover: Mover }) {
+  const grab = useRef<{ x: number; y: number; from: { x: number; y: number }; perMm: number } | null>(null);
+  const [active, setActive] = useState(false);
+  const { box, sheetW, sheetH } = mover;
+
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      aria-label="Фото на листе — перетащите, чтобы передвинуть; стрелки двигают на 1 мм"
+      title="Перетащите, чтобы передвинуть фото на листе"
+      className={`group absolute touch-none rounded-sm outline-none transition-colors ${
+        active
+          ? "cursor-grabbing bg-safe/8 ring-2 ring-safe"
+          : "cursor-grab hover:bg-safe/5 hover:ring-2 hover:ring-safe/60 focus-visible:ring-2 focus-visible:ring-safe"
+      }`}
+      style={{
+        left: `${(box.x / sheetW) * 100}%`,
+        top: `${(box.y / sheetH) * 100}%`,
+        width: `${(box.w / sheetW) * 100}%`,
+        height: `${(box.h / sheetH) * 100}%`,
+      }}
+      onPointerDown={(event) => {
+        const paper = event.currentTarget.parentElement;
+        if (!paper) return;
+        grab.current = {
+          x: event.clientX,
+          y: event.clientY,
+          from: { x: box.x, y: box.y },
+          perMm: paper.getBoundingClientRect().width / sheetW,
+        };
+        setActive(true);
+        try {
+          event.currentTarget.setPointerCapture(event.pointerId);
+        } catch {
+          // Capture is a nicety: without it the drag still works over the handle.
+        }
+      }}
+      onPointerMove={(event) => {
+        const start = grab.current;
+        if (!start) return;
+        mover.onMove(
+          start.from.x + (event.clientX - start.x) / start.perMm,
+          start.from.y + (event.clientY - start.y) / start.perMm,
+        );
+      }}
+      onPointerUp={() => {
+        grab.current = null;
+        setActive(false);
+      }}
+      onPointerCancel={() => {
+        grab.current = null;
+        setActive(false);
+      }}
+      onKeyDown={(event) => {
+        const step = event.shiftKey ? 10 : 1;
+        const moves: Record<string, [number, number]> = {
+          ArrowLeft: [-step, 0],
+          ArrowRight: [step, 0],
+          ArrowUp: [0, -step],
+          ArrowDown: [0, step],
+        };
+        const move = moves[event.key];
+        if (!move) return;
+        event.preventDefault();
+        mover.onMove(box.x + move[0], box.y + move[1], true);
+      }}
+    >
+      <span
+        className={`pointer-events-none absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-safe px-2 py-0.5 text-[11px] font-semibold text-white shadow-card transition-opacity ${
+          active ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+        }`}
+      >
+        {active ? `${Math.round(box.x)} × ${Math.round(box.y)} мм от края` : "Перетащите"}
+      </span>
+    </div>
+  );
+}
 
 function ticksFor(spanPx: number, unit: Unit, dpi: number) {
   const span = fromPixels(spanPx, unit, dpi);
@@ -42,6 +141,7 @@ export function Stage({
   transparent,
   onFile,
   onPick,
+  mover,
 }: StageProps) {
   const [box, setBox] = useState({ w: 0, h: 0 });
   const [dragging, setDragging] = useState(false);
@@ -145,6 +245,7 @@ export function Stage({
                     transparent ? "checkerboard" : ""
                   }`}
                 />
+                {mover && !busy ? <MoveHandle mover={mover} /> : null}
                 {busy ? (
                   <div className="pointer-events-none absolute inset-0 overflow-hidden bg-ink/55 backdrop-blur-[1px]">
                     <div className="absolute inset-x-0 top-0 h-16 animate-sweep bg-gradient-to-b from-transparent via-safe/25 to-transparent">

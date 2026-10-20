@@ -65,6 +65,11 @@ export type Settings = {
   /** When set, ignore `copies` and lay out as many as the sheet will take. */
   fillSheet: boolean;
   /**
+   * Where the photos were dragged to on the sheet: the group's top-left corner
+   * in millimetres. `null` lets the sheet lay them out by itself.
+   */
+  blockAt: { x: number; y: number } | null;
+  /**
    * The studio's own name and number. Printed on the sheet only — in a cell the
    * order left empty, and in the paper's margin. Never on a photograph: a
    * document photo with text on it is refused at the counter. See `imprint.ts`.
@@ -137,6 +142,7 @@ export const DEFAULT_SETTINGS: Settings = {
   // One copy to start with: multiplying is an explicit choice, not a surprise.
   copies: 1,
   fillSheet: false,
+  blockAt: null,
   // Empty until a studio types its own name, so the switch below can default to
   // on without anything appearing on anyone's paper uninvited.
   studioName: "",
@@ -178,6 +184,8 @@ export function fromSheet(sheet: SheetPreset): Partial<Settings> {
     sheetId: sheet.id,
     sheetW: sheet.width,
     sheetH: sheet.height,
+    // A place dragged out on one paper means nothing on another.
+    blockAt: null,
   };
 }
 

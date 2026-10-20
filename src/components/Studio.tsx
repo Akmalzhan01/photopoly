@@ -40,8 +40,10 @@ import {
   type Settings,
 } from "@/lib/settings";
 import {
+  arrange,
   composeSheet,
   findSheet,
+  groupBounds,
   mmToPx,
   planSheet,
   type SheetSpec,
@@ -469,6 +471,7 @@ export function Studio({ attireAssets }: { attireAssets: AttireAssetView[] }) {
       dpi: sheetDpi,
       copies,
       cutMarks: settings.cutMarks,
+      blockAt: settings.blockAt,
       imprint: {
         name: settings.studioName,
         phone: settings.studioPhone,
@@ -488,6 +491,7 @@ export function Studio({ attireAssets }: { attireAssets: AttireAssetView[] }) {
       sheetDpi,
       copies,
       settings.cutMarks,
+      settings.blockAt,
       settings.studioName,
       settings.studioPhone,
       settings.studioNote,
@@ -498,6 +502,32 @@ export function Studio({ attireAssets }: { attireAssets: AttireAssetView[] }) {
   );
 
   const sheeting = settings.sheet && layout.capacity > 0;
+
+  // The photos as one piece on the sheet, where they are now and where they
+  // would go by themselves — the second is what a drag snaps back to.
+  const group = useMemo(() => (sheeting ? groupBounds(arrange(sheetSpec, layout)) : null), [sheeting, sheetSpec, layout]);
+  const homeGroup = useMemo(
+    () => (sheeting ? groupBounds(arrange({ ...sheetSpec, blockAt: null }, layout)) : null),
+    [sheeting, sheetSpec, layout],
+  );
+  const moveGroup = useCallback(
+    (x: number, y: number, exact = false) => {
+      if (!group || !homeGroup) return;
+      // Within a millimetre and a half of a sensible place, it is that place:
+      // where it started, against the margin, or against the far margin.
+      const snap = (value: number, targets: number[]) => {
+        const near = exact ? undefined : targets.find((target) => Math.abs(value - target) < 1.5);
+        return near ?? Math.round(value * 10) / 10;
+      };
+      patch({
+        blockAt: {
+          x: snap(x, [homeGroup.x, settings.margin, settings.sheetW - settings.margin - group.w]),
+          y: snap(y, [homeGroup.y, settings.margin, settings.sheetH - settings.margin - group.h]),
+        },
+      });
+    },
+    [group, homeGroup, patch, settings.margin, settings.sheetW, settings.sheetH],
+  );
   const sheetPxW = Math.round(mmToPx(settings.sheetW, sheetDpi));
   const sheetPxH = Math.round(mmToPx(settings.sheetH, sheetDpi));
 
@@ -737,6 +767,11 @@ export function Studio({ attireAssets }: { attireAssets: AttireAssetView[] }) {
           transparent={!sheeting && settings.background === "transparent"}
           onFile={onFile}
           onPick={onPick}
+          mover={
+            sheeting && group
+              ? { box: group, sheetW: settings.sheetW, sheetH: settings.sheetH, onMove: moveGroup }
+              : undefined
+          }
         />
         <aside className="w-full shrink-0 border-t border-line lg:h-full lg:w-88 lg:border-l lg:border-t-0">
           <Panel

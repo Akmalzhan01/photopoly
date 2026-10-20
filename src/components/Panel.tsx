@@ -124,6 +124,7 @@ export function Panel({
     gap: settings.gap,
     margin: settings.margin,
     cutMarks: settings.cutMarks,
+    blockAt: settings.blockAt,
     copies,
     imprint: {
       name: settings.studioName,
@@ -800,6 +801,22 @@ export function Panel({
                     checked={settings.cutMarks}
                     onChange={(cutMarks) => patch({ cutMarks })}
                   />
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="text-[12px] leading-snug text-dust">
+                      {settings.blockAt
+                        ? "Фото передвинуты вручную."
+                        : "Фото можно перетащить мышкой в любое место листа."}
+                    </p>
+                    {settings.blockAt ? (
+                      <button
+                        type="button"
+                        onClick={() => patch({ blockAt: null })}
+                        className="shrink-0 text-[12px] font-medium text-safe-soft transition-colors hover:text-safe"
+                      >
+                        Вернуть на место
+                      </button>
+                    ) : null}
+                  </div>
 
                   <div className="space-y-3 border-t border-line pt-4">
                     <div>
